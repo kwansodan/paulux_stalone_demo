@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/utils/helpers";
+import { generateBookingReference, hashPassword } from "@/utils/helpers";
 import { BookingStatus, PaymentStatus, UserRole } from "@generated/prisma/enums";
 
 
@@ -42,30 +42,30 @@ const services = [
 
 const bookings = [
   {
-    bookingReference: "BK-1001",
+    bookingReference: generateBookingReference(),
     clientName: "Emma Wilson",
     clientEmail: "emma@gmail.com",
     clientPhone: "555-1111",
     serviceName: "Deep Tissue Massage",
-    bookingDate: new Date("2026-02-01"),
+    bookingDate: "2026-02-01",
     bookingTime: "09:00",
   },
   {
-    bookingReference: "BK-1002",
+    bookingReference: generateBookingReference(),
     clientName: "David Lee",
     clientEmail: "david@gmail.com",
     clientPhone: "555-2222",
     serviceName: "Hair Styling",
-    bookingDate: new Date("2026-02-01"),
+    bookingDate: "2026-02-01",
     bookingTime: "10:30",
   },
   {
-    bookingReference: "BK-1003",
+    bookingReference: generateBookingReference(),
     clientName: "Sophia Adams",
     clientEmail: "sophia@gmail.com",
     clientPhone: "555-3333",
     serviceName: "Classic Manicure",
-    bookingDate: new Date("2026-02-01"),
+    bookingDate: "2026-02-01",
     bookingTime: "11:30",
   }
 ]
@@ -84,6 +84,7 @@ async function seed() {
   try {
 
     // delete all existing resources
+    await prisma.session.deleteMany()
     await prisma.user.deleteMany()
     await prisma.booking.deleteMany() //delete booking before services
     await prisma.service.deleteMany()
@@ -143,7 +144,7 @@ async function seed() {
           serviceId: serviceBooked.id,
 
           bookingDate: b.bookingDate,
-          bookingTime: `${b.bookingDate.toISOString().split('T')[0]}T${b.bookingTime}:00Z`,
+          bookingTime: b.bookingTime,
 
           status: BookingStatus.PENDING,
           paymentStatus: PaymentStatus.PENDING,

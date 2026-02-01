@@ -1,16 +1,24 @@
 import { prisma } from "@/lib/prisma";
-import { Prisma, Service } from "@generated/prisma/client";
+import { Prisma } from "@generated/prisma/client";
 import { ServiceUpsertInput } from "../utils/validation";
+import { SerializedService } from "../types";
 
 export class ServiceRepository {
 
-  async getAllServices(where: Prisma.ServiceWhereInput) {
-    return prisma.service.findMany({
+  async getAllServices(where: Prisma.ServiceWhereInput): Promise<SerializedService[]> {
+    const services = await prisma.service.findMany({
       where,
       orderBy: {
         createdAt: 'desc',
       }
     })
+
+    return services.map(service => ({
+      ...service,
+      price: service.price.toString(),
+      createdAt: service.createdAt.toISOString(),
+      updatedAt: service.updatedAt.toISOString()
+    }))
   }
 
   async findById(id: string) {
@@ -29,7 +37,7 @@ export class ServiceRepository {
     })
   }
 
-  async upsertService(upsertDTO: ServiceUpsertInput): Promise<Service> {
+  async upsertService(upsertDTO: ServiceUpsertInput): Promise<SerializedService> {
 
     const upsertedService = await prisma.service.upsert({
       where: {
@@ -53,7 +61,14 @@ export class ServiceRepository {
       }
     })
 
-    return upsertedService
+    const serializedService = {
+      ...upsertedService,
+      price: upsertedService.price.toString(),
+      createdAt: upsertedService.createdAt.toISOString(),
+      updatedAt: upsertedService.updatedAt.toISOString()
+    }
+
+    return serializedService
   }
 }
 

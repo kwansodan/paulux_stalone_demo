@@ -5,6 +5,14 @@ import { hashToken } from "@/utils/crypto";
 
 class AuthRepository {
 
+  async findUserById(id: string) {
+    return prisma.user.findUnique({
+      where: {
+        id,
+      }
+    })
+  }
+
   async createSession(sessionToken: string, userId: string) {
     const sessionId = hashToken(sessionToken);
 

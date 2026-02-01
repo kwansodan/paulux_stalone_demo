@@ -36,16 +36,14 @@ enum SupportedCurrency {
   GHS
 }
 
-
-model Session{
-  id        String @id
+model Session {
+  id        String   @id
   expiresAt DateTime
-  userId    String @db.Uuid
-  user      User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
 }
-
 
 model User {
   id           String  @id @default(uuid()) @db.Uuid
@@ -60,20 +58,21 @@ model User {
   updatedAt DateTime @updatedAt
 
   sessions Session[]
+  bookings Booking[]
 
   @@map("users")
 }
 
 model Service {
-  id              String   @id @default(uuid()) @db.Uuid
+  id              String            @id @default(uuid()) @db.Uuid
   name            String
   description     String?
   durationMinutes Int
-  price           Decimal  @db.Decimal(10, 2)
+  price           Decimal           @db.Decimal(10, 2)
   currency        SupportedCurrency @default(GHS)
-  isActive        Boolean  @default(true)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  isActive        Boolean           @default(true)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   bookings Booking[]
 
@@ -87,18 +86,23 @@ model Booking {
   clientEmail      String
   clientPhone      String
 
-  serviceId String @db.Uuid 
+  serviceId String  @db.Uuid
   service   Service @relation(fields: [serviceId], references: [id])
 
-  bookingDate DateTime @db.Date
-  bookingTime DateTime @db.Time
+  bookingDate String
+  bookingTime String
 
   status        BookingStatus
   paymentStatus PaymentStatus
   paymentRef    String?
+  cancelReason  String?
 
   createdAt DateTime @default(now())
 
+  createdById String? @db.Uuid
+  createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  @@index([createdById])
   @@index([bookingDate])
   @@index([status])
   @@index([paymentStatus])
@@ -106,11 +110,11 @@ model Booking {
 }
 
 model BusinessHour {
-  id        String   @id @default(uuid()) @db.Uuid
+  id        String  @id @default(uuid()) @db.Uuid
   dayOfWeek Int // 0 = Sunday ... 6 = Saturday
   startTime String
   endTime   String
-  isOpen    Boolean  @default(true)
+  isOpen    Boolean @default(true)
 
   updatedAt DateTime @updatedAt
 

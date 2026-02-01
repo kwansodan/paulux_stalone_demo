@@ -1,0 +1,26 @@
+'use client'
+import React, { useState } from 'react'
+import BookingsCalendar from './booking-calender'
+import SelectDayPanel from './bookings-by-day'
+import { SerializedService } from '@/features/service/types'
+import { User } from '@generated/prisma/client'
+import { BookingFilter } from './booking-client-shell'
+
+const BookingManager = ({ authenticatedUser, services, selectedBookingFilter }: {authenticatedUser: User, services: SerializedService[], selectedBookingFilter: BookingFilter}) => {
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  return (
+    <div className="flex flex-row gap-6 w-full">
+      <div className="w-175">
+        <BookingsCalendar
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+        />
+      </div>
+      <div className="w-105">
+        <SelectDayPanel filter={selectedBookingFilter} services={services} user={authenticatedUser} selectedDate={selectedDate} />
+      </div>
+    </div>
+  )
+}
+
+export default BookingManager
