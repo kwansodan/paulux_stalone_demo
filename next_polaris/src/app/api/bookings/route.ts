@@ -1,9 +1,13 @@
+import { requireRoleApi } from "@/app/_auth/require-role-api";
+import { authRepository } from "@/features/auth/server/auth.repository";
 import { blockedDateRepository } from "@/features/blocked-date/server/blockedDate.repository";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
-import { BookingInputSchema } from "@/features/booking/utils/validation";
+import { isPastSlot } from "@/features/booking/utils/helpers";
+import { BookingSchema } from "@/features/booking/utils/validation";
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { isTimeWithinRange } from "@/utils/helpers";
+import { Prisma, UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -11,6 +15,9 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
+    const auth = await requireRoleApi(['ADMIN'])
+    if (!auth.ok) return auth.response
+
 
     const searchParams = request.nextUrl.searchParams;
     const date = searchParams.get('date')
@@ -18,7 +25,7 @@ export async function GET(request: NextRequest) {
 
     if (date) {
       query = {
-        bookingDate: new Date(date)
+        bookingDate: date
       }
     }
 
@@ -41,7 +48,16 @@ export async function POST(request: NextRequest) {
   try {
 
     const body = await request.json();
-    const validatedBody = BookingInputSchema.parse(body)
+    const validatedBody = BookingSchema.parse(body)
+
+    if (validatedBody.createdById) {
+      const existingUser = await authRepository.findUserById(validatedBody.createdById)
+      if (!existingUser || existingUser.role !== UserRole.ADMIN) {
+        return NextResponse.json(
+          { success: false, error: 'Invalid createdById provided' },
+          { status: 409 })
+      }
+    }
 
     //  validate that body contains a valid serviceId 
     const existingService = await serviceRepository.findById(validatedBody.serviceId);
@@ -93,11 +109,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (isPastSlot(
+      new Date(validatedBody.bookingDate),
+      validatedBody.bookingTime
+    )) {
+      return NextResponse.json(
+        { success: false, error: "Selected time is already in the past" },
+        { status: 409 }
+      )
+    }
+
+
     // check if booking already exists for chosen date or time
     const isAvailable = await bookingRepository.isSlotAvailable(
       new Date(validatedBody.bookingDate),
       validatedBody.bookingTime,
-      validatedBody.serviceId
+      validatedBody.serviceId,
+      validatedBody.id
     )
 
     if (!isAvailable) {
@@ -106,7 +134,6 @@ export async function POST(request: NextRequest) {
         { status: 409 })
     }
 
-
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
     })
@@ -114,13 +141,44 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ successs: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {
     if (error instanceof NextResponse) return error
+    console.error("Error creating booking: ", error)
+    if (error instanceof Prisma.PrismaClientValidationError) {
+      return NextResponse.json(
+        { success: false, message: "Invalid data provided" },
+        { status: 400 }
+      )
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      let message = "Database operation failed"
+
+      if (error.code === "P2002") {
+        const target = error.meta?.["target"]
+
+        if (Array.isArray(target) && target.length > 0) {
+          message = `${target[0]} already exists`
+        } else {
+          message = "Unique constraint violated"
+        }
+      } else if (error.code === "P2025") {
+        message = "Record not found"
+      } else if (error.code === "P2003") {
+        message = "Invalid reference to related record"
+      }
+
+      return NextResponse.json(
+        { success: false, message },
+        { status: 400 }
+      )
+    }
+
     if (error.name === "ValidationError") {
       return NextResponse.json(
         { error: "Validation failed", details: error.errors },
         { status: 400 }
       )
     }
-    console.error("Error creating booking: ", error)
+
     return NextResponse.json({ success: false, message: error.message || "Failed to create booking" }, { status: 500 })
   }
 }

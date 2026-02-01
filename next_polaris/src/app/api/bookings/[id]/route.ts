@@ -1,3 +1,5 @@
+import { requireRole } from "@/app/_auth/require-role";
+import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -5,36 +7,38 @@ import { NextRequest, NextResponse } from "next/server";
 
 
 export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) { 
-    try{
-        // await requireRole(['ADMIN', 'MANAGER'])
-        const awaitedParams = await params;
-        const bookingId = awaitedParams.id;
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const auth = await requireRoleApi(['ADMIN'])
+    if (!auth.ok) return auth.response
 
-        if(!bookingId){
-            return NextResponse.json({
-                success: false,
-                message: "Booking ID is required"
-            })
-        }
+    const awaitedParams = await params;
+    const bookingId = awaitedParams.id;
 
-        const booking = await bookingRepository.findById(bookingId);
-
-        return NextResponse.json({
-            success: true,
-            data: booking
-        }, { status: 200 })
-
-    }catch (error) {
-        console.error('Error: getting Booking', error);
-        if (error instanceof NextResponse) return error
-        return NextResponse.json({
-            success: false,
-            message: 'Failed to get Booking',
-        }, { status: 500 });
+    if (!bookingId) {
+      return NextResponse.json({
+        success: false,
+        message: "Booking ID is required"
+      })
     }
+
+    const booking = await bookingRepository.findById(bookingId);
+
+    return NextResponse.json({
+      success: true,
+      data: booking
+    }, { status: 200 })
+
+  } catch (error) {
+    console.error('Error: getting Booking', error);
+    if (error instanceof NextResponse) return error
+    return NextResponse.json({
+      success: false,
+      message: 'Failed to get Booking',
+    }, { status: 500 });
+  }
 
 }
 
@@ -43,7 +47,9 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // await requireRole(['ADMIN', 'MANAGER'])
+    const auth = await requireRoleApi(['ADMIN'])
+    if (!auth.ok) return auth.response
+
     const awaitedParams = await params;
     const bookingId = awaitedParams.id;
 

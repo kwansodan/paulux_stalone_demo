@@ -32,10 +32,14 @@ export function generateBookingReference(): string {
 }
 
 export function isTimeWithinRange(
-  time: string,        
-  start: string,       
-  end: string         
+  time: string,
+  start: string,
+  end: string
 ) {
   return time >= start && time <= end
 }
+
+
+
+
 

@@ -1,6 +1,6 @@
 
 import { prisma } from "@/lib/prisma"
-import { SignInSchema } from "@/features/auth/utils/validation"
+import { LoginSchema } from "@/features/auth/utils/validation"
 import { generateSessionToken } from "@/utils/crypto"
 import { comparePassword } from "@/utils/helpers"
 import { type NextRequest, NextResponse } from "next/server"
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Email and password are required" }, { status: 400 })
     }
 
-    const validatedData = await SignInSchema.parse({ email, password })
+    const validatedData = await LoginSchema.parse({ email, password })
 
     const user = await prisma.user.findUnique({
       where: {
