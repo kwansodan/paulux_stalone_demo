@@ -3,16 +3,10 @@ import { BusinessHourInput } from "../utils/validation";
 
 export class BusinessHourRepository {
 
-  upsert(dto: BusinessHourInput) {
-    return prisma.businessHour.upsert({
+  update(dto: BusinessHourInput) {
+    return prisma.businessHour.update({
       where: { dayOfWeek: dto.dayOfWeek },
-      update: {
-        startTime: dto.startTime,
-        endTime: dto.endTime,
-        isOpen: dto.isOpen,
-      },
-      create: {
-        dayOfWeek: dto.dayOfWeek,
+      data: {
         startTime: dto.startTime,
         endTime: dto.endTime,
         isOpen: dto.isOpen,
@@ -29,6 +23,15 @@ export class BusinessHourRepository {
   findByDayOfWeek(dayOfWeek: number) {
     return prisma.businessHour.findUnique({
       where: { dayOfWeek },
+    });
+  }
+
+  updateStatus(dayOfWeek: number, isOpen: boolean) {
+    return prisma.businessHour.update({
+      where: { dayOfWeek },
+      data: {
+        isOpen
+      }
     });
   }
 

@@ -11,9 +11,17 @@ export async function POST(req: NextRequest) {
   try {
 
     const body = await req.json();
+    console.log('POST BUSINESS HOURS DATA', body)
     const data = BusinessHourInputSchema.parse(body);
 
-    const result = await businessHourRepository.upsert(data);
+    const existingHour = await businessHourRepository.findByDayOfWeek(data.dayOfWeek)
+    if (!existingHour) {
+      return NextResponse.json(
+        { success: false, error: 'No business hour exists for chosen day of week' },
+        { status: 409 })
+    }
+
+    const result = await businessHourRepository.update(data);
     return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     if (error instanceof NextResponse) return error

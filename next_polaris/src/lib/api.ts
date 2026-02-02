@@ -1,5 +1,4 @@
 import axios from "axios"
-import { useRouter } from "next/navigation"
 
 export const api = axios.create({
   baseURL: "/api",
