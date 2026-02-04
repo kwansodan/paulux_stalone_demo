@@ -87,8 +87,8 @@ export async function getPresignedUrl(
  */
 export async function getFileUrl(objectName: string): Promise<string> {
     const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
-    const endpoint = process.env.MINIO_ENDPOINT || 'localhost';
-    const port = process.env.MINIO_PORT || '9000';
+    const endpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || 'localhost';
+    const port = process.env.NEXT_PUBLIC_MINIO_PORT || '9005';
 
     // For production, you might want to use a custom domain or reverse proxy
     return `${protocol}://${endpoint}:${port}/${BUCKET_NAME}/${objectName}`;
