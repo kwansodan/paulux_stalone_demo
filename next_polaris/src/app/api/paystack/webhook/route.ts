@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaystackSignature } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
+import { createCalendarEvent } from '@/lib/google-calendar';
 
 export async function POST(req: NextRequest) {
     try {
@@ -38,15 +39,33 @@ export async function POST(req: NextRequest) {
             // Update booking status
             // We assume reference maps to bookingReference
             if (status === 'success') {
-                const updateResult = await prisma.booking.update({
+                // First update the status
+                const updatedBooking = await prisma.booking.update({
                     where: { bookingReference: reference },
                     data: {
                         status: 'CONFIRMED',
                         paymentStatus: 'PAID',
-                        paymentRef: reference, // Or Paystack's id if preferred
+                        paymentRef: reference,
+                    },
+                    include: {
+                        service: true, // Required for calendar event details
                     },
                 });
-                console.log(`Updated booking ${reference} to CONFIRMED.`, updateResult);
+
+                console.log(`Updated booking ${reference} to CONFIRMED.`);
+
+                // Create Google Calendar Event
+                // Only create if not already exists (though here we just confirmed payment, so likely new)
+                if (!updatedBooking.googleEventId) {
+                    const eventId = await createCalendarEvent(updatedBooking);
+                    if (eventId) {
+                        await prisma.booking.update({
+                            where: { id: updatedBooking.id },
+                            data: { googleEventId: eventId }
+                        });
+                        console.log(`Linked Google Calendar event ${eventId} to booking ${reference}`);
+                    }
+                }
             }
         }
 

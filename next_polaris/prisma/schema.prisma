@@ -95,6 +95,7 @@ model Booking {
   status        BookingStatus
   paymentStatus PaymentStatus
   paymentRef    String?
+  googleEventId String?
   cancelReason  String?
 
   createdAt DateTime @default(now())
