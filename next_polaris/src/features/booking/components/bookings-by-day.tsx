@@ -26,11 +26,30 @@ export default function SelectDayPanel({ selectedDate, user, services, filter }:
   const bookings: BookingWithService[] = useMemo(() => data?.data.bookings ?? [], [data])
 
   const filteredBookings = useMemo(() => {
-    if(filter === 'all') return bookings
+    if (filter === 'all') return bookings
 
     return bookings.filter((b) => b.status.toLowerCase() === filter.toLowerCase())
-    
+
   }, [filter, bookings])
+
+  function handleBookingAction(bookingId: string, action: 'edit' | 'delete') {
+    setSelectedBooking(null)
+
+    const bookingSelected = filteredBookings.find((b) => b.id === bookingId)
+    if (!bookingSelected) {
+      toast("Invalid Booking Selected")
+      return
+    }
+
+    setSelectedBooking(bookingSelected)
+
+    if (action === 'edit') {
+      setIsEditModalOpen(true)
+    } else if (action === 'delete') {
+      setIsCancelOpen(true)
+    }
+  }
+
 
   return (
     <>
@@ -57,26 +76,8 @@ export default function SelectDayPanel({ selectedDate, user, services, filter }:
                   key={b.id}
                   user={user}
                   booking={b}
-                  onEdit={(bookingId: string) => {
-                    setSelectedBooking(null)
-                    const bookingSelected = filteredBookings.find((b) => b.id === bookingId)
-                    if (!bookingSelected) {
-                      toast("Invalid Booking Selected")
-                      return
-                    }
-                    setSelectedBooking(bookingSelected)
-                    setIsEditModalOpen(true)
-                  }}
-                  onCancel={(bookingId: string) => {
-                    setSelectedBooking(null)
-                    const bookingSelected = filteredBookings.find((b) => b.id === bookingId)
-                    if (!bookingSelected) {
-                      toast("Invalid Booking Selected")
-                      return
-                    }
-                    setSelectedBooking(bookingSelected)
-                    setIsCancelOpen(true)
-                  }}
+                  onEdit={(bookingId) => handleBookingAction(bookingId, 'edit')}
+                  onCancel={(bookingId) => handleBookingAction(bookingId, 'delete')}
                 />
               ))}
             </>

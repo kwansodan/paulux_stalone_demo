@@ -37,29 +37,66 @@ export class ServiceRepository {
     })
   }
 
-  async upsertService(upsertDTO: ServiceUpsertInput): Promise<SerializedService> {
-
-    const upsertedService = await prisma.service.upsert({
+  async updateStatus(id: string, isActive: boolean) {
+    return prisma.service.update({
       where: {
-        id: upsertDTO.id,
+        id
       },
-      update: {
-        name: upsertDTO.name,
-        description: upsertDTO.description,
-        durationMinutes: upsertDTO.durationMinutes,
-        price: upsertDTO.price,
-        currency: upsertDTO.currency,
-        isActive: upsertDTO.isActive,
+      data: {
+        isActive: isActive
       },
-      create: {
-        name: upsertDTO.name,
-        description: upsertDTO.description,
-        durationMinutes: upsertDTO.durationMinutes,
-        price: upsertDTO.price,
-        currency: upsertDTO.currency,
-        isActive: upsertDTO.isActive,
-      }
+      select: {
+        id: true,
+        name: true,
+        isActive: true,
+        updatedAt: true,
+      },
     })
+  }
+
+  async upsertService(upsertDTO: ServiceUpsertInput): Promise<SerializedService> {
+    let upsertedService;
+    if (upsertDTO.id) {
+      const existing = await prisma.service.findUnique({
+        where: { id: upsertDTO.id }
+      })
+
+      if (!existing) {
+        throw new Error("Service not found. Cannot update.")
+      }
+
+      upsertedService = await prisma.service.update({
+        where: {
+          id: upsertDTO.id
+        },
+        data: {
+          name: upsertDTO.name,
+          description: upsertDTO.description,
+          durationMinutes: upsertDTO.durationMinutes,
+          price: upsertDTO.price,
+          currency: upsertDTO.currency,
+          maxBookingsPerDay: upsertDTO.maxBookingsPerDay,
+          latestBookingTime: upsertDTO.latestBookingTime,
+          minDepositPercent: upsertDTO.minDepositPercent,
+          isActive: upsertDTO.isActive,
+        }
+      })
+    }else{
+      upsertedService = await prisma.service.create({
+        data: {
+          name: upsertDTO.name,
+          description: upsertDTO.description,
+          durationMinutes: upsertDTO.durationMinutes,
+          price: upsertDTO.price,
+          currency: upsertDTO.currency,
+          maxBookingsPerDay: upsertDTO.maxBookingsPerDay,
+          latestBookingTime: upsertDTO.latestBookingTime,
+          minDepositPercent: upsertDTO.minDepositPercent,
+          isActive: upsertDTO.isActive,
+        }
+      })
+    }
+
 
     const serializedService = {
       ...upsertedService,

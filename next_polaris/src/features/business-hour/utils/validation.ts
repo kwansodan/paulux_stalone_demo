@@ -7,4 +7,10 @@ export const BusinessHourInputSchema = z.object({
   isOpen: z.boolean().optional().default(true),
 });
 
+
+export const BusinessHourStatusSchema = z.object({
+  isOpen: z.boolean(),
+})
+
+export type BusinessStatusInput = z.infer<typeof BusinessHourStatusSchema>;
 export type BusinessHourInput = z.infer<typeof BusinessHourInputSchema>;
