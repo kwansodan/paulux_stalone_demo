@@ -74,8 +74,8 @@ services:
     container_name: polaris_caddy
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "8095:80"
+      - "8445:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
