@@ -148,22 +148,31 @@ You can also trigger deployment manually:
 2. Select "Deploy to Production" workflow
 3. Click "Run workflow"
 
-## Production Domain Setup: nginx-proxy
+## Production Domain Setup: Caddy
 
-You are running a shared `nginx-proxy` on your server. To expose this app:
+We use Caddy for automatic HTTPS.
 
-1.  **Identify Network**:
-    Ensure your server has the `nginx-proxy` network (check `docker network ls`).
-    If it's named differently, update `docker-compose.yml` -> `networks` -> `proxy_network` -> `name`.
+**CRITICAL WARNING:**
+Your server seems to have `nginx-proxy` running on ports 80 and 443.
+**Caddy CANNOT start if ports 80 and 443 are in use.**
 
-2.  **Deploy**:
+You MUST stop the existing nginx proxy before deploying this:
+```bash
+docker stop nginx-proxy
+docker rm nginx-proxy
+```
+(Be careful as this might affect other sites on your server).
+
+### Deploying
+1.  **Start Services**:
     ```bash
     docker compose up -d
     ```
+    
+2.  **Verification**:
+    - Check logs: `docker compose logs -f caddy`
+    - Visit `https://polarisbeauty.biz`
 
-3.  **Verification**:
-    The `nginx-proxy` container will automatically detect the new container, generate certificates via `acme-companion`, and route `polarisbeauty.biz` to your app.
-    - Check usage: `docker logs nginx-proxy`
 
 
 ---

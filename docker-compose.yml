@@ -34,10 +34,6 @@ services:
     container_name: polaris_app
     restart: unless-stopped
     env_file: .env
-    environment:
-      - VIRTUAL_HOST=polarisbeauty.biz
-      - LETSENCRYPT_HOST=polarisbeauty.biz
-      - LETSENCRYPT_EMAIL=jojoyawson573@gmail.com
     ports:
       - "3000:3000"
     depends_on:
@@ -45,10 +41,27 @@ services:
         condition: service_healthy
     networks:
       - polaris_network
-      - proxy_network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
+
+  # Caddy Reverse Proxy (Automatic SSL)
+  caddy:
+    image: caddy:alpine
+    container_name: polaris_caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+      - minio
+    networks:
+      - polaris_network
 
   # MinIO Object Storage (S3-compatible)
   minio:
@@ -76,24 +89,6 @@ services:
     networks:
       - polaris_network
 
-  # Caddy Reverse Proxy (Automatic SSL)
-  caddy:
-    image: caddy:alpine
-    container_name: polaris_caddy
-    restart: unless-stopped
-    ports:
-      - "8095:80"
-      - "8445:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-      - minio
-    networks:
-      - polaris_network
-
 volumes:
   postgres_data:
     driver: local
@@ -101,10 +96,11 @@ volumes:
     driver: local
   minio_data:
     driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
 
 networks:
   polaris_network:
     driver: bridge
-  proxy_network:
-    external: true
-    name: nginx-proxy # IMPORTANT: Change this to the actual network name of your existing nginx-proxy container
