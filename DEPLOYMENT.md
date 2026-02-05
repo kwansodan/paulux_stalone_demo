@@ -148,34 +148,23 @@ You can also trigger deployment manually:
 2. Select "Deploy to Production" workflow
 3. Click "Run workflow"
 
-## SSL/HTTPS Setup (Automatic with Caddy)
+## Production Domain Setup: nginx-proxy
 
-Caddy handles SSL automatically.
+You are running a shared `nginx-proxy` on your server. To expose this app:
 
-### Production Setup
-1.  **Ensure DNS Configured**: `polarisbeauty.biz` must point to your server's IP.
-2.  **Start Services**:
+1.  **Identify Network**:
+    Ensure your server has the `nginx-proxy` network (check `docker network ls`).
+    If it's named differently, update `docker-compose.yml` -> `networks` -> `proxy_network` -> `name`.
+
+2.  **Deploy**:
     ```bash
     docker compose up -d
     ```
-3.  **Verification**:
-    Caddy will automatically fetch certificates from Let's Encrypt.
-    - Check logs: `docker compose logs caddy`
-    - Visit `https://polarisbeauty.biz`
 
-### Troubleshooting Caddy
-If SSL fails:
-- Ensure ports 80 and 443 are open.
-- Check if Caddy data volume is persisting:
-  ```bash
-  docker volume ls | grep caddy
-  ```
-- Reset Caddy certificates (if needed):
-  ```bash
-  docker compose stop caddy
-  docker volume rm polaris_caddy_data
-  docker compose up -d caddy
-  ```
+3.  **Verification**:
+    The `nginx-proxy` container will automatically detect the new container, generate certificates via `acme-companion`, and route `polarisbeauty.biz` to your app.
+    - Check usage: `docker logs nginx-proxy`
+
 
 ---
 
