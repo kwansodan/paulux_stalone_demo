@@ -34,6 +34,10 @@ services:
     container_name: polaris_app
     restart: unless-stopped
     env_file: .env
+    environment:
+      - VIRTUAL_HOST=polarisbeauty.biz
+      - LETSENCRYPT_HOST=polarisbeauty.biz
+      - LETSENCRYPT_EMAIL=jojoyawson573@gmail.com
     ports:
       - "3000:3000"
     depends_on:
@@ -41,6 +45,7 @@ services:
         condition: service_healthy
     networks:
       - polaris_network
+      - proxy_network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
@@ -54,6 +59,9 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+      # Expose MinIO to nginx-proxy if needed, or keep internal/mapped ports
+      # VIRTUAL_HOST=minio.polarisbeauty.biz
+      # VIRTUAL_PORT=9001
     command: server /data --console-address ":9001"
     ports:
       - "9005:9000" # API
@@ -93,11 +101,10 @@ volumes:
     driver: local
   minio_data:
     driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
-    driver: local
 
 networks:
   polaris_network:
     driver: bridge
+  proxy_network:
+    external: true
+    name: nginx-proxy # IMPORTANT: Change this to the actual network name of your existing nginx-proxy container
