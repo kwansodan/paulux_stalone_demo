@@ -47,21 +47,21 @@ services:
 
   # Caddy Reverse Proxy (Automatic SSL)
   caddy:
-    image: caddy:alpine
+    image: caddy:2
     container_name: polaris_caddy
     restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
+    environment:
+      - GODADDY_API_KEY=${GODADDY_API_KEY}
+      - GODADDY_API_SECRET=${GODADDY_API_SECRET}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
       - caddy_data:/data
       - caddy_config:/config
+    networks:
+      - polaris_network
     depends_on:
       - app
       - minio
-    networks:
-      - polaris_network
 
   # MinIO Object Storage (S3-compatible)
   minio:
