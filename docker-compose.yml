@@ -47,7 +47,9 @@ services:
 
   # Caddy Reverse Proxy (Automatic SSL)
   caddy:
-    image: caddy:2
+    build:
+      context: .
+      dockerfile: Dockerfile.caddy
     container_name: polaris_caddy
     restart: unless-stopped
     environment:
