@@ -148,51 +148,38 @@ You can also trigger deployment manually:
 2. Select "Deploy to Production" workflow
 3. Click "Run workflow"
 
-## SSL/HTTPS Setup (Recommended for Production)
+## SSL/HTTPS Setup (Automatic with Caddy)
 
-### Using Let's Encrypt (Free)
+Caddy handles SSL automatically.
 
-1. **Install Certbot on your server**
-   ```bash
-   sudo apt-get update
-   sudo apt-get install certbot
-   ```
+### Production Setup
+1.  **Ensure DNS Configured**: `polarisbeauty.biz` must point to your server's IP.
+2.  **Start Services**:
+    ```bash
+    docker compose up -d
+    ```
+3.  **Verification**:
+    Caddy will automatically fetch certificates from Let's Encrypt.
+    - Check logs: `docker compose logs caddy`
+    - Visit `https://polarisbeauty.biz`
 
-2. **Stop Nginx temporarily**
-   ```bash
-   cd ~/polaris
-   docker compose stop nginx
-   ```
+### Troubleshooting Caddy
+If SSL fails:
+- Ensure ports 80 and 443 are open.
+- Check if Caddy data volume is persisting:
+  ```bash
+  docker volume ls | grep caddy
+  ```
+- Reset Caddy certificates (if needed):
+  ```bash
+  docker compose stop caddy
+  docker volume rm polaris_caddy_data
+  docker compose up -d caddy
+  ```
 
-3. **Generate SSL certificate**
-   ```bash
-   sudo certbot certonly --standalone -d yourdomain.com -d www.yourdomain.com
-   ```
+---
 
-4. **Copy certificates**
-   ```bash
-   sudo mkdir -p ~/polaris/nginx/ssl
-   sudo cp /etc/letsencrypt/live/yourdomain.com/fullchain.pem ~/polaris/nginx/ssl/cert.pem
-   sudo cp /etc/letsencrypt/live/yourdomain.com/privkey.pem ~/polaris/nginx/ssl/key.pem
-   sudo chown -R $USER:$USER ~/polaris/nginx/ssl
-   ```
 
-5. **Update nginx.conf**
-   - Uncomment the HTTPS server block
-   - Update `server_name` with your domain
-   - Uncomment the HTTP to HTTPS redirect
-
-6. **Restart services**
-   ```bash
-   docker compose up -d
-   ```
-
-7. **Set up auto-renewal**
-   ```bash
-   sudo crontab -e
-   # Add this line:
-   0 0 1 * * certbot renew --quiet && cp /etc/letsencrypt/live/yourdomain.com/*.pem ~/polaris/nginx/ssl/ && cd ~/polaris && docker compose restart nginx
-   ```
 
 ## Monitoring & Maintenance
 
@@ -204,7 +191,7 @@ docker compose logs -f
 # Specific service
 docker compose logs -f app
 docker compose logs -f db
-docker compose logs -f nginx
+docker compose logs -f caddy
 ```
 
 ### Check Service Status
