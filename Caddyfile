@@ -1,3 +1,8 @@
 polarisbeauty.biz {
     reverse_proxy app:3000
+    tls {
+        dns godaddy {env.GODADDY_API_KEY} {env.GODADDY_API_SECRET}
+    }
 }
+
+
