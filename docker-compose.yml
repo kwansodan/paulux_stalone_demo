@@ -93,6 +93,22 @@ services:
     networks:
       - polaris_network
 
+  # Portainer - Container Management UI
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: polaris_portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - "9443:9443" # HTTPS UI
+      - "8000:8000" # Edge Agent (optional)
+    networks:
+      - polaris_network
+
 volumes:
   postgres_data:
     driver: local
@@ -103,6 +119,8 @@ volumes:
   caddy_data:
     driver: local
   caddy_config:
+    driver: local
+  portainer_data:
     driver: local
 
 networks:
