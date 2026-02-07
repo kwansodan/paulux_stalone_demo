@@ -30,6 +30,7 @@ enum PaymentStatus {
   PENDING
   PAID
   REFUNDED
+  FAILED
 }
 
 enum SupportedCurrency {
@@ -72,16 +73,43 @@ model Service {
   currency        SupportedCurrency @default(GHS)
 
   maxBookingsPerDay Int?
-  latestBookingTime String?        // "HH:mm"
-  minDepositPercent Int   @default(0)
+  latestBookingTime String? // "HH:mm"
+  minDepositPercent Int     @default(0)
 
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   bookings Booking[]
 
   @@map("services")
+}
+
+enum PaymentProvider {
+  PAYSTACK
+  MANUAL
+}
+
+model Payment {
+  id String @id @default(uuid()) @db.Uuid
+
+  bookingId String  @db.Uuid
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+
+  provider    PaymentProvider
+  providerRef String // reference from gateway
+  amount      Decimal           @db.Decimal(10, 2)
+  currency    SupportedCurrency
+
+  status     PaymentStatus
+  rawPayload Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([provider, providerRef])
+  @@index([bookingId])
+  @@map("payments")
 }
 
 model Booking {
@@ -98,6 +126,7 @@ model Booking {
   bookingTime String
 
   status        BookingStatus
+  payments       Payment[]
   paymentStatus PaymentStatus
   paymentRef    String?
   googleEventId String?
@@ -111,7 +140,7 @@ model Booking {
   @@index([createdById])
   @@index([bookingDate])
   @@index([status])
-  @@index([paymentStatus])
+  // @@index([paymentStatus])
   @@map("bookings")
 }
 

@@ -7,7 +7,7 @@ import { BookingSchema } from "@/features/booking/utils/validation";
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { isTimeWithinRange } from "@/utils/helpers";
-import { Prisma, UserRole } from "@generated/prisma/client";
+import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
 
@@ -21,12 +21,48 @@ export async function GET(request: NextRequest) {
 
     const searchParams = request.nextUrl.searchParams;
     const date = searchParams.get('date')
-    let query;
+    const from = searchParams.get("from")
+    const to = searchParams.get("to")
+    const status = searchParams.get("status")
+    const paymentStatus = searchParams.get("paymentStatus")
+    const search = searchParams.get("search")
+    const time = searchParams.get("time")
+
+    const query: Prisma.BookingWhereInput = {};
 
     if (date) {
-      query = {
-        bookingDate: date
+      query.bookingDate = date
+    }
+
+    if (from || to) {
+      query.bookingDate = {}
+      if (from) query.bookingDate.gte = from
+      if (to) query.bookingDate.lte = to
+    }
+
+    if (time) {
+      query.bookingTime = time
+    }
+
+    if (status) {
+      query.status = status as BookingStatus
+    }
+
+    if (paymentStatus) {
+      query.payments = {
+        some: {
+          status: paymentStatus as PaymentStatus,
+        },
       }
+    }
+
+
+    if (search) {
+      query.OR = [
+        { clientName: { contains: search, mode: "insensitive" } },
+        { clientEmail: { contains: search, mode: "insensitive" } },
+        { clientPhone: { contains: search } },
+      ]
     }
 
     const bookings = await bookingRepository.getAllBookings(query)
