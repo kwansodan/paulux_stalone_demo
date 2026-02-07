@@ -42,6 +42,7 @@ services:
         condition: service_healthy
     networks:
       - polaris_network
+      - fulstack_default
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
@@ -88,3 +89,5 @@ volumes:
 networks:
   polaris_network:
     driver: bridge
+  fulstack_default:
+    external: true
