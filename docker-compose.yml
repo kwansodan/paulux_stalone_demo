@@ -51,6 +51,9 @@ services:
       VIRTUAL_PORT: 3000
       LETSENCRYPT_HOST: polarisbeauty.biz
       LETSENCRYPT_EMAIL: polarisbeautylounge@gmail.com
+      # Tell Next.js the correct public URL
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
 
   # MinIO Object Storage (S3-compatible)
   minio:
