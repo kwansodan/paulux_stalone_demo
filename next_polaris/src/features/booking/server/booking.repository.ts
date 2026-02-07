@@ -26,7 +26,7 @@ export class BookingRepository {
           bookingDate: payload.bookingDate,
           bookingTime: payload.bookingTime,
           status: payload.status,
-          // paymentStatus: payload.paymentStatus,
+          paymentStatus: payload.paymentStatus ?? PaymentStatus.PENDING,
           createdById: payload.createdById ?? null
         }
       })
@@ -42,7 +42,7 @@ export class BookingRepository {
         bookingDate: payload.bookingDate,
         bookingTime: payload.bookingTime,
         status: BookingStatus.PENDING,
-        // paymentStatus: PaymentStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
         createdById: payload?.createdById ?? null
       }
     })
