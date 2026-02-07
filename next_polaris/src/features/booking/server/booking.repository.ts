@@ -26,7 +26,7 @@ export class BookingRepository {
           bookingDate: payload.bookingDate,
           bookingTime: payload.bookingTime,
           status: payload.status,
-          paymentStatus: payload.paymentStatus,
+          // paymentStatus: payload.paymentStatus,
           createdById: payload.createdById ?? null
         }
       })
@@ -42,7 +42,7 @@ export class BookingRepository {
         bookingDate: payload.bookingDate,
         bookingTime: payload.bookingTime,
         status: BookingStatus.PENDING,
-        paymentStatus: PaymentStatus.PENDING,
+        // paymentStatus: PaymentStatus.PENDING,
         createdById: payload?.createdById ?? null
       }
     })
@@ -54,6 +54,7 @@ export class BookingRepository {
       where,
       include: {
         service: true,
+        payments: true,
       },
       orderBy: {
         createdAt: 'desc',
@@ -64,8 +65,15 @@ export class BookingRepository {
       return { bookings }
     }
 
-    const queryResult: BookingQueryResult = {
-      bookings: bookings
+    const queryResult: any = {
+      // serialized service.price in booking.service for easier handling on client side
+      bookings: bookings.map(b => ({
+        ...b,
+        service: {
+          ...b.service,
+          price: b.service.price.toString()
+        }
+      }))
     };
     if (options.includeCount) {
       queryResult['count'] = bookings.length
@@ -80,6 +88,7 @@ export class BookingRepository {
 
     return queryResult
   }
+
 
   async findById(id: string) {
     return prisma.booking.findUnique({

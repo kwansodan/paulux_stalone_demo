@@ -123,3 +123,115 @@
     @apply bg-background text-foreground;
   }
 }
+
+.compact-daypicker.rdp {
+  --rdp-cell-size: 24px;
+  --rdp-accent-color: #a855f7;
+  --rdp-background-color: #a855f7;
+  font-size: 13px;
+  max-width: 580px;
+  padding: 12px;
+}
+
+/* Two months side by side */
+.compact-daypicker .rdp-months {
+  display: flex;
+  gap: 16px;
+}
+
+/* Month header */
+.compact-daypicker .rdp-caption {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 10px;
+  position: relative;
+}
+
+.compact-daypicker .rdp-caption_label {
+  font-size: 14px;
+  font-weight: 600;
+}
+
+/* Navigation arrows */
+.compact-daypicker .rdp-nav_button {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+}
+
+.compact-daypicker .rdp-nav_button:hover {
+  background-color: #f3f4f6;
+  border-radius: 4px;
+}
+
+/* THE ACTUAL FIX - Header row must be a flex container */
+.compact-daypicker .rdp-head_row {
+  display: flex !important;
+  width: 100%;
+}
+
+/* Each weekday header cell */
+.compact-daypicker .rdp-head_cell {
+  flex: 1;
+  font-size: 11px;
+  font-weight: 500;
+  color: #6b7280;
+  text-align: center;
+  padding: 4px 0 8px 0;
+}
+
+/* Body rows also flex */
+.compact-daypicker .rdp-tbody .rdp-row {
+  display: flex !important;
+  width: 100%;
+}
+
+/* Day cells */
+.compact-daypicker .rdp-cell {
+  flex: 1;
+  text-align: center;
+  padding: 2px;
+}
+
+.compact-daypicker .rdp-day {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  margin: 0 auto;
+}
+
+/* Selected range */
+.compact-daypicker .rdp-day_selected {
+  background-color: #a855f7 !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.compact-daypicker .rdp-day_range_middle {
+  background-color: #f3e8ff !important;
+  color: #111827 !important;
+}
+
+.compact-daypicker .rdp-day_range_start {
+  background-color: #a855f7 !important;
+  color: white !important;
+  border-radius: 4px 0 0 4px !important;
+}
+
+.compact-daypicker .rdp-day_range_end {
+  background-color: #a855f7 !important;
+  color: white !important;
+  border-radius: 0 4px 4px 0 !important;
+}
+
+.compact-daypicker .rdp-day_outside {
+  opacity: 0.3;
+}
+
+.compact-daypicker .rdp-day:hover:not(.rdp-day_selected) {
+  background-color: #f3f4f6;
+}

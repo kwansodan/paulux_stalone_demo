@@ -3,6 +3,7 @@ import { BookingInput, BookingStatusEnum, BookingStatusInput, CancelBookingInput
 import { api } from "@/lib/api";
 import { toast } from "sonner";
 import { BookingStatus } from "@generated/prisma/enums";
+import { BookingFilters, BookingWithService, IBookingMetrics } from "../../types";
 
 
 export const createOrEditBooking = async (data: BookingInput & { id?: string }) => {
@@ -38,6 +39,48 @@ export function useGetBookingsByDate(dateStr: string) {
       const res = await api.get(`/bookings?date=${dateStr}`)
       return res.data
     }
+  })
+}
+
+export function useBookings(filters: Partial<BookingFilters>) {
+  return useQuery({
+    queryKey: ["reports-bookings",       
+      filters.from,
+      filters.to,
+      filters.status,
+      filters.paymentStatus,
+      filters.search,
+      filters.time],
+    queryFn: async () => {
+      const res = await api.get("/bookings", { params: filters })
+      return res.data.data.bookings
+    },
+    refetchOnMount: false,
+  })
+}
+
+
+export function useBookingMetrics(initial: IBookingMetrics) {
+  return useQuery({
+    queryKey: ["booking-metrics"],
+    queryFn: async () => {
+      const res = await api.get("/bookings", { params: { includeCount: true } })
+      const { bookings, count }: { bookings: BookingWithService[]; count: number } = res.data.data;
+
+      const confirmedBookings: BookingWithService[] = bookings.filter(
+        b => b.status === BookingStatus.CONFIRMED
+      )
+
+      const metrics = {
+        totalBookings: count ?? bookings.length,
+        cancelled: bookings.filter(b => b.status === "CANCELLED").length,
+        unpaid: bookings.length - confirmedBookings.length,
+        completed: bookings.filter(b => b.status === "COMPLETED").length,
+      }
+
+      return metrics
+    },
+    initialData: initial,
   })
 }
 
@@ -95,7 +138,7 @@ export function useMarkAsCompleted() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => updateBookingStatus(id, { status: BookingStatus.COMPLETED}),
+    mutationFn: (id: string) => updateBookingStatus(id, { status: BookingStatus.COMPLETED }),
     onMutate: () => {
       toast.loading("Updating booking status...", { id: "booking-status" })
     },

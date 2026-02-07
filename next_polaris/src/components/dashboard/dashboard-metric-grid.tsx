@@ -1,5 +1,5 @@
 import { Calendar, CircleCheckIcon, TriangleAlert } from "lucide-react"
-import MetricCard from "./dashboard-metric-card"
+import MetricCard from "../metric-card"
 
 type Props = {
   todaysCount: number

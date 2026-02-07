@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { generateBookingReference, hashPassword } from "@/utils/helpers";
-import { BookingStatus, PaymentStatus, UserRole } from "@generated/prisma/enums";
+import { BookingStatus, PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/enums";
 
 
 
@@ -87,6 +87,7 @@ async function seed() {
     // delete all existing resources
     await prisma.session.deleteMany()
     await prisma.user.deleteMany()
+    await prisma.payment.deleteMany()
     await prisma.booking.deleteMany() //delete booking before services
     await prisma.service.deleteMany()
     await prisma.businessHour.deleteMany()
@@ -126,7 +127,7 @@ async function seed() {
     })
 
     // create bookings for each service
-    await prisma.booking.createMany({
+    const dbBookings = await prisma.booking.createManyAndReturn({
       data: bookings.map((b) => {
         const serviceBooked = dbServices.find((service) => service.name === b.serviceName);
 
@@ -148,9 +149,22 @@ async function seed() {
           bookingTime: b.bookingTime,
 
           status: BookingStatus.PENDING,
-          paymentStatus: PaymentStatus.PENDING,
+          // paymentStatus: PaymentStatus.PENDING,
         })
       }).filter(item => item !== null)
+    })
+
+    // create payments for each booking
+    await prisma.payment.createMany({
+      data: dbBookings.map((b, i) => ({
+        bookingId: b.id,
+        provider: PaymentProvider.MANUAL,
+        providerRef: `MANUAL-00${i + 1}`,
+        amount: b.serviceId ? (dbServices.find(s => s.id === b.serviceId)?.price || 0) : 0,
+        currency: "GHS",
+        status: PaymentStatus.PAID,
+        rawPayload: { note: "Seed payment" },
+      }))
     })
 
     const t1 = performance.now()
