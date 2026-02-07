@@ -26,9 +26,12 @@ services:
     build:
       context: ./next_polaris
       dockerfile: Dockerfile.prod
+      network: host
       args:
         - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+        - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
+        - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
     container_name: polaris_app
     restart: unless-stopped
     env_file: .env
@@ -52,9 +55,12 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+      # Expose MinIO to nginx-proxy if needed, or keep internal/mapped ports
+      # VIRTUAL_HOST=minio.polarisbeauty.biz
+      # VIRTUAL_PORT=9001
     command: server /data --console-address ":9001"
     ports:
-      - "9000:9000" # API
+      - "9005:9000" # API
       - "9001:9001" # Console UI
     volumes:
       - minio_data:/data
@@ -66,21 +72,40 @@ services:
     networks:
       - polaris_network
 
-  # Nginx Reverse Proxy (Optional but recommended for production)
-  nginx:
-    image: nginx:alpine
-    container_name: polaris_nginx
+  caddy:
+    image: caddy:2.8
+    container_name: polaris_caddy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/ssl:/etc/nginx/ssl:ro
-      - ./nginx/logs:/var/log/nginx
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
     depends_on:
       - app
-      - minio
+    networks:
+      - polaris_network
+
+  # Portainer - Container Management UI
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: polaris_portainer
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - "9443:9443" # HTTPS UI
+      - "8000:8000" # Edge Agent (optional)
     networks:
       - polaris_network
 
@@ -90,6 +115,12 @@ volumes:
   app_cache:
     driver: local
   minio_data:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+  portainer_data:
     driver: local
 
 networks:
