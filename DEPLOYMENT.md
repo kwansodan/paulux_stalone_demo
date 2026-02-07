@@ -148,30 +148,10 @@ You can also trigger deployment manually:
 2. Select "Deploy to Production" workflow
 3. Click "Run workflow"
 
-## Production Domain Setup: Caddy
+## Production Domain Setup
 
-We use Caddy for automatic HTTPS.
+Ensure your reverse proxy (e.g. Nginx) is configured to point to the application on port 3000.
 
-**CRITICAL WARNING:**
-Your server seems to have `nginx-proxy` running on ports 80 and 443.
-**Caddy CANNOT start if ports 80 and 443 are in use.**
-
-You MUST stop the existing nginx proxy before deploying this:
-```bash
-docker stop nginx-proxy
-docker rm nginx-proxy
-```
-(Be careful as this might affect other sites on your server).
-
-### Deploying
-1.  **Start Services**:
-    ```bash
-    docker compose up -d
-    ```
-    
-2.  **Verification**:
-    - Check logs: `docker compose logs -f caddy`
-    - Visit `https://polarisbeauty.biz`
 
 
 
@@ -189,7 +169,6 @@ docker compose logs -f
 # Specific service
 docker compose logs -f app
 docker compose logs -f db
-docker compose logs -f caddy
 ```
 
 ### Check Service Status
