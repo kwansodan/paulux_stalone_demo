@@ -26,6 +26,7 @@ services:
     build:
       context: ./next_polaris
       dockerfile: Dockerfile.prod
+      network: host
       args:
         - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
