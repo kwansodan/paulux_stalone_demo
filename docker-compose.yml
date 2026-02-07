@@ -1,28 +1,4 @@
 services:
-  # Traefik Reverse Proxy
-  traefik:
-    image: traefik:v3.6
-    container_name: polaris_traefik
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "8080:8080" # Dashboard (internal only)
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./traefik.yml:/etc/traefik/traefik.yml:ro
-      - traefik_letsencrypt:/letsencrypt
-      - traefik_logs:/var/log/traefik
-    networks:
-      - polaris_network
-    labels:
-      - "traefik.enable=true"
-      # Dashboard
-      - "traefik.http.routers.dashboard.rule=Host(`traefik.polarisbeauty.biz`)"
-      - "traefik.http.routers.dashboard.service=api@internal"
-      - "traefik.http.routers.dashboard.entrypoints=websecure"
-      - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
-
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
@@ -64,19 +40,17 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      traefik:
-        condition: service_started
     networks:
       - polaris_network
+      - nginx-proxy # Connect to nginx-proxy network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.polaris-app.rule=Host(`polarisbeauty.biz`)"
-      - "traefik.http.routers.polaris-app.entrypoints=websecure"
-      - "traefik.http.routers.polaris-app.tls.certresolver=letsencrypt"
-      - "traefik.http.services.polaris-app.loadbalancer.server.port=3000"
+    environment:
+      VIRTUAL_HOST: polarisbeauty.biz
+      VIRTUAL_PORT: 3000
+      LETSENCRYPT_HOST: polarisbeauty.biz
+      LETSENCRYPT_EMAIL: polarisbeautylounge@gmail.com
 
   # MinIO Object Storage (S3-compatible)
   minio:
@@ -111,11 +85,9 @@ volumes:
     driver: local
   minio_data:
     driver: local
-  traefik_letsencrypt:
-    driver: local
-  traefik_logs:
-    driver: local
 
 networks:
   polaris_network:
     driver: bridge
+  nginx-proxy:
+    external: true
