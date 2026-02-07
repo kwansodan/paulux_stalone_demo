@@ -45,26 +45,6 @@ services:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
 
-  # Caddy Reverse Proxy (Automatic SSL)
-  caddy:
-    build:
-      context: .
-      dockerfile: Dockerfile.caddy
-    container_name: polaris_caddy
-    restart: unless-stopped
-    environment:
-      - GODADDY_API_KEY=${GODADDY_API_KEY}
-      - GODADDY_API_SECRET=${GODADDY_API_SECRET}
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    networks:
-      - polaris_network
-    depends_on:
-      - app
-      - minio
-
   # MinIO Object Storage (S3-compatible)
   minio:
     image: minio/minio:latest
@@ -97,10 +77,6 @@ volumes:
   app_cache:
     driver: local
   minio_data:
-    driver: local
-  caddy_data:
-    driver: local
-  caddy_config:
     driver: local
 
 networks:
