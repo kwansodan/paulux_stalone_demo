@@ -57,5 +57,5 @@ jobs:
           ssh ubuntu@${{ secrets.OVH_HOST }} << 'EOF'
             set -e
             sleep 15
-            curl -f http://localhost:3000
+            curl -f http://polarisbeauty.biz
           EOF
