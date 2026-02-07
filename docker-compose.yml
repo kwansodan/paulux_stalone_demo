@@ -42,7 +42,6 @@ services:
         condition: service_healthy
     networks:
       - polaris_network
-      - nginx-proxy # Connect to nginx-proxy network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
@@ -89,5 +88,3 @@ volumes:
 networks:
   polaris_network:
     driver: bridge
-  nginx-proxy:
-    external: true
