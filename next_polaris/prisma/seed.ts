@@ -149,7 +149,7 @@ async function seed() {
           bookingTime: b.bookingTime,
 
           status: BookingStatus.PENDING,
-          // paymentStatus: PaymentStatus.PENDING,
+          paymentStatus: PaymentStatus.PENDING,
         })
       }).filter(item => item !== null)
     })
