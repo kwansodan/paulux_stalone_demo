@@ -35,25 +35,16 @@ services:
     container_name: polaris_app
     restart: unless-stopped
     env_file: .env
-    expose:
-      - "3000"
+    ports:
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
     networks:
       - polaris_network
-      - fulstack_default
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
-    environment:
-      VIRTUAL_HOST: polarisbeauty.biz
-      VIRTUAL_PORT: 3000
-      LETSENCRYPT_HOST: polarisbeauty.biz
-      LETSENCRYPT_EMAIL: polarisbeautylounge@gmail.com
-      # Tell Next.js the correct public URL
-      HOSTNAME: 0.0.0.0
-      PORT: 3000
 
   # MinIO Object Storage (S3-compatible)
   minio:
@@ -81,6 +72,27 @@ services:
     networks:
       - polaris_network
 
+  caddy:
+    image: caddy:2.8
+    container_name: polaris_caddy
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - polaris_network
+
 volumes:
   postgres_data:
     driver: local
@@ -88,9 +100,11 @@ volumes:
     driver: local
   minio_data:
     driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
 
 networks:
   polaris_network:
     driver: bridge
-  fulstack_default:
-    external: true
