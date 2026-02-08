@@ -60,7 +60,6 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/generated ./generated
 
 # Copy Prisma CLI and dependencies
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
@@ -69,7 +68,7 @@ COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
 COPY --chmod=755 docker-entrypoint.sh ./
 
 # Change ownership of Prisma files to nextjs user
-RUN chown -R nextjs:nodejs ./prisma ./node_modules/.prisma ./node_modules/@prisma ./node_modules/prisma 2>/dev/null || true
+RUN chown -R nextjs:nodejs ./prisma ./generated ./node_modules/@prisma ./node_modules/prisma 2>/dev/null || true
 
 USER nextjs
 
