@@ -5,6 +5,8 @@ import { serviceRepository } from '@/features/service/server/service.repository'
 import { UserRole } from '@generated/prisma/client'
 import React from 'react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ServicesPage() {
   await requireRole([UserRole.ADMIN])
   const services = await serviceRepository.getAllServices({})

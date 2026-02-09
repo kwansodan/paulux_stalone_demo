@@ -1,13 +1,85 @@
 services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: polaris_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+      POSTGRES_DB: polaris
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db:/docker-entrypoint-initdb.d
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - polaris_network
+
+  # Next.js Application
   app:
     build:
       context: ./next_polaris
-      dockerfile: Dockerfile.dev
+      dockerfile: Dockerfile.prod
+      network: host
+      args:
+        - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
+        - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+        - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
+        - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
+    container_name: polaris_app
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - polaris_network
     volumes:
-      - ./next_polaris:/app
-      - /app/node_modules
-      - /app/.next
+      - ./next_polaris/public:/app/public
+      - app_cache:/app/.next/cache
+
+  # MinIO Object Storage (S3-compatible)
+  minio:
+    image: minio/minio:latest
+    container_name: polaris_minio
+    restart: unless-stopped
     environment:
-      - NODE_ENV=development
-    # Command for development (already in Dockerfile.dev but being explicit here if needed)
-    command: npm run dev
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+      # Expose MinIO to nginx-proxy if needed, or keep internal/mapped ports
+      # VIRTUAL_HOST=minio.polarisbeauty.biz
+      # VIRTUAL_PORT=9001
+    command: server /data --console-address ":9001"
+    ports:
+      - "9005:9000" # API
+      - "9001:9001" # Console UI
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - polaris_network
+
+volumes:
+  postgres_data:
+    driver: local
+  app_cache:
+    driver: local
+  minio_data:
+    driver: local
+
+networks:
+  polaris_network:
+    driver: bridge
