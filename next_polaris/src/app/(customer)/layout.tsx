@@ -1,13 +1,16 @@
-// import { requireRole } from '@/app/_auth/require-role';
+import LandingFooter from '@/components/landing/landing-footer'
+import LandingHeader from '@/components/landing/landing-heading'
 import React from 'react'
 
-const Layout = async ({ children }:Readonly<{ children: React.ReactNode }>) => {
+const Layout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   // await requireRole([UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.MANAGER]);
 
   return (
-    <div>
-        {children}
-    </div>
+    <main className="flex flex-col min-h-screen bg-white">
+      <LandingHeader />
+      {children}
+      <LandingFooter />
+    </main>
   )
 }
 

@@ -8,11 +8,15 @@ import { NavItem } from '../types'
 import { navItems } from '../constants'
 import { usePathname } from 'next/navigation'
 import { signInPath } from '@/app/paths'
+import Modal from '@/components/modal'
+import { Button } from '@/components/ui/button'
+import { useSignout } from '@/features/auth/client/hooks/use-sign-out'
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true)
-  // const [activeIndex, setActiveIndex] = useState(0)
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false)
   const pathname = usePathname();
+  const signOutMutation = useSignout()
 
   const { activeIndex } = getActivePath(pathname, navItems.map((item) => item.href), [signInPath()])
 
@@ -59,7 +63,7 @@ const Sidebar = () => {
             isOpen={isOpen}
             isActive={activeIndex === index}
             navItem={navItem}
-            // onClick={() => setActiveIndex(index)}
+          // onClick={() => setActiveIndex(index)}
           />
         ))}
       </div>
@@ -71,11 +75,30 @@ const Sidebar = () => {
             "flex items-center gap-3 w-full px-3 py-2 rounded-lg hover:text-red-500 hover:bg-gray-100 transition-colors",
             !isOpen && "justify-center"
           )}
+          onClick={() => setIsSignOutModalOpen(true)}
         >
           <LogOut className="w-5 h-5" />
           {isOpen && <span className="text-sm">Sign out</span>}
         </button>
       </div>
+
+      <Modal
+        open={isSignOutModalOpen}
+        onClose={() => setIsSignOutModalOpen(false)}
+        title="Sign Out?"
+        subtitle="Are you sure you want to logout? You will be taken back to the login screen and you can log back in later"
+        childrenClassName="max-h-[224px] w-[500px]"
+        showSeparator={false}
+      >
+        <div className="flex justify-end gap-3 pt-4">
+          <Button className="bg-[#D10505] hover:bg-[#D10505]/90" type="button" onClick={() => setIsSignOutModalOpen(false)}>
+            Close
+          </Button>
+          <Button variant="outline" onClick={() => signOutMutation.mutateAsync()} disabled={signOutMutation.isPending} >
+            {signOutMutation.isPending ? "Signing Out..." : "Cancel"}
+          </Button>
+        </div>
+      </Modal>
     </nav>
   )
 }

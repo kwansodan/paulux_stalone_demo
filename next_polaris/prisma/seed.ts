@@ -24,18 +24,21 @@ const services = [
     name: "Deep Tissue Massage",
     description: "Intense massage targeting deep muscle layers",
     durationMinutes: 60,
+    minDepositPercent: 30,
     price: 80,
   },
   {
     name: "Hair Styling",
     description: "Professional wash, blow-dry and styling",
     durationMinutes: 45,
+    minDepositPercent: 20,
     price: 40,
   },
   {
     name: "Classic Manicure",
     description: "Nail shaping, cuticle care and polish",
     durationMinutes: 30,
+    minDepositPercent: 100,
     price: 25,
   },
 ]

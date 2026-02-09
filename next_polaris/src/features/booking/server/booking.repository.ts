@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { Booking, BookingStatus, PaymentStatus, Prisma } from "@generated/prisma/client";
 import { Booking as BookingPayload } from "../utils/validation";
 import { generateBookingReference } from "@/utils/helpers";
-import { BookingQueryOptions, BookingQueryResult } from "../types";
+import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
 
 export class BookingRepository {
 
@@ -90,13 +90,22 @@ export class BookingRepository {
   }
 
 
-  async findById(id: string) {
-    return prisma.booking.findUnique({
+  async findById(id: string){
+    const result = await  prisma.booking.findUnique({
       where: { id },
       include: {
         service: true,
+        payments: true,
       },
     })
+
+    return {
+      ...result,
+      service: {
+        ...result?.service,
+        price: result?.service.price.toString() ?? "0"
+      }
+    }
   }
 
   async findByReference(reference: string) {

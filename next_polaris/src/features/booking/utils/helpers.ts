@@ -13,14 +13,21 @@ export function isPastSlot(date: Date, time: string) {
 
 
 
-export function formatDate(date: string | Date) {
-  const options: Intl.DateTimeFormatOptions = {
+export function formatDate(
+  date: string | Date,
+  options?: Intl.DateTimeFormatOptions
+) {
+  const defaultOptions: Intl.DateTimeFormatOptions = {
     weekday: 'long',
     month: 'long',
     day: 'numeric'
   };
-  return new Date(date).toLocaleDateString('en-US', options);
+
+  const finalOptions = options ? { ...defaultOptions, ...options } : defaultOptions;
+  
+  return new Date(date).toLocaleDateString('en-US', finalOptions);
 }
+
 
 
 export function formatTime(time24: string) {

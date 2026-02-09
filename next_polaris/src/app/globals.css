@@ -3,6 +3,19 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@font-face {
+  font-family: 'Seasons';
+  src: url('/fonts/seasons/FSP DEMO - The Seasons Light Regular.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@theme {
+  --font-family-sans: var(--font-gellix), ui-sans-serif, system-ui;
+  --font-family-seasons: 'Seasons', ui-serif, Georgia;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -121,6 +134,16 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
   }
 }
 

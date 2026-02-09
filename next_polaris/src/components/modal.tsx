@@ -38,7 +38,7 @@ export default function Modal({
 }: ModalProps) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className={cn("bg-gray-100 min-h-2xl min-w-xl p-6", className)}>
+      <DialogContent className={cn("bg-gray-100 min-h-2xl md:min-w-xl p-6", className)}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           {subtitle && <DialogDescription>{subtitle}</DialogDescription>}
