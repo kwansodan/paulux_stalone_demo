@@ -35,6 +35,7 @@
     "embla-carousel-react": "^8.6.0",
     "fastest-levenshtein": "^1.0.16",
     "html2canvas": "^1.4.1",
+    "googleapis": "^171.2.0",
     "lodash": "^4.17.23",
     "lucide-react": "^0.563.0",
     "next": "16.1.4",

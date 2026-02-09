@@ -1,0 +1,4 @@
+polarisbeauty.biz {
+    reverse_proxy polaris_app:3000
+    tls polarisbeautylounge@gmail.com
+}

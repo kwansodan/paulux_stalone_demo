@@ -42,6 +42,10 @@ docker-compose.override.yml
 # Nginx logs
 nginx/logs/
 
+# Traefik
+traefik/logs/
+acme.json
+
 # Database backups
 *.sql
 backup_*.sql
