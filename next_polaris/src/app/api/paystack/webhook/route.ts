@@ -44,8 +44,8 @@ export async function POST(req: NextRequest) {
                     where: { bookingReference: reference },
                     data: {
                         status: 'CONFIRMED',
-                        paymentStatus: 'PAID',
-                        paymentRef: reference,
+                        // paymentStatus: 'PAID',
+                        // paymentRef: reference,
                     },
                     include: {
                         service: true, // Required for calendar event details

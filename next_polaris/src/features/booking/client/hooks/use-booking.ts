@@ -32,6 +32,16 @@ export function useAvailableSlots(date?: string, serviceId?: string) {
 }
 
 
+export function useGetBookingsById(id: string) {
+  return useQuery({
+    queryKey: ["booking", id],
+    queryFn: async () => {
+      const res = await api.get(`/bookings/${id}`)
+      return res.data
+    }
+  })
+}
+
 export function useGetBookingsByDate(dateStr: string) {
   return useQuery({
     queryKey: ["bookings", dateStr],
@@ -102,6 +112,7 @@ export function useCreateBooking() {
 
       // console.log('Successfully created Booking', data)
       toast.success("Booking created successfully!")
+      return data.data
     },
     onError: (error) => {
       console.error("Failed to create booking", error)
@@ -139,6 +150,33 @@ export function useMarkAsCompleted() {
 
   return useMutation({
     mutationFn: (id: string) => updateBookingStatus(id, { status: BookingStatus.COMPLETED }),
+    onMutate: () => {
+      toast.loading("Updating booking status...", { id: "booking-status" })
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["slots", data.data.bookingDate, data.data.serviceId],
+      })
+
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", data.data.bookingDate],
+      })
+
+      // console.log('Successfully created Booking', data)
+      toast.success("Booking status updated successfully", { id: "booking-status" })
+    },
+    onError: (error) => {
+      console.error("Failed to update booking status", error)
+      toast.error("Failed to update booking status", { id: "booking-status" })
+    },
+  })
+}
+
+export function useCancelBooking() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => updateBookingStatus(id, { status: BookingStatus.CANCELLED }),
     onMutate: () => {
       toast.loading("Updating booking status...", { id: "booking-status" })
     },

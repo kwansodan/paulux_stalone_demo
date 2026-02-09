@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import ReactQueryProvider from "@/lib/react-query";
 import { Toaster } from "sonner";
+import { gellix } from "./fonts";
 
 // const geistSans = Geist({
 //   variable: "--font-geist-sans",
@@ -27,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`antialiased`}
+        className={`${gellix.variable}  ${gellix.className} antialiased`}
       >
         <ReactQueryProvider>
           {children}

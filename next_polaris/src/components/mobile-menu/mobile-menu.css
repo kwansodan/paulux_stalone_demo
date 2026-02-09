@@ -1,0 +1,32 @@
+/* mobile-menu.css */
+
+.mobile-menu {
+  --origin-x: calc(100% - 32px);
+  --origin-y: 32px;
+}
+
+.mobile-menu[data-state="open"] {
+  animation: menu-open 0.45s ease-out forwards;
+}
+
+.mobile-menu[data-state="closed"] {
+  animation: menu-close 0.35s ease-in forwards;
+}
+
+@keyframes menu-open {
+  from {
+    clip-path: circle(0% at var(--origin-x) var(--origin-y));
+  }
+  to {
+    clip-path: circle(150% at var(--origin-x) var(--origin-y));
+  }
+}
+
+@keyframes menu-close {
+  from {
+    clip-path: circle(150% at var(--origin-x) var(--origin-y));
+  }
+  to {
+    clip-path: circle(0% at var(--origin-x) var(--origin-y));
+  }
+}
