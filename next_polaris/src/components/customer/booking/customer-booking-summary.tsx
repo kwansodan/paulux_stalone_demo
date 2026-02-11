@@ -94,7 +94,14 @@ export default function BookingSummary({ booking }: Props) {
     if (payment.status === "PAID") {
       return payment.amount === booking.service?.price ? "Paid in full" : "Deposit paid"
     }
+    if (payment.status === "REFUNDED") {
+      return "Refunded"
+    }
     return payment.status
+  }
+
+  const hasRefundablePayment = () => {
+    return booking.payments?.some((p: any) => p.status === "PAID" && p.provider === "PAYSTACK")
   }
 
   return (
@@ -250,16 +257,28 @@ export default function BookingSummary({ booking }: Props) {
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Booking?"
-        subtitle="Are you sure you want to cancel this booking?"
+        subtitle={hasRefundablePayment()
+          ? "Your payment will be refunded. This may take up to 10 business days."
+          : "Are you sure you want to cancel this booking?"
+        }
         childrenClassName="max-h-[224px] "
         showSeparator={false}
       >
+        {hasRefundablePayment() && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>Refund Information:</strong><br />
+              A full refund will be automatically initiated to your original payment method.
+              Please allow up to 10 business days for the refund to appear in your account.
+            </p>
+          </div>
+        )}
         <div className="flex justify-end gap-3 pt-4">
           <Button className="bg-[#D10505] hover:bg-[#D10505]/90" type="button" onClick={() => setIsCancelModalOpen(false)}>
             Close
           </Button>
           <Button variant="outline" onClick={() => handleCancelSubmit()} disabled={isPending} >
-            {isPending ? "Cancelling..." : "Cancel"}
+            {isPending ? "Cancelling..." : "Cancel Booking"}
           </Button>
         </div>
       </Modal>
