@@ -67,8 +67,8 @@ COPY --from=builder /app/src ./src
 # Install Prisma CLI for migrations (includes all WASM dependencies)
 RUN npm install prisma@7.3.0 --save-dev --no-save
 
-# Install tsx for running seed script
-RUN npm install tsx --save-dev --no-save
+# Install tsx globally for running seed script
+RUN npm install -g tsx
 
 # Copy entrypoint script
 COPY --chmod=755 docker-entrypoint.sh ./
