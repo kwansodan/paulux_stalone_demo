@@ -52,15 +52,7 @@ jobs:
             docker compose ps
           EOF
 
-      - name: Seed Database
-        run: |
-          ssh ubuntu@${{ secrets.OVH_HOST }} << 'EOF'
-            set -e
-            cd ~/polaris
-            # Run the seed script inside the app container
-            # Using -T to disable pseudo-TTY allocation which is often issue in non-interactive shells
-            docker compose exec -T app npm run prisma-seed
-          EOF
+
 
       - name: Health Check
         run: |
