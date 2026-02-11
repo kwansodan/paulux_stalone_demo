@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { Upload, User, Hash, Mail, Phone, Clock, FileText } from "lucide-react"
 import { useRouter } from "next/navigation"
 import html2canvas from "html2canvas"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
 import { useCancelBooking } from "@/features/booking/client/hooks/use-booking"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
@@ -19,6 +19,40 @@ export default function BookingSummary({ booking }: Props) {
   const summaryRef = useRef<HTMLDivElement>(null)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const { mutate: cancelBooking, isPending } = useCancelBooking()
+  // New state for verification
+  const [isVerifying, setIsVerifying] = useState(false);
+  const searchParams = new URLSearchParams(window.location.search);
+  const reference = searchParams.get('reference');
+
+  // Verify payment on mount if reference exists and status is pending
+  useEffect(() => {
+    if (reference && booking.paymentStatus === 'PENDING' && !isVerifying) {
+      const verifyPayment = async () => {
+        setIsVerifying(true);
+        try {
+          // Call our verification endpoint
+          // We use fetch directly here for simplicity, or could use a custom hook
+          const response = await fetch(`/api/paystack/verify/${reference}`);
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            toast.success("Payment verified successfully!");
+            // Refresh the page to show updated status
+            router.refresh();
+          } else {
+            // Only show error if it's a genuine failure, not just "still pending"
+            // But verify endpoint usually returns success=false if not paid
+            console.warn("Verification returned unsuccessful", data);
+          }
+        } catch (error) {
+          console.error("Verification failed", error);
+        } finally {
+          setIsVerifying(false);
+        }
+      };
+      verifyPayment();
+    }
+  }, [reference, booking.paymentStatus, router, isVerifying]);
 
   const handleShare = async () => {
     if (!summaryRef.current) return

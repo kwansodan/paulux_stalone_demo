@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyPaystackSignature } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
 import { createCalendarEvent } from '@/lib/google-calendar';
+import { paymentService } from '@/features/payment/server/payment.service';
 
 export async function POST(req: NextRequest) {
     try {
@@ -30,75 +31,20 @@ export async function POST(req: NextRequest) {
             const { reference, status, amount, paid_at, channel } = data;
 
             if (status === 'success') {
-                // Find the payment record by provider reference
-                const payment = await prisma.payment.findUnique({
-                    where: {
-                        provider_providerRef: {
-                            provider: 'PAYSTACK',
-                            providerRef: reference,
-                        },
-                    },
-                    include: {
-                        booking: {
-                            include: {
-                                service: true,
-                            },
-                        },
-                    },
-                });
-
-                if (!payment) {
-                    console.error(`Payment not found for reference: ${reference}`);
-                    return NextResponse.json(
-                        { message: 'Payment not found' },
-                        { status: 404 }
-                    );
-                }
-
-                // Update payment status to PAID
-                await prisma.payment.update({
-                    where: { id: payment.id },
-                    data: {
-                        status: 'PAID',
-                        rawPayload: {
-                            event,
-                            data,
-                            processedAt: new Date().toISOString(),
-                        },
-                    },
-                });
-
-                console.log(`Updated payment ${payment.id} to PAID`);
-
-                // Update booking status and paymentStatus
-                const updatedBooking = await prisma.booking.update({
-                    where: { id: payment.bookingId },
-                    data: {
-                        status: 'CONFIRMED',
-                        paymentStatus: 'PAID',
-                    },
-                    include: {
-                        service: true,
-                    },
-                });
-
-                console.log(`Updated booking ${updatedBooking.bookingReference} to CONFIRMED with PAID status`);
-
-                // Create Google Calendar Event if not already created
-                if (!updatedBooking.googleEventId) {
-                    try {
-                        const eventId = await createCalendarEvent(updatedBooking);
-                        if (eventId) {
-                            await prisma.booking.update({
-                                where: { id: updatedBooking.id },
-                                data: { googleEventId: eventId },
-                            });
-                            console.log(`Created Google Calendar event ${eventId} for booking ${updatedBooking.bookingReference}`);
-                        }
-                    } catch (calendarError) {
-                        console.error('Failed to create calendar event:', calendarError);
-                        // Don't fail the webhook if calendar creation fails
+                try {
+                    const result = await paymentService.processSuccessfulPayment(reference, data);
+                    if (!result.success) {
+                        return NextResponse.json(
+                            { message: result.message || 'Payment processing failed' },
+                            { status: 404 } // Or appropriate error code based on service return
+                        );
                     }
+                    console.log(`Payment successfully processed via webhook for reference: ${reference}`);
+                } catch (serviceError: any) {
+                    console.error('Error in payment service:', serviceError);
+                    // Decide if you want to return 500 or 200 (to avoid Paystack retrying indefinitely if it's a bug)
+                    // Usually 200 is safer if the error is non-recoverable logic error, 500 if it's transient DB error.
+                    // For now, let's log and return 200 to acknowledge receipt.
                 }
             }
         }

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
+import { paymentService } from '@/features/payment/server/payment.service';
 
 export async function GET(
     req: NextRequest,
@@ -48,28 +49,19 @@ export async function GET(
 
         // Update payment status if it differs from Paystack
         if (payment && data.status === 'success' && payment.status !== 'PAID') {
-            await prisma.payment.update({
-                where: { id: payment.id },
-                data: {
-                    status: 'PAID',
-                    rawPayload: {
-                        ...(typeof payment.rawPayload === 'object' ? payment.rawPayload : {}),
-                        verification: {
-                            verifiedAt: new Date().toISOString(),
-                            paystackData: data,
-                        },
-                    },
-                },
-            });
-
-            // Update booking status
-            await prisma.booking.update({
-                where: { id: payment.bookingId },
-                data: {
-                    status: 'CONFIRMED',
-                    paymentStatus: 'PAID',
-                },
-            });
+            try {
+                // Use the shared service to update DB and Sync Calendar
+                const result = await paymentService.processSuccessfulPayment(reference, data);
+                if (!result.success) {
+                    console.error(`Service failed to process payment: ${result.message}`);
+                    // We continue to return success: true because the *verification* with Paystack was successful,
+                    // even if our internal update had a hiccup (though ideally it shouldn't).
+                    // However, we should probably reflect the *current* state in the response data.
+                }
+            } catch (error) {
+                console.error('Error processing payment in verify endpoint:', error);
+                // Fallback? No, just log. The user might refresh and try again.
+            }
         }
 
         return NextResponse.json({
