@@ -14,7 +14,7 @@ const admins = [
   },
   {
     username: "Text Admin 01",
-    email: "testadmin01@gmail.com",
+    email: "jojoyawson573@gmail.com",
     password: "SecureAdmin456!",
     role: UserRole.ADMIN,
   },
