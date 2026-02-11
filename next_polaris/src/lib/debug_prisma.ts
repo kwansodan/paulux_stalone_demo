@@ -4,6 +4,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 import { prisma } from '@/lib/prisma';
 import { generateBookingReference } from '@/utils/helpers';
 import { BookingStatus, PaymentStatus } from '@generated/prisma/client';
+import { createCalendarEvent } from '@/lib/google-calendar';
 
 async function debugPrisma() {
     console.log('--- Debugging Prisma Adapter ---');
@@ -35,7 +36,7 @@ async function debugPrisma() {
         console.log('Booking created:', booking.id);
 
         // Load env vars MUST be before import for this test too, though we did it at top
-        import { createCalendarEvent } from '@/lib/google-calendar';
+        // import { createCalendarEvent } from '@/lib/google-calendar';
 
         console.log('3. Calling createCalendarEvent...');
         // Mock booking object for calendar
