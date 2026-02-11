@@ -4,11 +4,11 @@ import { initializeTransaction } from '@/lib/paystack';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, amount, bookingReference } = body;
+        const { email, amount, bookingReference, bookingId } = body;
 
-        if (!email || !amount || !bookingReference) {
+        if (!email || !amount || !bookingReference || !bookingId) {
             return NextResponse.json(
-                { message: 'Missing required fields: email, amount, bookingReference' },
+                { message: 'Missing required fields: email, amount, bookingReference, bookingId' },
                 { status: 400 }
             );
         }
@@ -19,10 +19,9 @@ export async function POST(req: NextRequest) {
         // Amount is expected in Pesewas (GHS subunit) by Paystack
         const amountPesewas = Math.round(Number(amount) * 100);
 
-        // Construct callback URL (optional, can be omitted if relying on webhook)
-        // Using origin from request if available, or env var
+        // Construct callback URL using bookingId for better UX
         const origin = req.nextUrl.origin;
-        const callbackUrl = `${origin}/booking/confirmation?reference=${reference}`;
+        const callbackUrl = `${origin}/customer/booking/summary/${bookingId}?reference=${reference}`;
 
         const paystackResponse = await initializeTransaction(
             email,
@@ -42,3 +41,4 @@ export async function POST(req: NextRequest) {
         );
     }
 }
+

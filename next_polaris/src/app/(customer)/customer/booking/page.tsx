@@ -8,7 +8,7 @@ export default async function CustomerBookingPage() {
 
   return (
     <div className="p-6">
-      <CustomerBookingForm services={services}/>
+      <CustomerBookingForm services={services} />
     </div>
   )
 }

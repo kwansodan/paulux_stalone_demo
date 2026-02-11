@@ -30,13 +30,15 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
 
   const handleProceedToPayment = async () => {
     try {
+      const amount = paymentOption === "deposit" ? depositAmount : price
 
       console.log("Proceeding to payment with:", {
         ...formData,
         paymentOption,
-        amount: paymentOption === "deposit" ? depositAmount : price,
+        amount,
       })
 
+      // Step 1: Create the booking
       const payload: BookingInput = {
         serviceId: formData.serviceId!,
         bookingTime: formData.time!,
@@ -46,20 +48,54 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         clientPhone: formData.phone,
       }
 
-      const result = await createBookingMutation.mutateAsync(payload)
+      const booking = await createBookingMutation.mutateAsync(payload)
+      console.log("Booking created:", booking.id)
 
-      // console.log("Booking created", result)
+      // Step 2: Initialize Paystack payment
+      const paystackResponse = await fetch('/api/paystack/initialize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: formData.email,
+          amount: amount,
+          bookingReference: booking.bookingReference,
+          bookingId: booking.id,
+        }),
+      })
 
-      // make req to paystack to initiate payment 
-      // then on success, create payment record with pending status and redirect to payment confirmation page
-      // push new page with booking id and payment reference as query params i.e booking summary page
+      if (!paystackResponse.ok) {
+        const errorData = await paystackResponse.json()
+        throw new Error(errorData.message || 'Failed to initialize payment')
+      }
 
-      // redirect to booking summary page for now
-      router.push(customerBookingSummaryPath(result.id))
+      const paystackData = await paystackResponse.json()
+      console.log("Paystack initialized:", paystackData.data.reference)
 
+      // Step 3: Create payment record with PENDING status
+      const paymentResponse = await fetch('/api/payments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bookingId: booking.id,
+          provider: 'PAYSTACK',
+          providerRef: paystackData.data.reference,
+          amount: amount,
+          currency: 'GHS',
+          status: 'PENDING',
+        }),
+      })
+
+      if (!paymentResponse.ok) {
+        const errorData = await paymentResponse.json()
+        throw new Error(errorData.message || 'Failed to create payment record')
+      }
+
+      console.log("Payment record created")
+
+      // Step 4: Redirect to Paystack payment page
+      window.location.href = paystackData.data.authorization_url
 
     } catch (error) {
-
       console.error("Error proceeding to payment:", error)
     }
   }

@@ -60,14 +60,21 @@ COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/generated ./generated
 COPY --from=builder /app/package.json ./package.json
 
+# Copy source files and config for seeding
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/src ./src
+
 # Install Prisma CLI for migrations (includes all WASM dependencies)
 RUN npm install prisma@7.3.0 --save-dev --no-save
+
+# Install tsx for running seed script
+RUN npm install tsx --save-dev --no-save
 
 # Copy entrypoint script
 COPY --chmod=755 docker-entrypoint.sh ./
 
-# Change ownership of Prisma files to nextjs user
-RUN chown -R nextjs:nodejs ./prisma ./generated ./node_modules 2>/dev/null || true
+# Change ownership of Prisma files and others to nextjs user
+RUN chown -R nextjs:nodejs ./prisma ./generated ./src ./tsconfig.json ./node_modules 2>/dev/null || true
 
 USER nextjs
 
