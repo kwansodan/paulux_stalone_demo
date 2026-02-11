@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import { prisma } from "@/lib/prisma";
 import { generateBookingReference, hashPassword } from "@/utils/helpers";
 import { BookingStatus, PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/enums";
@@ -88,16 +89,30 @@ async function seed() {
   try {
 
     // delete all existing resources
+    console.log("Deleting sessions...");
     await prisma.session.deleteMany()
+    console.log("Deleting users...");
     await prisma.user.deleteMany()
+    console.log("Deleting payments...");
     await prisma.payment.deleteMany()
-    await prisma.booking.deleteMany() //delete booking before services
+    console.log("Deleting bookings...");
+    // Workaround for deleteMany hanging: delete individually
+    const existingBookings = await prisma.booking.findMany({ select: { id: true } });
+    console.log(`Found ${existingBookings.length} bookings to delete.`);
+    for (const b of existingBookings) {
+      await prisma.booking.delete({ where: { id: b.id } });
+    }
+    // await prisma.booking.deleteMany() //delete booking before services
+    console.log("Deleting services...");
     await prisma.service.deleteMany()
+    console.log("Deleting business hours...");
     await prisma.businessHour.deleteMany()
+    console.log("Deleting blocked dates...");
     await prisma.blockedDate.deleteMany()
 
 
     // create admin users
+    console.log("Creating admins...");
     const adminsWithHashedPassword = await Promise.all(admins.map(async (admin) => {
       const hashedPassword = await hashPassword(admin.password);
       return ({
@@ -112,16 +127,17 @@ async function seed() {
     })
 
     // create services 
-    const dbServices = await prisma.service.createManyAndReturn({
-      data: services
-    })
+    console.log("Creating services...");
+    const dbServices = await Promise.all(services.map(s => prisma.service.create({ data: s })));
 
     // create business hours
+    console.log("Creating business hours...");
     await prisma.businessHour.createMany({
       data: businessHours
     })
 
     // create one blocked date
+    console.log("Creating blocked dates...");
     await prisma.blockedDate.create({
       data: {
         date: new Date("2026-02-10"), // some holiday
@@ -130,17 +146,18 @@ async function seed() {
     })
 
     // create bookings for each service
-    const dbBookings = await prisma.booking.createManyAndReturn({
-      data: bookings.map((b) => {
-        const serviceBooked = dbServices.find((service) => service.name === b.serviceName);
+    console.log("Creating bookings...");
+    const dbBookings = (await Promise.all(bookings.map(async (b) => {
+      const serviceBooked = dbServices.find((service) => service.name === b.serviceName);
 
-        // create bookings for services that exist
-        if (!serviceBooked) {
-          console.log(`Invalid Service booking for ${b.bookingReference}`)
-          return null
-        }
+      // create bookings for services that exist
+      if (!serviceBooked) {
+        console.log(`Invalid Service booking for ${b.bookingReference}`)
+        return null
+      }
 
-        return ({
+      return prisma.booking.create({
+        data: {
           bookingReference: b.bookingReference,
           clientName: b.clientName,
           clientEmail: b.clientEmail,
@@ -153,11 +170,12 @@ async function seed() {
 
           status: BookingStatus.PENDING,
           paymentStatus: PaymentStatus.PENDING,
-        })
-      }).filter(item => item !== null)
-    })
+        }
+      })
+    }))).filter((item): item is NonNullable<typeof item> => item !== null)
 
     // create payments for each booking
+    console.log("Creating payments...");
     await prisma.payment.createMany({
       data: dbBookings.map((b, i) => ({
         bookingId: b.id,

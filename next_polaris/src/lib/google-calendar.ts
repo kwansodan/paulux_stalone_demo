@@ -4,8 +4,9 @@ import { JWT } from 'google-auth-library';
 // Environment variables
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
-const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL;
-const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
+const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_SERVICES_ACCOUNT_EMAIL;
+const CALENDAR_ID = 'primary'; // Use service account's primary calendar
+// const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 
 // Initialize JWT client
 const auth = new JWT({

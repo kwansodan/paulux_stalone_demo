@@ -1,14 +1,16 @@
 import dotenv from 'dotenv';
 import path from 'path';
-import { createCalendarEvent } from './google-calendar';
 
-// Load env vars
+// Load env vars - MUST be done before importing files that use env vars at top level
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 async function testCalendar() {
     console.log('--- Testing Google Calendar Integration ---');
 
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
+    // Dynamically import to ensure env vars are loaded first
+    const { createCalendarEvent } = await import('./google-calendar');
+
+    if (!process.env.GOOGLE_SERVICES_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY) {
         console.error('Error: Google credentials not found in env.');
         return;
     }
