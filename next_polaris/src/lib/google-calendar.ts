@@ -5,7 +5,11 @@ import { JWT } from 'google-auth-library';
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
 
 // Handle private key with robust newline replacement
-const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+// Handle private key with robust newline replacement and quote stripping
+const privateKeyRaw = process.env.GOOGLE_PRIVATE_KEY;
+const privateKey = privateKeyRaw?.startsWith('"') && privateKeyRaw?.endsWith('"')
+    ? privateKeyRaw.slice(1, -1)
+    : privateKeyRaw;
 const GOOGLE_PRIVATE_KEY = privateKey ? privateKey.replace(/\\n/g, '\n') : undefined;
 
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_SERVICES_ACCOUNT_EMAIL;
