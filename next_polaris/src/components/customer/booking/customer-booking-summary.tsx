@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Upload, User, Hash, Mail, Phone, Clock, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
@@ -21,7 +21,7 @@ export default function BookingSummary({ booking }: Props) {
   const { mutate: cancelBooking, isPending } = useCancelBooking()
   // New state for verification
   const [isVerifying, setIsVerifying] = useState(false);
-  const searchParams = new URLSearchParams(window.location.search);
+  const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
 
   // Verify payment on mount if reference exists and status is pending
