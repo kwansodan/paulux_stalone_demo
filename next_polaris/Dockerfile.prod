@@ -19,6 +19,9 @@ RUN npm ci
 FROM base AS prod-deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
+# Copy prisma directory for postinstall script
+COPY prisma ./prisma/
+
 # Install only production dependencies
 RUN npm ci --omit=dev
 
@@ -60,6 +63,9 @@ RUN adduser --system --uid 1001 nextjs
 COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Create cache directory and set permissions
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next/cache
 
 # Overwrite/Augment node_modules with full production dependencies to ensure seed scripts work
 COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
