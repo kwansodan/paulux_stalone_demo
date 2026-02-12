@@ -3,10 +3,13 @@ import { JWT } from 'google-auth-library';
 
 // Environment variables
 const SCOPES = ['https://www.googleapis.com/auth/calendar'];
-const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n');
+
+// Handle private key with robust newline replacement
+const privateKey = process.env.GOOGLE_PRIVATE_KEY;
+const GOOGLE_PRIVATE_KEY = privateKey ? privateKey.replace(/\\n/g, '\n') : undefined;
+
 const GOOGLE_CLIENT_EMAIL = process.env.GOOGLE_SERVICES_ACCOUNT_EMAIL;
-const CALENDAR_ID = 'primary'; // Use service account's primary calendar
-// const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
+const CALENDAR_ID = process.env.GOOGLE_CALENDAR_ID || 'primary';
 
 // Initialize JWT client
 const auth = new JWT({
@@ -23,8 +26,20 @@ const calendar = google.calendar({ version: 'v3', auth });
 export async function createCalendarEvent(booking: any) {
     if (!GOOGLE_PRIVATE_KEY || !GOOGLE_CLIENT_EMAIL) {
         console.warn('Google Calendar credentials not found. Skipping event creation.');
+        if (!GOOGLE_PRIVATE_KEY) console.warn('Missing GOOGLE_PRIVATE_KEY');
+        if (!GOOGLE_CLIENT_EMAIL) console.warn('Missing GOOGLE_SERVICES_ACCOUNT_EMAIL');
         return null;
     }
+
+    // Debug key format (safe logging)
+    console.log('Google Key Debug:', {
+        email: GOOGLE_CLIENT_EMAIL,
+        keyLength: GOOGLE_PRIVATE_KEY?.length,
+        hasHeader: GOOGLE_PRIVATE_KEY?.includes('BEGIN PRIVATE KEY'),
+        hasFooter: GOOGLE_PRIVATE_KEY?.includes('END PRIVATE KEY'),
+        firstChars: GOOGLE_PRIVATE_KEY?.substring(0, 10),
+        lastChars: GOOGLE_PRIVATE_KEY?.substring(GOOGLE_PRIVATE_KEY.length - 10)
+    });
 
     // Format date-time for Google API (RFC3339)
     // Assuming booking has date (YYYY-MM-DD) and time (HH:MM or HH:MM:SS)
