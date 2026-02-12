@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
         const amountPesewas = Math.round(Number(amount) * 100);
 
         // Construct callback URL using bookingId for better UX
-        const origin = req.nextUrl.origin;
+        const origin = process.env.BASE_URL || req.nextUrl.origin;
         const callbackUrl = `${origin}/customer/booking/summary/${bookingId}?reference=${reference}`;
 
         const paystackResponse = await initializeTransaction(
