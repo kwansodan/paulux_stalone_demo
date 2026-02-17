@@ -89,6 +89,7 @@ async function seed() {
 
     // delete all existing resources
     await prisma.session.deleteMany()
+    await prisma.passwordResetToken.deleteMany()
     await prisma.user.deleteMany()
     await prisma.payment.deleteMany()
     await prisma.booking.deleteMany() //delete booking before services

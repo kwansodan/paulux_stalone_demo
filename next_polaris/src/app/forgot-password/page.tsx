@@ -1,11 +1,12 @@
-import React from 'react'
+import { PasswordForgotForm } from '@/features/auth/components/forgot-password-form'
 
-const page = () => {
+export default function ForgotPasswordPage() {
+
   return (
-    <div>
-      Forgot Password
+    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+
+      {<PasswordForgotForm />}
+
     </div>
   )
 }
-
-export default page

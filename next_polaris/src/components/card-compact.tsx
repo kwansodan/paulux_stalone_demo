@@ -12,14 +12,15 @@ import { Separator } from './ui/separator';
 
 interface CardCompactProps {
   title: string;
-  description: string;
+  description?: string;
   content: React.ReactNode;
   className?: string;
   footer?: React.ReactNode;
   headerIcon?: React.ReactNode;
+  showSeparator?: boolean
 }
 
-const CardCompact = ({ title, description, content, footer, className, headerIcon }: CardCompactProps) => {
+const CardCompact = ({ title, description, content, footer, className, headerIcon, showSeparator=true }: CardCompactProps) => {
   return (
     <Card className={className}>
       <CardHeader className="text-center space-y-4">
@@ -31,12 +32,12 @@ const CardCompact = ({ title, description, content, footer, className, headerIco
           </div>
         )}
         <div className="flex flex-col">
-          <CardTitle className="text-3xl font-medium text-gray-900">{title}</CardTitle>
-          <CardDescription className="text-base text-gray-600">{description}</CardDescription>
+          {title && <CardTitle className="text-3xl font-medium text-gray-900">{title}</CardTitle>}
+          {description && <CardDescription className="text-base text-gray-600">{description}</CardDescription>}
         </div>
       </CardHeader>
       <CardContent className="px-8">
-        <Separator className="w-full mt-2 mb-4" />
+        {showSeparator && <Separator className="w-full mt-2 mb-4" />}
         {content}
       </CardContent>
       {footer && (

@@ -170,6 +170,12 @@ export default function CreateBookingForm({
             )}
           />
 
+          {form.getValues('serviceId').trim() && (
+            <div className="bg-fuchsia-50 border border-fuchsia-600">
+              <p>Minimum deposit required: </p><span>GHS {services.find((service) => service.id === serviceId)?.minDepositPercent * Number(service.pr)}</span>
+            </div>
+          )}
+
           {/* Booking Date */}
           <FormField
             control={form.control}
@@ -193,6 +199,7 @@ export default function CreateBookingForm({
               </div>
             )}
           />
+
 
           {/* Booking Time Slots */}
           <FormField
