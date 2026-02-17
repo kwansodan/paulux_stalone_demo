@@ -26,6 +26,23 @@ export async function POST(req: NextRequest) {
 
         console.log(`Received Paystack event: ${event}`);
 
+        // Try to find an invoice and log the receipt
+        const reference = data.reference;
+        const invoice = await prisma.invoice.findUnique({
+            where: { invoiceNumber: reference },
+            include: { booking: true }
+        });
+
+        if (invoice) {
+            const { auditLogService } = await import('@/features/payment/server/audit-log.service');
+            await auditLogService.logAction({
+                action: "WEBHOOK_RECEIVED",
+                invoiceId: invoice.id,
+                bookingId: invoice.bookingId,
+                metadata: { provider: 'PAYSTACK', event, body }
+            });
+        }
+
         // Handle successful payment
         if (event === 'charge.success') {
             const { reference, status, amount, paid_at, channel } = data;
