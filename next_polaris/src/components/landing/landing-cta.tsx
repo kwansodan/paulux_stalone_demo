@@ -1,5 +1,6 @@
 import { customerBookingPath } from "@/app/paths"
 import Link from "next/link"
+import { Button } from "../ui/button"
 
 export default function LandingCTA() {
   return (
@@ -15,9 +16,11 @@ export default function LandingCTA() {
           Book your appointment today and experience the ultimate in beauty and relaxation.
         </p>
 
-        <Link href={customerBookingPath()} className=" h-10 mt-6 rounded-full py-2.5 px-4 bg-white text-fuchsia-600 hover:bg-gray-100">
-          Book your experience
-        </Link>
+        <Button asChild className=" h-10 mt-6 rounded-full py-2.5 px-4 bg-white text-fuchsia-600 hover:bg-gray-100">
+          <Link href={customerBookingPath()} >
+            Book your experience
+          </Link>
+        </Button>
       </div>
     </section>
   )

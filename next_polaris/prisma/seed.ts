@@ -91,6 +91,7 @@ async function seed() {
     // delete all existing resources
     console.log("Deleting sessions...");
     await prisma.session.deleteMany()
+    await prisma.passwordResetToken.deleteMany()
     console.log("Deleting users...");
     await prisma.user.deleteMany()
     console.log("Deleting payments...");
