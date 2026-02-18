@@ -1,1 +1,1 @@
-Polaris!
+Polaris
