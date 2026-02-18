@@ -35,6 +35,6 @@ export const PasswordResetSchema = z
     }
   });
 
-export type PasswordResetInput = z.infer<typeof passwordResetSchema>;
+export type PasswordResetInput = z.infer<typeof PasswordResetSchema>;
 export type ForgotPasswordInput = z.infer<typeof ForgotPasswordSchema>;
 export type LoginInput = z.infer<typeof LoginSchema>;
