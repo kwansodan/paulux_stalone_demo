@@ -15,6 +15,16 @@ COPY prisma ./prisma/
 # Install dependencies including devDeps for build
 RUN npm ci
 
+# Install production dependencies only in a separate stage
+FROM base AS prod-deps
+WORKDIR /app
+COPY package.json package-lock.json* ./
+# Copy prisma directory for postinstall script
+COPY prisma ./prisma/
+
+# Install only production dependencies
+RUN npm ci --omit=dev
+
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
@@ -54,6 +64,34 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Create cache directory and set permissions
+RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next/cache
+
+# Overwrite/Augment node_modules with full production dependencies to ensure seed scripts work
+COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
+
+# Copy Prisma files for migrations
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
+COPY --from=builder /app/generated ./generated
+COPY --from=builder /app/package.json ./package.json
+
+# Copy source files and config for seeding
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
+COPY --from=builder /app/src ./src
+
+# Install Prisma CLI for migrations (includes all WASM dependencies)
+RUN npm install prisma@7.3.0 --save-dev --no-save
+
+# Install tsx globally for running seed script
+RUN npm install -g tsx
+
+# Copy entrypoint script
+COPY --chmod=755 docker-entrypoint.sh ./
+
+# Change ownership of Prisma files and others to nextjs user
+RUN chown -R nextjs:nodejs ./prisma ./generated ./src ./tsconfig.json ./node_modules 2>/dev/null || true
+
 USER nextjs
 
 EXPOSE 3000
@@ -61,4 +99,4 @@ EXPOSE 3000
 ENV PORT 3000
 ENV HOSTNAME "0.0.0.0"
 
-CMD ["node", "server.js"]
+CMD ["./docker-entrypoint.sh"]

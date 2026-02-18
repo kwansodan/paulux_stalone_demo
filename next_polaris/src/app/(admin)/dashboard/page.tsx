@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic"
 
 import { requireRole } from "@/app/_auth/require-role"
 import DashboardHeader from "@/components/dashboard/dashboard-header"

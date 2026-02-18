@@ -43,3 +43,43 @@ export async function GET(req: NextRequest) {
     data: payments
   }, { status: 200 })
 }
+
+export async function POST(req: NextRequest) {
+  try {
+    const body = await req.json()
+    const { bookingId, provider, providerRef, amount, currency, status, rawPayload } = body
+
+    // Validate required fields
+    if (!bookingId || !provider || !providerRef || !amount || !currency || !status) {
+      return NextResponse.json(
+        { message: 'Missing required fields: bookingId, provider, providerRef, amount, currency, status' },
+        { status: 400 }
+      )
+    }
+
+    // Create payment record
+    const payment = await paymentRepository.save({
+      bookingId,
+      provider,
+      providerRef,
+      amount: Number(amount),
+      currency,
+      status,
+      rawPayload,
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: "Payment record created successfully",
+      data: payment
+    }, { status: 201 })
+
+  } catch (error: any) {
+    console.error('Error creating payment record:', error)
+    return NextResponse.json(
+      { message: 'Failed to create payment record', error: error.message },
+      { status: 500 }
+    )
+  }
+}
+

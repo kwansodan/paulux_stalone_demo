@@ -3,6 +3,7 @@ import { Booking, BookingStatus, PaymentStatus, Prisma } from "@generated/prisma
 import { Booking as BookingPayload } from "../utils/validation";
 import { generateBookingReference } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
+import { createCalendarEvent } from "@/lib/google-calendar";
 
 export class BookingRepository {
 
@@ -26,13 +27,13 @@ export class BookingRepository {
           bookingDate: payload.bookingDate,
           bookingTime: payload.bookingTime,
           status: payload.status,
-          // paymentStatus: payload.paymentStatus,
+          paymentStatus: payload.paymentStatus ?? PaymentStatus.PENDING,
           createdById: payload.createdById ?? null
         }
       })
     }
 
-    return prisma.booking.create({
+    let booking = await prisma.booking.create({
       data: {
         bookingReference: generateBookingReference(),
         clientName: payload.clientName,
@@ -42,10 +43,31 @@ export class BookingRepository {
         bookingDate: payload.bookingDate,
         bookingTime: payload.bookingTime,
         status: BookingStatus.PENDING,
-        // paymentStatus: PaymentStatus.PENDING,
+        paymentStatus: PaymentStatus.PENDING,
         createdById: payload?.createdById ?? null
+      },
+      include: {
+        service: true
       }
     })
+
+    if (payload.status === BookingStatus.CONFIRMED) {
+      // If created as confirmed (e.g. by admin), add to calendar
+      try {
+        const eventId = await createCalendarEvent(booking);
+        if (eventId) {
+          booking = await prisma.booking.update({
+            where: { id: booking.id },
+            data: { googleEventId: eventId },
+            include: { service: true }
+          });
+        }
+      } catch (error) {
+        console.error("Failed to create calendar event for new booking:", error);
+      }
+    }
+
+    return booking;
   }
 
 
@@ -90,8 +112,8 @@ export class BookingRepository {
   }
 
 
-  async findById(id: string){
-    const result = await  prisma.booking.findUnique({
+  async findById(id: string) {
+    const result = await prisma.booking.findUnique({
       where: { id },
       include: {
         service: true,
@@ -143,13 +165,30 @@ export class BookingRepository {
 
 
   async updateStatus(id: string, status: BookingStatus) {
-    return prisma.booking.update({
+    let booking = await prisma.booking.update({
       where: { id },
       data: { status },
       include: {
         service: true,
       },
     })
+
+    if (status === BookingStatus.CONFIRMED && !booking.googleEventId) {
+      try {
+        const eventId = await createCalendarEvent(booking);
+        if (eventId) {
+          booking = await prisma.booking.update({
+            where: { id: booking.id },
+            data: { googleEventId: eventId },
+            include: { service: true }
+          });
+        }
+      } catch (error) {
+        console.error("Failed to create calendar event on status update:", error);
+      }
+    }
+
+    return booking;
   }
 
   async countByStatus(status: BookingStatus) {

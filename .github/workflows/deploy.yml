@@ -52,6 +52,8 @@ jobs:
             docker compose ps
           EOF
 
+
+
       - name: Health Check
         run: |
           ssh ubuntu@${{ secrets.OVH_HOST }} << 'EOF'

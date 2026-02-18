@@ -37,6 +37,7 @@ export const BookingInputSchema = z.object({
     .regex(timeRegex, "Time must be HH:mm"),
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
+  paymentStatus: PaymentStatusEnum.optional(),
 });
 
 // Schema for full booking (with defaults)

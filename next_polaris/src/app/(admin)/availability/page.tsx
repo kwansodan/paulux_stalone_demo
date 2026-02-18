@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { requireRole } from '@/app/_auth/require-role'
 import AvailabilityPageHeader from '@/components/availability/availability-page-header'
 import BlockedDatesSection from '@/features/blocked-date/components/blocked-dates-section'
@@ -19,7 +21,7 @@ export default async function AvailabilityPage() {
           <BusinessHoursSection businessHours={businessHours} />
         </div>
         <div className='w-1/2 min-h-130 max-w-140'>
-          <BlockedDatesSection blockedDates={blockedDates}/>
+          <BlockedDatesSection blockedDates={blockedDates} />
         </div>
       </div>
 

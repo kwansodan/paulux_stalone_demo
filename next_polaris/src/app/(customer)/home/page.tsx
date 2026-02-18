@@ -3,6 +3,8 @@ import LandingHero from "@/components/landing/landing-hero"
 import LandingCTA from "@/components/landing/landing-cta"
 import ServicesCarousel from "@/components/customer/services/services-carousel"
 
+export const dynamic = 'force-dynamic'
+
 export default async function HomePage() {
   const services = await serviceRepository.getAllServices({
     isActive: true,

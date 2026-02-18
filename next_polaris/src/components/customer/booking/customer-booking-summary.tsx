@@ -2,9 +2,9 @@
 
 import { Button } from "@/components/ui/button"
 import { Upload, User, Hash, Mail, Phone, Clock, FileText } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
-import { useRef, useState } from "react"
+import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
 import { useCancelBooking } from "@/features/booking/client/hooks/use-booking"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
@@ -19,6 +19,40 @@ export default function BookingSummary({ booking }: Props) {
   const summaryRef = useRef<HTMLDivElement>(null)
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
   const { mutate: cancelBooking, isPending } = useCancelBooking()
+  // New state for verification
+  const [isVerifying, setIsVerifying] = useState(false);
+  const searchParams = useSearchParams();
+  const reference = searchParams.get('reference');
+
+  // Verify payment on mount if reference exists and status is pending
+  useEffect(() => {
+    if (reference && booking.paymentStatus === 'PENDING' && !isVerifying) {
+      const verifyPayment = async () => {
+        setIsVerifying(true);
+        try {
+          // Call our verification endpoint
+          // We use fetch directly here for simplicity, or could use a custom hook
+          const response = await fetch(`/api/paystack/verify/${reference}`);
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            toast.success("Payment verified successfully!");
+            // Refresh the page to show updated status
+            router.refresh();
+          } else {
+            // Only show error if it's a genuine failure, not just "still pending"
+            // But verify endpoint usually returns success=false if not paid
+            console.warn("Verification returned unsuccessful", data);
+          }
+        } catch (error) {
+          console.error("Verification failed", error);
+        } finally {
+          setIsVerifying(false);
+        }
+      };
+      verifyPayment();
+    }
+  }, [reference, booking.paymentStatus, router, isVerifying]);
 
   const handleShare = async () => {
     if (!summaryRef.current) return
@@ -94,7 +128,14 @@ export default function BookingSummary({ booking }: Props) {
     if (payment.status === "PAID") {
       return payment.amount === booking.service?.price ? "Paid in full" : "Deposit paid"
     }
+    if (payment.status === "REFUNDED") {
+      return "Refunded"
+    }
     return payment.status
+  }
+
+  const hasRefundablePayment = () => {
+    return booking.payments?.some((p: any) => p.status === "PAID" && p.provider === "PAYSTACK")
   }
 
   return (
@@ -250,16 +291,28 @@ export default function BookingSummary({ booking }: Props) {
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Booking?"
-        subtitle="Are you sure you want to cancel this booking?"
+        subtitle={hasRefundablePayment()
+          ? "Your payment will be refunded. This may take up to 10 business days."
+          : "Are you sure you want to cancel this booking?"
+        }
         childrenClassName="max-h-[224px] "
         showSeparator={false}
       >
+        {hasRefundablePayment() && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+            <p className="text-sm text-blue-800">
+              <strong>Refund Information:</strong><br />
+              A full refund will be automatically initiated to your original payment method.
+              Please allow up to 10 business days for the refund to appear in your account.
+            </p>
+          </div>
+        )}
         <div className="flex justify-end gap-3 pt-4">
           <Button className="bg-[#D10505] hover:bg-[#D10505]/90" type="button" onClick={() => setIsCancelModalOpen(false)}>
             Close
           </Button>
           <Button variant="outline" onClick={() => handleCancelSubmit()} disabled={isPending} >
-            {isPending ? "Cancelling..." : "Cancel"}
+            {isPending ? "Cancelling..." : "Cancel Booking"}
           </Button>
         </div>
       </Modal> */}

@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import BookingMetrics from "@/features/booking/components/booking-metrics"
 import BookingsTable from "@/features/booking/components/booking-table"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
@@ -24,7 +26,7 @@ export default async function ReportsPage() {
   return (
     <div className="space-y-6 p-6">
       <BookingMetrics initialMetrics={metrics} />
-      <BookingsTable  />
+      <BookingsTable />
     </div>
   )
 }

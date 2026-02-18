@@ -140,6 +140,8 @@ model Booking {
   payments      Payment[]
   // paymentStatus PaymentStatus
   // paymentRef    String?
+  paymentStatus PaymentStatus @default(PENDING)
+  payments      Payment[]
   googleEventId String?
   cancelReason  String?
 
@@ -151,7 +153,7 @@ model Booking {
   @@index([createdById])
   @@index([bookingDate])
   @@index([status])
-  // @@index([paymentStatus])
+  @@index([paymentStatus])
   @@map("bookings")
 }
 

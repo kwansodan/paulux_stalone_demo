@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic"
+
 import { paymentRepository } from "@/features/payment/server/payment.repository"
 import PaymentMetrics from "@/features/payment/components/payment-metrics"
 import PaymentManager from "@/features/payment/components/payment-manager"

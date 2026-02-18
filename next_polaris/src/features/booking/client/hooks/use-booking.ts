@@ -8,7 +8,7 @@ import { BookingFilters, BookingWithService, IBookingMetrics } from "../../types
 
 export const createOrEditBooking = async (data: BookingInput & { id?: string }) => {
   const res = await api.post("/bookings", data)
-  return res.data;
+  return res.data.data;
 }
 
 export function cancelBooking(id: string, payload: CancelBookingInput) {
@@ -54,7 +54,7 @@ export function useGetBookingsByDate(dateStr: string) {
 
 export function useBookings(filters: Partial<BookingFilters>) {
   return useQuery({
-    queryKey: ["reports-bookings",       
+    queryKey: ["reports-bookings",
       filters.from,
       filters.to,
       filters.status,
@@ -103,16 +103,16 @@ export function useCreateBooking() {
     mutationFn: createOrEditBooking,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.bookingDate, data.data.serviceId],
+        queryKey: ["slots", data.bookingDate, data.serviceId],
       })
 
       queryClient.invalidateQueries({
-        queryKey: ["bookings", data.data.bookingDate],
+        queryKey: ["bookings", data.bookingDate],
       })
 
       // console.log('Successfully created Booking', data)
       toast.success("Booking created successfully!")
-      return data.data
+      return data
     },
     onError: (error) => {
       console.error("Failed to create booking", error)
@@ -128,11 +128,11 @@ export function useEditBooking() {
     mutationFn: createOrEditBooking,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.bookingDate, data.data.serviceId],
+        queryKey: ["slots", data.bookingDate, data.serviceId],
       })
 
       queryClient.invalidateQueries({
-        queryKey: ["bookings", data.data.bookingDate],
+        queryKey: ["bookings", data.bookingDate],
       })
 
       // console.log('Successfully created Booking', data)
