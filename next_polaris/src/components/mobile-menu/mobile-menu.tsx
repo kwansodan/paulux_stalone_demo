@@ -51,11 +51,15 @@ export default function MobileMenu({
 
           {/* Socials */}
           <div className="absolute bottom-10 w-full flex justify-center gap-6">
-            {SOCIAL_ICONS.facebook('black')}
-            {SOCIAL_ICONS.instagram('black')}
-            {SOCIAL_ICONS.x()}
-            {SOCIAL_ICONS.linkedin('black')}
-            {SOCIAL_ICONS.youtube('black')}
+            <Link href="https://www.facebook.com/share/17zoSqtEfT/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.facebook('black')}
+            </Link>
+            <Link href="https://www.instagram.com/polarisbeautylounge?igsh=MWJ4dzk2bDY5YmFrcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.instagram('black')}
+            </Link>
+            <Link href="https://www.tiktok.com/@polarisbeautylounge?_r=1&_t=ZS-93mfvZstJqL" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.tiktok('black')}
+            </Link>
           </div>
         </Dialog.Content>
       </Dialog.Portal>

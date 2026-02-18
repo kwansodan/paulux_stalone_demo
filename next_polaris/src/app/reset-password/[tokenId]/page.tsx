@@ -6,7 +6,7 @@ interface PasswordResetPageProps {
 export default async function ResetPasswordPage({ params }: PasswordResetPageProps) {
   const { tokenId } = await params;
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
+    <div className="min-h-screen flex items-center justify-center bg-white">
 
       {<ResetPasswordForm tokenId={tokenId}/>}
 

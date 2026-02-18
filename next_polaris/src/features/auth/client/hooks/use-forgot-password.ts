@@ -18,8 +18,8 @@ export function useForgotPassword() {
       return data
     },
     onSuccess: (data) => {
-      console.log('Password Forgot Initiation successful', data)
-      toast("Password Forgot Initiation Successful")
+      // console.log('Password Forgot Initiation successful', data)
+      // toast("Password Forgot Initiation Successful")
       // router.push(dashboardPath())
       // Store token, redirect, etc.
       return data

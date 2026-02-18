@@ -12,13 +12,15 @@ import { BackButton } from '@/components/back-button'
 import { signInPath } from '@/app/paths'
 import { useState } from 'react'
 import { useResetPassword } from '../client/hooks/use-reset-password'
-import { CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 
-export function ResetPasswordForm() {
+export function ResetPasswordForm({ tokenId } : { tokenId: string }) {
   const [step, setStep] = useState(1)
-  const resetPasswordMutation = useResetPassword()
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const resetPasswordMutation = useResetPassword(tokenId)
   const router = useRouter()
 
   const form = useForm<PasswordResetInput>({
@@ -43,7 +45,7 @@ export function ResetPasswordForm() {
   return (
     <>
       {step === 1 && (
-        <div className="w-145 gap-6 flex-col items-center justify-center bg-gray-100">
+        <div className="w-145 gap-6 flex flex-col items-center justify-center bg-white">
           <div className="w-full flex justify-start">
             <BackButton href={signInPath()} label='Back to Login' />
           </div>
@@ -62,12 +64,25 @@ export function ResetPasswordForm() {
                         <FormLabel className="text-sm font-normal text-foreground">
                           Password
                         </FormLabel>
-                        <Input
-                          type="password"
-                          placeholder="enter password"
-                          className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="enter password"
+                            className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            {showPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
                         {form.formState.errors.password && (
                           <p className="text-red-500 text-sm mt-1">
                             {form.formState.errors.password.message}
@@ -77,6 +92,7 @@ export function ResetPasswordForm() {
                     )}
                   />
 
+                  {/* Confirm Password Field */}
                   <FormField
                     control={form.control}
                     name="confirmPassword"
@@ -85,12 +101,25 @@ export function ResetPasswordForm() {
                         <FormLabel className="text-sm font-normal text-foreground">
                           Confirm Password
                         </FormLabel>
-                        <Input
-                          type="password"
-                          placeholder="confirm password"
-                          className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
-                          {...field}
-                        />
+                        <div className="relative">
+                          <Input
+                            type={showConfirmPassword ? 'text' : 'password'}
+                            placeholder="confirm password"
+                            className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg pr-10"
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                          >
+                            {showConfirmPassword ? (
+                              <EyeOff className="w-5 h-5" />
+                            ) : (
+                              <Eye className="w-5 h-5" />
+                            )}
+                          </button>
+                        </div>
                         {form.formState.errors.confirmPassword && (
                           <p className="text-red-500 text-sm mt-1">
                             {form.formState.errors.confirmPassword.message}

@@ -28,6 +28,7 @@ export const passwordResetEvent = inngest.createFunction(
     const result = await sendEmailPasswordReset(user.email, passwordResetLink)
 
     if (result.error) {
+      console.log("ERROR SENDING PASSWORD RESET", result)
       throw new Error(`${result.error.name}: ${result.error.message}`);
     }
 

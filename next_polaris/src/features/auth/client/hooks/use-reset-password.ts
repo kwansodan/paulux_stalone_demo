@@ -5,13 +5,13 @@ import { PasswordResetInput } from '../../utils/validation'
 // import { toast } from 'sonner'
 import { api } from '@/lib/api'
 
-export function useResetPassword() {
+export function useResetPassword(tokenId: string) {
   // const router = useRouter()
 
   return useMutation({
     mutationFn: async (formInput: PasswordResetInput) => {
       const { data } = await api.post(
-        '/reset-password',
+        '/reset-password/'+tokenId,
         formInput
       )
       

@@ -19,8 +19,10 @@ export function useLogin() {
     },
     onSuccess: (data) => {
       console.log('Login successful', data)
-      toast("Login Successful. Redirecting to Dashboard")
-      router.push(dashboardPath())
+      if(data.success === true){
+        toast("Login Successful. Redirecting to Dashboard")
+        router.push(dashboardPath())
+      }
       // Store token, redirect, etc.
     },
     onError: (error) => {
