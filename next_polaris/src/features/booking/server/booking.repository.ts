@@ -4,6 +4,8 @@ import { Booking as BookingPayload } from "../utils/validation";
 import { generateBookingReference } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { paymentProcessingService } from "@/features/payment/server/payment-processing.service";
+import { sendPaymentLinkEmail } from "../emails/send-payment-link-email";
 
 export class BookingRepository {
 
@@ -64,6 +66,33 @@ export class BookingRepository {
         }
       } catch (error) {
         console.error("Failed to create calendar event for new booking:", error);
+      }
+    }
+
+    // Trigger payment link for admin-created bookings
+    if (payload.createdById && !payload.id) {
+      try {
+        const paymentResult = await paymentProcessingService.initializePayment({
+          bookingId: booking.id,
+          email: booking.clientEmail,
+          amount: Number(booking.service.price),
+          bookingReference: booking.bookingReference,
+          callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation?reference=${booking.bookingReference}`
+        });
+
+        if (paymentResult.success && paymentResult.paymentUrl) {
+          await sendPaymentLinkEmail(
+            booking.clientEmail,
+            booking.clientName,
+            booking.service.name,
+            Number(booking.service.price),
+            paymentResult.paymentUrl,
+            booking.bookingDate,
+            booking.bookingTime
+          );
+        }
+      } catch (error) {
+        console.error("Failed to initialize payment or send email:", error);
       }
     }
 
