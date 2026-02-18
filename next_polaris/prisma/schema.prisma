@@ -137,7 +137,6 @@ model Booking {
   bookingTime String
 
   status        BookingStatus
-  payments      Payment[]
   // paymentStatus PaymentStatus
   // paymentRef    String?
   paymentStatus PaymentStatus @default(PENDING)
