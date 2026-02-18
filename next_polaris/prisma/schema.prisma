@@ -142,6 +142,8 @@ model Booking {
   // paymentRef    String?
   paymentStatus PaymentStatus @default(PENDING)
   payments      Payment[]
+  invoices      Invoice[]
+  auditLogs     PaymentAuditLog[]
   googleEventId String?
   cancelReason  String?
 
@@ -178,4 +180,73 @@ model BlockedDate {
 
   @@unique([date])
   @@map("blocked_dates")
+}
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  ISSUED
+  PAID
+  VOID
+  OVERDUE
+}
+
+model Invoice {
+  id            String        @id @default(uuid()) @db.Uuid
+  invoiceNumber String        @unique
+  bookingId     String        @db.Uuid
+  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  
+  amount        Decimal       @db.Decimal(10, 2)
+  currency      SupportedCurrency @default(GHS)
+  status        InvoiceStatus @default(DRAFT)
+  
+  gateway       PaymentProvider?
+  transactionType String      @default("initial") // e.g., "initial", "refund"
+  
+  dueDate       DateTime?
+  issuedAt      DateTime?
+  paidAt        DateTime?
+  
+  parentInvoiceId String?    @db.Uuid
+  parentInvoice   Invoice?   @relation("InvoiceChildren", fields: [parentInvoiceId], references: [id])
+  childInvoices   Invoice[]  @relation("InvoiceChildren")
+
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  auditLogs     PaymentAuditLog[]
+
+  @@index([bookingId])
+  @@index([status])
+  @@map("invoices")
+}
+
+model PaymentAuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  invoiceId  String?  @db.Uuid
+  invoice    Invoice? @relation(fields: [invoiceId], references: [id])
+  
+  bookingId  String?  @db.Uuid
+  booking    Booking? @relation(fields: [bookingId], references: [id])
+  
+  action     String // e.g., "INVOICE_CREATED", "PAYMENT_RECEIVED", "STATUS_UPDATED"
+  oldValue   Json?
+  newValue   Json?
+  metadata   Json? // For tracking who did it, IP, etc.
+  
+  createdAt  DateTime @default(now())
+
+  @@index([bookingId])
+  @@map("payment_audit_logs")
+}
+
+model SystemSetting {
+  id    String @id @default(uuid()) @db.Uuid
+  key   String @unique
+  value String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
 }

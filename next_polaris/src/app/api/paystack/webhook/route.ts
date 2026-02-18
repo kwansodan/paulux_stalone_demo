@@ -26,25 +26,50 @@ export async function POST(req: NextRequest) {
 
         console.log(`Received Paystack event: ${event}`);
 
+        // Try to find an invoice and log the receipt
+        const reference = data.reference;
+        const invoice = await prisma.invoice.findUnique({
+            where: { invoiceNumber: reference },
+            include: { booking: true }
+        });
+
+        if (invoice) {
+            const { auditLogService } = await import('@/features/payment/server/audit-log.service');
+            await auditLogService.logAction({
+                action: "WEBHOOK_RECEIVED",
+                invoiceId: invoice.id,
+                bookingId: invoice.bookingId,
+                metadata: { provider: 'PAYSTACK', event, body }
+            });
+        }
+
         // Handle successful payment
         if (event === 'charge.success') {
             const { reference, status, amount, paid_at, channel } = data;
 
             if (status === 'success') {
                 try {
-                    const result = await paymentService.processSuccessfulPayment(reference, data);
-                    if (!result.success) {
-                        return NextResponse.json(
-                            { message: result.message || 'Payment processing failed' },
-                            { status: 404 } // Or appropriate error code based on service return
-                        );
+                    // Try to find an invoice first
+                    const invoice = await prisma.invoice.findUnique({
+                        where: { invoiceNumber: reference }
+                    });
+
+                    if (invoice) {
+                        console.log(`Found invoice ${invoice.invoiceNumber}, processing via unified flow`);
+                        await paymentService.confirmInvoicePayment(invoice.id, reference, data);
+                    } else {
+                        // Fallback to legacy flow
+                        const result = await paymentService.processSuccessfulPayment(reference, data);
+                        if (!result.success) {
+                            return NextResponse.json(
+                                { message: result.message || 'Payment processing failed' },
+                                { status: 404 }
+                            );
+                        }
                     }
                     console.log(`Payment successfully processed via webhook for reference: ${reference}`);
                 } catch (serviceError: any) {
                     console.error('Error in payment service:', serviceError);
-                    // Decide if you want to return 500 or 200 (to avoid Paystack retrying indefinitely if it's a bug)
-                    // Usually 200 is safer if the error is non-recoverable logic error, 500 if it's transient DB error.
-                    // For now, let's log and return 200 to acknowledge receipt.
                 }
             }
         }

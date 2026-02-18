@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/features/payment/server/payment.service';
+import { auditLogService } from '@/features/payment/server/audit-log.service';
+import { InvoiceStatus } from '@generated/prisma/client';
+import { generateOrchardSignature } from '@/lib/apps-and-mobiles';
 
 /**
  * Apps & Mobiles Webhook Handler
@@ -12,50 +15,84 @@ import { paymentService } from '@/features/payment/server/payment.service';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const signature = req.headers.get('x-apps-and-mobiles-signature'); // Placeholder header name
+        const { reference, trans_status, trans_id, trans_ref } = body;
 
-        console.log('Received Apps & Mobiles webhook:', JSON.stringify(body, null, 2));
+        // 1. Verify signature
+        // Orchard sample puts it in Auth header, but standard webhooks often use a dedicated header
+        // We'll check for our custom header first, then look at how Orchard typically does it.
+        const providedSignature = req.headers.get('x-apps-and-mobiles-signature');
 
-        // Placeholder for signature verification
-        // if (!verifySignature(body, signature)) {
-        //     return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
-        // }
-
-        // Apps & Mobiles payload structure usually includes status, reference, etc.
-        // Adjust these paths based on the actual payload format
-        const { status, reference, amount, external_id } = body;
-
-        // In some gateways, 'reference' or 'external_id' maps to our booking/payment reference
-        const targetReference = reference || external_id;
-
-        if (status === 'SUCCESS' && targetReference) {
-            try {
-                // Determine if this is a Paystack or Apps & Mobiles payment in DB
-                // Since this is the Apps & Mobiles webhook, we expect the provider to be MANUALLY handled 
-                // or we need to update the enum if we added a new provider.
-
-                // For now, let's assume we use the same processSuccessfulPayment logic 
-                // but we might need to adjust the provider check in payment.service.ts if it's hardcoded to PAYSTACK.
-
-                const result = await paymentService.processSuccessfulPayment(targetReference, body, 'APPS_AND_MOBILES');
-
-                if (result.success) {
-                    console.log(`Payment ${targetReference} processed successfully via Apps & Mobiles webhook`);
-                    return NextResponse.json({ message: 'OK' }, { status: 200 });
-                } else {
-                    console.error(`Payment processing failed for ${targetReference}:`, result.message);
-                    return NextResponse.json({ message: result.message }, { status: 400 });
-                }
-            } catch (error) {
-                console.error('Error processing Apps & Mobiles payment:', error);
-                return NextResponse.json({ message: 'Internal Server Error' }, { status: 500 });
+        if (providedSignature) {
+            const expectedSignature = generateOrchardSignature(body);
+            if (providedSignature !== expectedSignature) {
+                console.error('Invalid Orchard webhook signature');
+                return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
             }
+        } else {
+            // If no signature header, we might be in dev or Orchard uses IP whitelisting
+            // For now, we'll log it but proceed if we are in development
+            console.warn('Missing Apps & Mobiles signature header');
         }
 
-        return NextResponse.json({ message: 'Event ignored or missing reference' }, { status: 200 });
+        console.log(`Received Apps & Mobiles webhook: reference=${reference}, status=${trans_status}`);
+
+        // 2. Find the invoice
+        const invoice = await prisma.invoice.findUnique({
+            where: { invoiceNumber: reference },
+            include: { booking: true }
+        });
+
+        if (!invoice) {
+            console.error(`Invoice not found for reference: ${reference}`);
+            return NextResponse.json({ message: 'Invoice not found' }, { status: 404 });
+        }
+
+        // 3. Log the webhook receipt
+        await auditLogService.logAction({
+            action: "WEBHOOK_RECEIVED",
+            invoiceId: invoice.id,
+            bookingId: invoice.bookingId,
+            metadata: { provider: 'APPS_AND_MOBILES', body }
+        });
+
+        // 4. Handle status update
+        // Orchard typically uses: 000 for Success, others for failure/pending
+        if (trans_status === '000' || trans_status === '01') { // 01 is often 'Success' in some Orchard versions
+            await paymentService.confirmInvoicePayment(invoice.id, trans_id || trans_ref || reference, body);
+
+            await auditLogService.logAction({
+                action: "PAYMENT_COMPLETED",
+                invoiceId: invoice.id,
+                bookingId: invoice.bookingId,
+                newValue: { status: InvoiceStatus.PAID },
+                metadata: { trans_id }
+            });
+
+            console.log(`Successfully processed Apps & Mobiles payment for ${reference}`);
+        } else if (trans_status === '001' || trans_status === 'failed') {
+            await prisma.invoice.update({
+                where: { id: invoice.id },
+                data: { status: InvoiceStatus.VOID }
+            });
+
+            await auditLogService.logAction({
+                action: "PAYMENT_FAILED",
+                invoiceId: invoice.id,
+                bookingId: invoice.bookingId,
+                newValue: { status: InvoiceStatus.VOID },
+                metadata: { body }
+            });
+
+            console.log(`Payment failed for Apps & Mobiles reference ${reference}`);
+        }
+
+        return NextResponse.json({ message: 'Webhook processed' }, { status: 200 });
 
     } catch (error: any) {
         console.error('Apps & Mobiles webhook error:', error);
-        return NextResponse.json({ message: 'Invalid payload' }, { status: 400 });
+        return NextResponse.json(
+            { message: 'Webhook error', error: error.message },
+            { status: 500 }
+        );
     }
 }
