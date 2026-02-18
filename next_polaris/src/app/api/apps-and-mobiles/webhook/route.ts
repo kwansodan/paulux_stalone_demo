@@ -5,6 +5,13 @@ import { auditLogService } from '@/features/payment/server/audit-log.service';
 import { InvoiceStatus } from '@generated/prisma/client';
 import { generateOrchardSignature } from '@/lib/apps-and-mobiles';
 
+/**
+ * Apps & Mobiles Webhook Handler
+ * 
+ * TODO: Refine signature verification once full documentation or SDK is available.
+ * Using provided EVENT_KEY and SIGNING_KEY_URL for configuration.
+ */
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();

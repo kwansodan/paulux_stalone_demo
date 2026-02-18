@@ -58,9 +58,9 @@ export default function SelectDayPanel({ selectedDate, user, services, filter }:
 
           <div className="flex justify-between">
             <h3 className="font-medium">{formatDate(dateStr)}</h3>
-            <button className="text-sm text-fuchsia-600">
+            {/* <button className="text-sm text-fuchsia-600">
               View all
-            </button>
+            </button> */}
           </div>
 
           {isLoading ? (

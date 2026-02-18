@@ -44,7 +44,7 @@ export function LoginForm() {
                 Email
               </FormLabel>
               <Input
-                placeholder="service name"
+                placeholder="enter email"
                 className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                 {...field}
               />

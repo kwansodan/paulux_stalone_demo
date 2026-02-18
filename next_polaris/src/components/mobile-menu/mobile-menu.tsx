@@ -6,7 +6,8 @@ import { cn } from "@/lib/utils"
 import { SOCIAL_ICONS } from "../landing/landing-footer"
 import "./mobile-menu.css"
 import Link from "next/link"
-import { customerBookingPath, customerServicesPath } from "@/app/paths"
+import { customerBookingPath, customerServicesPath, homePath } from "@/app/paths"
+import Image from 'next/image'
 
 export default function MobileMenu({
   open,
@@ -26,14 +27,20 @@ export default function MobileMenu({
             "focus:outline-none"
           )}
         >
+          {/* <VisuallyHidden> */}
+            <Dialog.Title className="hiddenn">Mobile Menu</Dialog.Title>
+          {/* </VisuallyHidden> */}
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
-                <div className="w-3 h-3 rounded-full border-2 border-fuchsia-400" />
-              </div>
-              <span className="font-semibold text-xl text-gray-900">PolarisBooking</span>
-            </div>
+            <Link href={homePath()} className="flex items-center gap-2">
+              <Image
+                src="/images/polarisicon.png"
+                alt="Company Logo"
+                width={100}
+                height={50}
+                priority
+              />
+            </Link>
 
             <button
               onClick={() => onOpenChange(false)}
@@ -51,11 +58,15 @@ export default function MobileMenu({
 
           {/* Socials */}
           <div className="absolute bottom-10 w-full flex justify-center gap-6">
-            {SOCIAL_ICONS.facebook('black')}
-            {SOCIAL_ICONS.instagram('black')}
-            {SOCIAL_ICONS.x()}
-            {SOCIAL_ICONS.linkedin('black')}
-            {SOCIAL_ICONS.youtube('black')}
+            <Link href="https://www.facebook.com/share/17zoSqtEfT/?mibextid=wwXIfr" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.facebook('black')}
+            </Link>
+            <Link href="https://www.instagram.com/polarisbeautylounge?igsh=MWJ4dzk2bDY5YmFrcQ%3D%3D&utm_source=qr" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.instagram('black')}
+            </Link>
+            <Link href="https://www.tiktok.com/@polarisbeautylounge?_r=1&_t=ZS-93mfvZstJqL" target="_blank" rel="noopener noreferrer" className="text-white/70 flex gap-2 items-center hover:text-white transition-colors">
+              {SOCIAL_ICONS.tiktok('black')}
+            </Link>
           </div>
         </Dialog.Content>
       </Dialog.Portal>
