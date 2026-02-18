@@ -1,6 +1,6 @@
 "use client"
 
-import { CircleCheck, CircleX, MoreVertical, PencilLine } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
 import { BookingWithService } from "../types"
 import { formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
-import { useMarkAsCompleted } from "../client/hooks/use-booking"
+import { useMarkAsCompleted, useChargeCustomer } from "../client/hooks/use-booking"
 
 type BookingCardProps = {
   booking: BookingWithService
@@ -21,6 +21,7 @@ type BookingCardProps = {
 
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
   const markAsCompletedMutation = useMarkAsCompleted()
+  const chargeCustomer = useChargeCustomer()
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
 
@@ -62,9 +63,15 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             </DropdownMenuItem>
           )}
           {booking.status !== 'COMPLETED' && (<DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
-            <CircleCheck  className="text-green-600" />
+            <CircleCheck className="text-green-600" />
             <span className="w-full">Mark as completed</span>
           </DropdownMenuItem>)}
+          {(!booking.payments || booking.payments[0]?.status === 'PENDING') && (
+            <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
+              <CreditCard className="text-fuchsia-600" />
+              <span className="w-full">Charge customer</span>
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => onCancel(booking.id)} className="flex gap-2 text-red-600">
             <CircleX className="text-red-600" />
             <span className="w-full">Cancel order</span>
