@@ -98,10 +98,10 @@ export class SubsequentPaymentService {
             currency: SupportedCurrency.GHS,
             parentInvoiceId: originalInvoice.id,
             transactionType: 'refund',
-            gateway: originalInvoice.gateway
+            gateway: originalInvoice.gateway ?? undefined
         })
 
-        await invoiceService.updateInvoiceStatus(refundInvoice.id, InvoiceStatus.PAID, { gateway: originalInvoice.gateway })
+        await invoiceService.updateInvoiceStatus(refundInvoice.id, InvoiceStatus.PAID, { gateway: originalInvoice.gateway ?? undefined })
 
         // 4. Log to audit log
         await auditLogService.logAction({
