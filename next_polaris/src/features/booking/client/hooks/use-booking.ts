@@ -199,3 +199,25 @@ export function useCancelBooking() {
   })
 }
 
+export function useChargeCustomer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/bookings/${id}/charge`),
+    onMutate: () => {
+      toast.loading("Initializing payment...", { id: "charge-customer" })
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({
+        queryKey: ["reports-bookings"],
+      })
+      toast.success("Payment link sent to customer", { id: "charge-customer" })
+    },
+    onError: (error: any) => {
+      console.error("Failed to charge customer", error)
+      const message = error.response?.data?.message || "Failed to charge customer"
+      toast.error(message, { id: "charge-customer" })
+    },
+  })
+}
+
