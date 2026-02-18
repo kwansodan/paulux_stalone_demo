@@ -14,13 +14,13 @@ export const sendPaymentLinkEmail = async (
         from: "no-reply@app.ishmaelsroadstonextapp.com",
         to: email,
         subject: `Payment Link for your ${serviceName} Booking`,
-        react: <PaymentLinkEmail
-            customerName={customerName}
-            serviceName={serviceName}
-            amount={amount}
-            paymentUrl={paymentUrl}
-            bookingDate={bookingDate}
-            bookingTime={bookingTime}
+        react: <PaymentLinkEmail 
+        customerName={ customerName } 
+        serviceName = { serviceName } 
+        amount = { amount } 
+        paymentUrl = { paymentUrl }
+        bookingDate = { bookingDate }
+        bookingTime = { bookingTime }
         />,
     });
 }

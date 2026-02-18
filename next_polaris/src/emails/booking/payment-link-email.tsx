@@ -46,7 +46,6 @@ const PaymentLinkEmail = ({
                         <Section className="mb-8 text-center">
                             <Button
                                 href={paymentUrl}
-                                style={{ backgroundColor: '#c026d3', color: 'white' }}
                                 className="bg-fuchsia-600 text-white font-medium px-10 py-4 rounded-md inline-block text-center"
                             >
                                 Pay Now
