@@ -8,14 +8,14 @@ export class PaymentService {
      * Updates payment status, confirms booking, and syncs to Google Calendar.
      * idempotent: Safe to call multiple times for the same reference.
      */
-    async processSuccessfulPayment(reference: string, paystackData: any) {
-        console.log(`Processing successful payment for reference: ${reference}`);
+    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'APPS_AND_MOBILES' = 'PAYSTACK') {
+        console.log(`Processing successful payment for reference: ${reference} via ${provider}`);
 
         // 1. Find the payment record
         const payment = await prisma.payment.findUnique({
             where: {
                 provider_providerRef: {
-                    provider: 'PAYSTACK',
+                    provider: provider,
                     providerRef: reference,
                 },
             },
@@ -43,7 +43,7 @@ export class PaymentService {
                         ...(typeof payment.rawPayload === 'object' ? payment.rawPayload : {}),
                         success_processing: {
                             processedAt: new Date().toISOString(),
-                            data: paystackData,
+                            data: data,
                         },
                     },
                 },
