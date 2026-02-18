@@ -232,7 +232,7 @@ export default function BookingSummary({ booking }: Props) {
       </div>
 
       {/* Cancel Button */}
-      {booking.status !== "CANCELLED" && (
+      {/* {booking.status !== "CANCELLED" && (
         <div className="mt-6 flex justify-center">
           <Button
             variant="ghost"
@@ -243,10 +243,10 @@ export default function BookingSummary({ booking }: Props) {
             {isPending ? "Cancelling..." : "Cancel my booking"}
           </Button>
         </div>
-      )}
+      )} */}
 
 
-      <Modal
+      {/* <Modal
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Booking?"
@@ -262,7 +262,7 @@ export default function BookingSummary({ booking }: Props) {
             {isPending ? "Cancelling..." : "Cancel"}
           </Button>
         </div>
-      </Modal>
+      </Modal> */}
     </>
   )
 }
