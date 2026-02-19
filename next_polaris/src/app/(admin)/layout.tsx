@@ -1,4 +1,5 @@
 import AdminMobileHeader from '@/components/admin/admin-mobile-header'
+import Sidebar from '@/app/_navigation/sidebar/components/sidebar'
 
 const Layout = async ({ children }: Readonly<{ children: React.ReactNode }>) => {
   // await requireRole([UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.MANAGER]);
