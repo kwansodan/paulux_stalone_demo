@@ -48,7 +48,8 @@ export function useGetBookingsByDate(dateStr: string) {
     queryFn: async () => {
       const res = await api.get(`/bookings?date=${dateStr}`)
       return res.data
-    }
+    },
+    refetchOnWindowFocus: true,
   })
 }
 
