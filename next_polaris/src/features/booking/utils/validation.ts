@@ -38,9 +38,12 @@ export const BookingInputSchema = z.object({
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
   minDepositPercent: z
-    .number()
-    .transform((val) => Number(val))
-    .refine((val) => !isNaN(val) && val >= 0 && val <= 100, "Must be 0–100").optional(),
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100),
+      "Must be 0–100"
+    ),
   paymentStatus: PaymentStatusEnum.optional(),
 });
 
