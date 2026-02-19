@@ -4,7 +4,9 @@ import { useMemo, useState } from "react"
 import BookingsFilters from "./bookings-filters"
 import { BookingFilters, BookingWithServiceAndPayment } from "../types"
 import { DataTable } from "@/components/data-table"
-import { useBookings } from "../client/hooks/use-booking"
+import { useBookings, useChargeCustomer } from "../client/hooks/use-booking"
+import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 
 const initialFilters: BookingFilters = {
   from: undefined,
@@ -17,6 +19,7 @@ const initialFilters: BookingFilters = {
 
 export default function BookingsTable() {
   const [filters, setFilters] = useState<BookingFilters>(initialFilters)
+  const chargeCustomer = useChargeCustomer()
   // remove 'all' values and empty strings before sending to API
   const apiFilters = useMemo(() => {
     return Object.entries(filters).reduce((acc, [key, value]) => {
@@ -77,6 +80,29 @@ export default function BookingsTable() {
       label: "Amount",
       render: (row: BookingWithServiceAndPayment) => `GHS ${Number(row.service.price).toFixed(2)}`,
     },
+    {
+      key: "actions",
+      label: "Actions",
+      render: (row: BookingWithServiceAndPayment) => {
+        const payment = row.payments?.[0]
+        const isPending = !payment || payment.status === "PENDING"
+
+        if (!isPending) return null
+
+        return (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100"
+            disabled={chargeCustomer.isPending}
+            onClick={() => chargeCustomer.mutate(row.id)}
+          >
+            {chargeCustomer.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+            Charge
+          </Button>
+        )
+      }
+    }
   ]
 
 

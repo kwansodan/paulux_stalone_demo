@@ -289,6 +289,18 @@ export default function CreateBookingForm({
               </div>
             )}
           />
+
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6 flex items-start gap-3">
+            <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-blue-600 font-bold text-xs">i</span>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-blue-800">In-Person Payment</p>
+              <p className="text-xs text-blue-600 mt-1">
+                After creating the booking, use <strong>Charge Customer</strong> to open Paystack checkout on this device. The customer enters their card or MoMo details here.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Form Level Error */}

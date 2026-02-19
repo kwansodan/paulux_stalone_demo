@@ -5,6 +5,7 @@ import { generateBookingReference } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
 
+
 export class BookingRepository {
 
   async upsertBooking(payload: BookingPayload): Promise<Booking> {
@@ -67,6 +68,8 @@ export class BookingRepository {
       }
     }
 
+    // Payment is now triggered manually by admin via "Charge Customer" (POS flow)
+
     return booking;
   }
 
@@ -121,11 +124,15 @@ export class BookingRepository {
       },
     })
 
+    if (!result) {
+      return null
+    }
+
     return {
       ...result,
       service: {
-        ...result?.service,
-        price: result?.service.price.toString() ?? "0"
+        ...result.service,
+        price: result.service.price.toString()
       }
     }
   }

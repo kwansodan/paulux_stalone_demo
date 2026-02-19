@@ -48,7 +48,8 @@ export function useGetBookingsByDate(dateStr: string) {
     queryFn: async () => {
       const res = await api.get(`/bookings?date=${dateStr}`)
       return res.data
-    }
+    },
+    refetchOnWindowFocus: true,
   })
 }
 
@@ -195,6 +196,31 @@ export function useCancelBooking() {
     onError: (error) => {
       console.error("Failed to update booking status", error)
       toast.error("Failed to update booking status", { id: "booking-status" })
+    },
+  })
+}
+
+export function useChargeCustomer() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/bookings/${id}/charge`),
+    onMutate: () => {
+      toast.loading("Initializing payment...", { id: "charge-customer" })
+    },
+    onSuccess: (data) => {
+      const paymentUrl = data.data?.data?.paymentUrl
+      if (paymentUrl) {
+        toast.dismiss("charge-customer")
+        window.location.href = paymentUrl
+      } else {
+        toast.error("No payment URL received", { id: "charge-customer" })
+      }
+    },
+    onError: (error: any) => {
+      console.error("Failed to charge customer", error)
+      const message = error.response?.data?.message || "Failed to charge customer"
+      toast.error(message, { id: "charge-customer" })
     },
   })
 }

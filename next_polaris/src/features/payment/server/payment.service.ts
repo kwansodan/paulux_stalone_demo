@@ -8,14 +8,14 @@ export class PaymentService {
      * Updates payment status, confirms booking, and syncs to Google Calendar.
      * idempotent: Safe to call multiple times for the same reference.
      */
-    async processSuccessfulPayment(reference: string, paystackData: any) {
-        console.log(`Processing successful payment for reference: ${reference}`);
+    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'APPS_AND_MOBILES' = 'PAYSTACK') {
+        console.log(`Processing successful payment for reference: ${reference} via ${provider}`);
 
         // 1. Find the payment record
         const payment = await prisma.payment.findUnique({
             where: {
                 provider_providerRef: {
-                    provider: 'PAYSTACK',
+                    provider: provider,
                     providerRef: reference,
                 },
             },
@@ -43,7 +43,7 @@ export class PaymentService {
                         ...(typeof payment.rawPayload === 'object' ? payment.rawPayload : {}),
                         success_processing: {
                             processedAt: new Date().toISOString(),
-                            data: paystackData,
+                            data: data,
                         },
                     },
                 },
@@ -93,6 +93,70 @@ export class PaymentService {
         }
 
         return { success: true, paymentId: payment.id, bookingId: booking.id };
+    }
+
+    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: any) {
+        console.log(`Confirming invoice payment: ${invoiceId}`);
+
+        const invoice = await prisma.invoice.findUnique({
+            where: { id: invoiceId },
+            include: { booking: { include: { service: true } } }
+        });
+
+        if (!invoice) throw new Error("Invoice not found");
+
+        // 1. Update Invoice status to PAID
+        const updatedInvoice = await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: {
+                status: 'PAID',
+                paidAt: new Date(),
+            }
+        });
+
+        // 2. Create Payment record for tracking
+        const payment = await prisma.payment.create({
+            data: {
+                bookingId: invoice.bookingId,
+                provider: invoice.gateway || 'PAYSTACK', // Fallback to PAYSTACK if not set
+                providerRef: providerRef,
+                amount: invoice.amount,
+                currency: invoice.currency,
+                status: 'PAID',
+                rawPayload: payload,
+            }
+        });
+
+        // 3. Update booking status to CONFIRMED
+        let booking = invoice.booking;
+        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== 'PAID') {
+            booking = await prisma.booking.update({
+                where: { id: invoice.bookingId },
+                data: {
+                    status: 'CONFIRMED',
+                    paymentStatus: 'PAID',
+                },
+                include: { service: true }
+            });
+            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
+        }
+
+        // 4. Create Google Calendar Event
+        if (!booking.googleEventId) {
+            try {
+                const eventId = await createCalendarEvent(booking);
+                if (eventId) {
+                    await prisma.booking.update({
+                        where: { id: booking.id },
+                        data: { googleEventId: eventId }
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to create calendar event:', error);
+            }
+        }
+
+        return { success: true, invoice: updatedInvoice, booking, payment };
     }
 }
 
