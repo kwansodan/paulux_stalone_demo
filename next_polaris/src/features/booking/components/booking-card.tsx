@@ -66,7 +66,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             <CircleCheck className="text-green-600" />
             <span className="w-full">Mark as completed</span>
           </DropdownMenuItem>)}
-          {(!booking.payments || booking.payments[0]?.status === 'PENDING') && (
+          {(!booking.payments?.length || booking.payments[0]?.status === 'PENDING') && (
             <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
