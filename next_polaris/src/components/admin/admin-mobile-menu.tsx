@@ -90,7 +90,7 @@ export default function AdminMobileMenu({
                                                 : "text-gray-600 hover:bg-gray-100"
                                         )}
                                     >
-                                        {item.icon && React.cloneElement(item.icon as React.ReactElement, { className: "w-5 h-5" })}
+                                        {item.icon && React.cloneElement(item.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
                                         <span>{item.title}</span>
                                     </Link>
                                 )
