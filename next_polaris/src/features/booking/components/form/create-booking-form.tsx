@@ -277,9 +277,9 @@ export default function CreateBookingForm({
               <span className="text-blue-600 font-bold text-xs">i</span>
             </div>
             <div>
-              <p className="text-sm font-medium text-blue-800">Payment Link</p>
+              <p className="text-sm font-medium text-blue-800">In-Person Payment</p>
               <p className="text-xs text-blue-600 mt-1">
-                A Paystack payment link will be automatically sent to the customer's email upon creation.
+                After creating the booking, use <strong>Charge Customer</strong> to open Paystack checkout on this device. The customer enters their card or MoMo details here.
               </p>
             </div>
           </div>
