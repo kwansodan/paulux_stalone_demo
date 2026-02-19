@@ -160,7 +160,6 @@ export async function POST(request: NextRequest) {
     const isAvailable = await bookingRepository.isSlotAvailable(
       new Date(validatedBody.bookingDate),
       validatedBody.bookingTime,
-      validatedBody.serviceId,
       validatedBody.id
     )
 

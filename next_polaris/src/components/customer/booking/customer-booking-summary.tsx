@@ -24,6 +24,9 @@ export default function BookingSummary({ booking }: Props) {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
 
+  const price = booking.service ? Number(booking.service.price) : 0
+  const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
+
   // Verify payment on mount if reference exists and status is pending
   useEffect(() => {
     if (reference && booking.paymentStatus === 'PENDING' && !isVerifying) {
@@ -255,7 +258,7 @@ export default function BookingSummary({ booking }: Props) {
                 <span className="text-sm">Price</span>
               </div>
               <span className="text-sm font-medium">
-                GHS {Number(booking.service?.price).toFixed(2)}
+                GHS {Number(depositAmount).toFixed(2)}
               </span>
             </div>
           </div>
@@ -263,13 +266,13 @@ export default function BookingSummary({ booking }: Props) {
         </div>
 
         {/* Cancellation Policy */}
-        <div className="">
+        {/* <div className="">
           <p className="text-xs text-gray-600">
             <span className="font-medium">Cancellation policy:</span> Free cancellation
             up to 24 hours before your appointment. Late cancellations may be subject to{" "}
             <span className="text-fuchsia-600 underline">fees</span>.
           </p>
-        </div>
+        </div> */}
       </div>
 
       {/* Cancel Button */}

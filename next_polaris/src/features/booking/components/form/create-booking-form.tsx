@@ -37,6 +37,7 @@ export default function CreateBookingForm({
       serviceId: '',
       bookingDate: '',
       bookingTime: '',
+      minDepositPercent: undefined,
       createdById: user.id,
     }
   })
@@ -180,6 +181,23 @@ export default function CreateBookingForm({
               <p className="font-normal text-sm">{selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
             </div>
           )}
+
+          {/* Payment */}
+          <FormField
+            control={form.control}
+            name="minDepositPercent"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label className="text-sm font-normal text-foreground">Minimum deposit (%)</Label>
+                <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} max={100} {...field} />
+                {form.formState.errors.minDepositPercent && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.minDepositPercent.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
 
           {/* Booking Date */}
           <FormField

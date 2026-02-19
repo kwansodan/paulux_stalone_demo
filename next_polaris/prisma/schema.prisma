@@ -107,7 +107,7 @@ model Payment {
   id String @id @default(uuid()) @db.Uuid
 
   bookingId String  @db.Uuid
-  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking   Booking @relation("BookingPayments", fields: [bookingId], references: [id], onDelete: Cascade)
 
   provider    PaymentProvider
   providerRef String // reference from gateway
@@ -135,6 +135,8 @@ model Booking {
   serviceId String  @db.Uuid
   service   Service @relation(fields: [serviceId], references: [id])
 
+  minDepositPercent Int?
+
   bookingDate String
   bookingTime String
 
@@ -142,9 +144,7 @@ model Booking {
   // paymentStatus PaymentStatus
   // paymentRef    String?
   paymentStatus PaymentStatus @default(PENDING)
-  payments      Payment[]
-  invoices      Invoice[]
-  auditLogs     PaymentAuditLog[]
+  // payments      Payment[]
   googleEventId String?
   cancelReason  String?
 
@@ -152,6 +152,10 @@ model Booking {
 
   createdById String? @db.Uuid
   createdBy   User?   @relation(fields: [createdById], references: [id])
+
+  payments          Payment[]          @relation("BookingPayments")
+  invoices          Invoice[]          @relation("BookingInvoices")
+  paymentAuditLogs  PaymentAuditLog[]  @relation("BookingPaymentAuditLogs")
 
   @@index([createdById])
   @@index([bookingDate])
@@ -166,6 +170,8 @@ model BusinessHour {
   startTime String
   endTime   String
   isOpen    Boolean @default(true)
+
+  maxConcurrentBookings Int @default(4) //should be able to be set??phase 2??
 
   updatedAt DateTime @updatedAt
 
@@ -195,7 +201,7 @@ model Invoice {
   id            String        @id @default(uuid()) @db.Uuid
   invoiceNumber String        @unique
   bookingId     String        @db.Uuid
-  booking       Booking       @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking       Booking       @relation("BookingInvoices", fields: [bookingId], references: [id], onDelete: Cascade)
   
   amount        Decimal       @db.Decimal(10, 2)
   currency      SupportedCurrency @default(GHS)
@@ -228,7 +234,7 @@ model PaymentAuditLog {
   invoice    Invoice? @relation(fields: [invoiceId], references: [id])
   
   bookingId  String?  @db.Uuid
-  booking    Booking? @relation(fields: [bookingId], references: [id])
+  booking    Booking? @relation("BookingPaymentAuditLogs", fields: [bookingId], references: [id])
   
   action     String // e.g., "INVOICE_CREATED", "PAYMENT_RECEIVED", "STATUS_UPDATED"
   oldValue   Json?

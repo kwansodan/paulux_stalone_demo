@@ -3,14 +3,14 @@ import { useRouter } from 'next/navigation'
 import { LoginInput } from '../../utils/validation'
 import { dashboardPath } from '@/app/paths'
 import { toast } from 'sonner'
-import { api } from '@/lib/api'
+import { publicApi } from '@/lib/api'
 
 export function useLogin() {
   const router = useRouter()
 
   return useMutation({
     mutationFn: async (formInput: LoginInput) => {
-      const { data } = await api.post(
+      const { data } = await publicApi.post(
         '/login',
         formInput
       )

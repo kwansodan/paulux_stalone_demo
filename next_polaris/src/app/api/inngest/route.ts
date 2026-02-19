@@ -1,11 +1,11 @@
 import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest";
 import { passwordResetEvent } from "@/features/auth/events/event-password-reset";
-import { NextRequest, NextResponse } from "next/server";
+// import { NextRequest, NextResponse } from "next/server";
 
-console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
-console.log("BASE URL:", process.env.INNGEST_BASE_URL);
-console.log("SIGNING KEY URL:", process.env.INNGEST_SIGNING_KEY);
+// console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
+// console.log("BASE URL:", process.env.INNGEST_BASE_URL);
+// console.log("SIGNING KEY URL:", process.env.INNGEST_SIGNING_KEY);
 
 // Create an API that serves zero functions
 export const { GET, POST, PUT } = serve({
