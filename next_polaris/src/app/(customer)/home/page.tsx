@@ -4,7 +4,7 @@ import LandingHero from "@/components/landing/landing-hero"
 import LandingCTA from "@/components/landing/landing-cta"
 import ServicesCarousel from "@/components/customer/services/services-carousel"
 
-// export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic'
 
 // const LandingCTA = dynamic(() => import('@/components/landing/landing-cta'), { ssr: false });
 
