@@ -33,7 +33,7 @@ export default function BookingMetrics({
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard title="Total bookings" value={data.totalBookings} icon={<Users />} />
         <MetricCard title="Cancelled" value={data.cancelled} icon={<XCircle />} />
         <MetricCard title="Unpaid" value={data.unpaid} icon={<Clock />} />

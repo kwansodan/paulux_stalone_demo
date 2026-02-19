@@ -23,17 +23,17 @@ export default function MetricCard({
           "w-8 h-8 p-2 items-center justify-center rounded-full",
           iconClassName
         )}>
-        {
-          React.cloneElement(icon, {
-            className: cn(
-              "w-4 h-4 flex-shrink-0",
-            )
-          })
-        }
+          {
+            React.cloneElement(icon, {
+              className: cn(
+                "w-4 h-4 flex-shrink-0",
+              )
+            })
+          }
         </div>
       )}
       <h3 className="text-[30px] font-medium ">{value}</h3>
-      <p className="text-[18px] text-gray-900 line-clamp-1">{title}</p>
+      <p className="text-[18px] text-gray-900">{title}</p>
       {subtitle && (
         <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
       )}
