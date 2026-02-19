@@ -208,10 +208,13 @@ export function useChargeCustomer() {
       toast.loading("Initializing payment...", { id: "charge-customer" })
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries({
-        queryKey: ["reports-bookings"],
-      })
-      toast.success("Payment link sent to customer", { id: "charge-customer" })
+      const paymentUrl = data.data?.data?.paymentUrl
+      if (paymentUrl) {
+        toast.dismiss("charge-customer")
+        window.location.href = paymentUrl
+      } else {
+        toast.error("No payment URL received", { id: "charge-customer" })
+      }
     },
     onError: (error: any) => {
       console.error("Failed to charge customer", error)

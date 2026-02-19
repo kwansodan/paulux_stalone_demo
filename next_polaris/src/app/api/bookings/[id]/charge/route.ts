@@ -1,7 +1,6 @@
 import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { paymentProcessingService } from "@/features/payment/server/payment-processing.service";
-import { sendPaymentLinkEmail } from "@/features/booking/emails/send-payment-link-email";
 import { BookingStatus, PaymentStatus } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -39,19 +38,9 @@ export async function POST(
         });
 
         if (paymentResult.success && paymentResult.paymentUrl) {
-            await sendPaymentLinkEmail(
-                booking.clientEmail,
-                booking.clientName,
-                booking.service.name,
-                Number(booking.service.price),
-                paymentResult.paymentUrl,
-                booking.bookingDate,
-                booking.bookingTime
-            );
-
             return NextResponse.json({
                 success: true,
-                message: "Payment link sent to customer",
+                message: "Payment initialized",
                 data: { paymentUrl: paymentResult.paymentUrl }
             });
         } else {
