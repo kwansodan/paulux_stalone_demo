@@ -4,6 +4,10 @@ export const api = axios.create({
   baseURL: "/api",
   withCredentials: true,
 })
+export const publicApi = axios.create({
+  baseURL: "/api",
+  withCredentials: true,
+})
 
 
 

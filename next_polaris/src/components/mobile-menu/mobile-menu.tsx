@@ -16,6 +16,8 @@ export default function MobileMenu({
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
+
+
   return (
     <Dialog.Root open={open} onOpenChange={onOpenChange}>
       <Dialog.Portal>
@@ -28,7 +30,7 @@ export default function MobileMenu({
           )}
         >
           {/* <VisuallyHidden> */}
-            <Dialog.Title className="hiddenn">Mobile Menu</Dialog.Title>
+            <Dialog.Title className="hidden">Mobile Menu</Dialog.Title>
           {/* </VisuallyHidden> */}
           {/* Header */}
           <div className="flex items-center justify-between px-6 pt-6">
@@ -52,8 +54,8 @@ export default function MobileMenu({
 
           {/* Menu Items */}
           <nav className="mt-16 flex flex-col">
-            <MenuItem label="Services" href={customerServicesPath()} />
-            <MenuItem label="Book now" href={customerBookingPath()} />
+            <MenuItem label="Services" href={customerServicesPath()} onClose={() => onOpenChange(false)} />
+            <MenuItem label="Book now" href={customerBookingPath()} onClose={() => onOpenChange(false)}/>
           </nav>
 
           {/* Socials */}
@@ -74,9 +76,9 @@ export default function MobileMenu({
   )
 }
 
-function MenuItem({ label, href }: { label: string; href: string }) {
+function MenuItem({ label, href, onClose }: { label: string; href: string; onClose?: () => void }) {
   return (
-    <Link href={href} className="py-6 px-5 text-[30px] border-b-2 border-gray-800 font-medium text-right">
+    <Link href={href}  onClick={onClose} className="py-6 px-5 text-[30px] border-b-2 border-gray-800 font-medium text-right">
       {label}
     </Link>
   )
