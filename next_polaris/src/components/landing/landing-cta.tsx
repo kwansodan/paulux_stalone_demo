@@ -1,7 +1,7 @@
 'use client'
 
 import { customerBookingPath } from "@/app/paths"
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation' 
 import { Button } from "../ui/button"
 
 export default function LandingCTA() {
