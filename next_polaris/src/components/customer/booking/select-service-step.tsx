@@ -39,13 +39,21 @@ export default function SelectServiceStep({
           <SelectTrigger className="w-full min-h-12 bg-gray-50 border-gray-200 rounded-lg">
             <SelectValue placeholder="Select a service" />
           </SelectTrigger>
-          <SelectContent className="mt-12">
+          <SelectContent className="mt-12 ">
             {services.map((service) => (
               <SelectItem key={service.id} value={service.id} className="uppercase">
-                {service.name} 
+                <div className="flex items-center justify-between w-full gap-4">
+                  <span className="truncate">{service.name}</span>
+                  <span className="bg-gray-300 rounded-full w-1 h-1"/>
+                  <span className=" text-fuchsia-500">
+                    GHS {Number(service.price).toFixed(2)}
+                  </span>
+                </div>
               </SelectItem>
+
             ))}
           </SelectContent>
+
         </Select>
       </div>
 

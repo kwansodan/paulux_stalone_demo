@@ -142,15 +142,22 @@ export class BookingRepository {
   async isSlotAvailable(
     date: Date,
     time: string,
-    serviceId: string,
     excludeBookingId?: string
   ): Promise<boolean> {
     const dateString = date.toISOString().split('T')[0]
-    const existingBooking = await prisma.booking.findFirst({
+    const dayOfWeek = date.getUTCDay()
+
+    // Get capacity for this day
+    const businessHour = await prisma.businessHour.findUnique({
+      where: { dayOfWeek },
+      select: { maxConcurrentBookings: true }
+    })
+
+    if (!businessHour) return false
+    const bookingCount = await prisma.booking.count({
       where: {
         bookingDate: dateString,
         bookingTime: time,
-        serviceId,
         status: {
           in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
         },
@@ -160,7 +167,7 @@ export class BookingRepository {
       },
     })
 
-    return !existingBooking
+    return bookingCount < businessHour.maxConcurrentBookings
   }
 
 

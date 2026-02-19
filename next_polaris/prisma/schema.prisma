@@ -133,6 +133,8 @@ model Booking {
   serviceId String  @db.Uuid
   service   Service @relation(fields: [serviceId], references: [id])
 
+  minDepositPercent Int?
+
   bookingDate String
   bookingTime String
 
@@ -141,7 +143,6 @@ model Booking {
   // paymentStatus PaymentStatus
   // paymentRef    String?
   paymentStatus PaymentStatus @default(PENDING)
-  payments      Payment[]
   googleEventId String?
   cancelReason  String?
 
@@ -163,6 +164,8 @@ model BusinessHour {
   startTime String
   endTime   String
   isOpen    Boolean @default(true)
+
+  maxConcurrentBookings Int @default(4) //should be able to be set??phase 2??
 
   updatedAt DateTime @updatedAt
 

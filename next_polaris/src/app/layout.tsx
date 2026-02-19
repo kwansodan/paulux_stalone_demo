@@ -18,6 +18,9 @@ import { gellix } from "./fonts";
 export const metadata: Metadata = {
   title: "Polaris",
   description: "Bookings and Services App",
+  icons: {
+    icon: '/favicon.ico'
+  }
 };
 
 export default function RootLayout({

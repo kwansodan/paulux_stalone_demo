@@ -16,6 +16,8 @@ export type BookingFormData = {
   email: string
   phone: string
 
+  minDepositPercent?: number
+
   // Step 2: Service
   serviceId: string | null
   service: SerializedService | null

@@ -20,11 +20,11 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const router = useRouter()
   const service = formData.service
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
-    (service?.minDepositPercent || 0) < 100 ? "deposit" : "full"
+    (formData.minDepositPercent || service?.minDepositPercent || 0) < 100 ? "deposit" : "full"
   )
 
   const price = service ? Number(service.price) : 0
-  const depositAmount = price * ((service!.minDepositPercent || 0) / 100)
+  const depositAmount = price * ((formData.minDepositPercent || service!.minDepositPercent || 0) / 100)
 
   const createBookingMutation = useCreateBooking()
 
