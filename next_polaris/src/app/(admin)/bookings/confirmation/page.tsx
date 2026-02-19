@@ -5,10 +5,12 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
+import { useQueryClient } from "@tanstack/react-query"
 
 function ConfirmationContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
+    const queryClient = useQueryClient()
     const reference = searchParams.get("reference") ?? searchParams.get("trxref")
     const [status, setStatus] = useState<"loading" | "success" | "error">("loading")
     const [message, setMessage] = useState("")
@@ -24,6 +26,7 @@ function ConfirmationContent() {
             .then(() => {
                 setStatus("success")
                 setMessage("Payment confirmed successfully.")
+                queryClient.invalidateQueries({ queryKey: ["bookings"] })
             })
             .catch((err) => {
                 // Webhook may have already handled it — treat as success
