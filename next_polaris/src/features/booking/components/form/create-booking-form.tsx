@@ -194,9 +194,9 @@ export default function CreateBookingForm({
           {selectedService && (
             <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600">
               <div className="flex gap-2 items-center ">
-                <p className="font-semibold">Minimum deposit required: </p><span className="text-[20px] text-fuchsia-700 font-semibold">GHS {((minDepositPercent || selectedService.minDepositPercent) / 100) * Number(selectedService?.price)}</span>
+                <p className="font-semibold">Minimum deposit required: </p><span className="text-[20px] text-fuchsia-700 font-semibold">GHS {((Number(minDepositPercent) || selectedService.minDepositPercent) / 100) * Number(selectedService?.price)}</span>
               </div>
-              <p className="font-normal text-sm">{minDepositPercent || selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
+              <p className="font-normal text-sm">{Number(minDepositPercent) || selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
             </div>
           )}
 
