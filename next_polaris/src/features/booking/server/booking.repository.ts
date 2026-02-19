@@ -150,11 +150,15 @@ export class BookingRepository {
       },
     })
 
+    if (!result) {
+      return null
+    }
+
     return {
       ...result,
       service: {
-        ...result?.service,
-        price: result?.service.price.toString() ?? "0"
+        ...result.service,
+        price: result.service.price.toString()
       }
     }
   }
