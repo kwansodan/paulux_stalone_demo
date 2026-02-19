@@ -103,7 +103,7 @@ export default function SelectDayPanel({ selectedDate, user, services, filter }:
         open={isCancelOpen}
         onClose={() => setIsCancelOpen(false)}
         title="Cancel Order?"
-        className="min-w-125 min-h-79"
+        childrenClassName="w-[90vw] max-w-[500px]"
         showSeparator={false}
         subtitle={"Are you sure you want to cancel this order? This action cannot be undone"}
       >

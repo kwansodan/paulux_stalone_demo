@@ -9,10 +9,10 @@ type Props = {
 
 export default function ScheduleList({ bookings }: Props) {
   return (
-    <div className="mt-8 bg-white rounded-xl border p-5">
+    <div className="mt-8 bg-white rounded-xl border p-4 sm:p-5">
 
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="font-semibold">Today&apos;s schedule</h2>
+      <div className="flex flex-row justify-between items-center mb-4 gap-2">
+        <h2 className="font-semibold text-base sm:text-lg">Today&apos;s schedule</h2>
         <ViewAllButton />
       </div>
 

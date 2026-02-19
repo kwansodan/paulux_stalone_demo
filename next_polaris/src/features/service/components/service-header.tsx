@@ -7,10 +7,10 @@ import CreateServiceForm from "./form/create-service-form";
 export default function ServicesHeader() {
   const [open, setOpen] = useState(false)
   return (
-    <div className="mb-6 flex justify-between items-center">
+    <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Services</h1>
-        <p className="text-[16px] text-gray-600">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Services</h1>
+        <p className="text-sm sm:text-[16px] text-gray-600">
           Manage Your Salon Services
         </p>
       </div>

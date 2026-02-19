@@ -38,13 +38,13 @@ export default function BookingsFilters({
   }, [searchInput])
 
   const handleReset = () => {
-    setSearchInput("") 
-    onReset() 
+    setSearchInput("")
+    onReset()
   }
 
 
   return (
-    <div className="flex items-center justify-between gap-2">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <div className="space-y-1">
         <Label className="text-sm font-normal text-foreground">
           Date Range
@@ -67,7 +67,7 @@ export default function BookingsFilters({
         </Label>
         <Input
           type="time"
-          className="h-12 bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg"
+          className="h-12 bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg w-full"
           value={filters.time ?? ""}
           onChange={(e) =>
             onChange({ time: e.target.value || undefined })
@@ -83,7 +83,7 @@ export default function BookingsFilters({
           placeholder="Name, email, phone..."
           value={searchInput}
           onChange={(e) => setSearchInput(e.target.value)}
-          className="h-12 bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg"
+          className="h-12 bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg w-full"
         />
       </div>
 
@@ -96,7 +96,7 @@ export default function BookingsFilters({
           onValueChange={(v) => onChange({ status: v === "all" ? undefined : (v as BookingStatus) })}
 
         >
-          <SelectTrigger className="min-h-12  bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg">
+          <SelectTrigger className="min-h-12  bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg w-full">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent className="mt-12">
@@ -114,7 +114,7 @@ export default function BookingsFilters({
           Payment
         </Label>
         <Select value={filters.paymentStatus} onValueChange={(v) => onChange({ paymentStatus: v === "all" ? undefined : (v as PaymentStatus) })}>
-          <SelectTrigger className="min-h-12  bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg">
+          <SelectTrigger className="min-h-12  bg-gray-50 shadow-none border-[#E2E8F0] rounded-lg w-full">
             <SelectValue placeholder="Payment" />
           </SelectTrigger>
           <SelectContent className="mt-12">
@@ -126,12 +126,8 @@ export default function BookingsFilters({
         </Select>
       </div>
 
-      {activeFilters > 0 && (<div className="space-y-1">
-        <p className="text-sm font-normal text-foreground">
-          Filters
-        </p>
-
-        <Button variant="ghost" className="h-12 p-2" onClick={handleReset}>
+      {activeFilters > 0 && (<div className="flex items-end pb-1">
+        <Button variant="ghost" className="h-10 p-2 text-xs sm:text-sm text-fuchsia-600 hover:text-fuchsia-700 hover:bg-fuchsia-50" onClick={handleReset}>
           {activeFilters} filters ×
         </Button>
       </div>)}

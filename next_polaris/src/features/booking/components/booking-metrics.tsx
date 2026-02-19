@@ -17,23 +17,23 @@ export default function BookingMetrics({
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
         <div>
-          <h1 className="text-2xl font-semibold">Reports</h1>
-          <p className="text-gray-500">Generate and export business reports</p>
+          <h1 className="text-xl sm:text-2xl font-semibold">Reports</h1>
+          <p className="text-sm sm:text-base text-gray-500">Generate and export business reports</p>
         </div>
         <Button
           variant="outline"
-          className="h-12 shadow-none"
+          className="h-11 sm:h-12 shadow-none w-full sm:w-auto flex justify-center"
           onClick={() => exportBookings()}
           disabled={isExporting}
         >
-          {isExporting? <Loader className="h-4 w-4 mr-2 animate-spin" />:<UploadIcon className="h-4 w-4 mr-2" />}
+          {isExporting ? <Loader className="h-4 w-4 mr-2 animate-spin" /> : <UploadIcon className="h-4 w-4 mr-2" />}
           {isExporting ? "Exporting..." : "Export"}
         </Button>
       </div>
 
-      <div className="grid grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard title="Total bookings" value={data.totalBookings} icon={<Users />} />
         <MetricCard title="Cancelled" value={data.cancelled} icon={<XCircle />} />
         <MetricCard title="Unpaid" value={data.unpaid} icon={<Clock />} />

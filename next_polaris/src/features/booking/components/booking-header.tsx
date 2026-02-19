@@ -8,37 +8,37 @@ import { SerializedService } from "@/features/service/types";
 import { User } from "@generated/prisma/client";
 import { BookingFilter } from "./booking-client-shell";
 
-export default function BookingHeader({ 
-  services, 
-  authenticatedUser, 
-  selectedBookingFilter, 
-  setSelectedBookingFilter 
+export default function BookingHeader({
+  services,
+  authenticatedUser,
+  selectedBookingFilter,
+  setSelectedBookingFilter
 }: {
-  services: SerializedService[], 
-  authenticatedUser: User, 
-  selectedBookingFilter: string, 
-  setSelectedBookingFilter: (filter: BookingFilter) => void 
+  services: SerializedService[],
+  authenticatedUser: User,
+  selectedBookingFilter: string,
+  setSelectedBookingFilter: (filter: BookingFilter) => void
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="mb-6 flex justify-between items-center">
+    <div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Bookings</h1>
-        <p className="text-[16px] text-gray-600">
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">Bookings</h1>
+        <p className="text-sm sm:text-[16px] text-gray-600">
           View and manage all appointments
         </p>
       </div>
 
-      <div className="flex gap-3">
+      <div className="flex flex-row sm:flex-row gap-3 w-full sm:w-auto overflow-x-auto sm:overflow-visible pb-2 sm:pb-0">
         <Button
-          className="bg-fuchsia-600 hover:bg-fuchsia-700"
+          className="bg-fuchsia-600 hover:bg-fuchsia-700 whitespace-nowrap"
           onClick={() => setOpen(true)}
         >
           + New booking
         </Button>
 
         <Select value={selectedBookingFilter} onValueChange={setSelectedBookingFilter}>
-          <SelectTrigger className="w-40 shadow-none">
+          <SelectTrigger className="w-40 min-w-[140px] shadow-none">
             <SelectValue placeholder="All bookings" />
           </SelectTrigger>
           <SelectContent className="mt-11 shadow-sm">
