@@ -16,11 +16,11 @@ export default async function AvailabilityPage() {
     <div className='w-full p-6'>
       <AvailabilityPageHeader />
 
-      <div className='w-full flex gap-4'>
-        <div className='w-1/2 min-h-130 max-w-140'>
+      <div className='w-full flex flex-col lg:flex-row gap-6 mt-6'>
+        <div className='w-full lg:w-1/2 min-h-[400px]'>
           <BusinessHoursSection businessHours={businessHours} />
         </div>
-        <div className='w-1/2 min-h-130 max-w-140'>
+        <div className='w-full lg:w-1/2 min-h-[400px]'>
           <BlockedDatesSection blockedDates={blockedDates} />
         </div>
       </div>
