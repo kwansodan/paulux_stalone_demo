@@ -1,12 +1,12 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { Suspense, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { api } from "@/lib/api"
 
-export default function AdminPaymentConfirmationPage() {
+function ConfirmationContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const reference = searchParams.get("reference") ?? searchParams.get("trxref")
@@ -79,5 +79,17 @@ export default function AdminPaymentConfirmationPage() {
                 )}
             </div>
         </div>
+    )
+}
+
+export default function AdminPaymentConfirmationPage() {
+    return (
+        <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <Loader2 className="h-10 w-10 text-fuchsia-500 animate-spin" />
+            </div>
+        }>
+            <ConfirmationContent />
+        </Suspense>
     )
 }
