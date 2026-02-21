@@ -9,17 +9,19 @@ This document outlines the payment gateway configurations for the Polaris applic
 - **Webhook Endpoint**: `/api/paystack/webhook`
 - **Provider Enum**: `PAYSTACK`
 
-## Apps & Mobiles
+## Hubtel
 - **Environment Variables**:
-  - `APPS_AND_MOBILE_EVENT_KEY`: Provided event key for webhook identification.
-  - `APPS_AND_MOBILE_SIGNING_KEY_URL`: key identifier or URL for signature verification.
-- **Webhook Endpoint**: `/api/apps-and-mobiles/webhook`
-- **Provider Enum**: `APPS_AND_MOBILES`
+  - `HUBTEL_CLIENT_ID`: Hubtel API Key Client ID.
+  - `HUBTEL_CLIENT_SECRET`: Hubtel API Key secret.
+  - `HUBTEL_MERCHANT_ACCOUNT`: Merchant ID if required.
+  - `HUBTEL_WEBHOOK_SECRET`: Optional secret header for webhook verifications (`x-hubtel-signature`).
+- **Webhook Endpoint**: `/api/webhooks/hubtel`
+- **Provider Enum**: `HUBTEL`
 
 ## Webhook Security
 All webhooks should implement signature verification to ensure authenticity.
 - Paystack uses the `x-paystack-signature` header.
-- Apps & Mobiles implementation currently has a placeholder for verification; ensure to refine this once the full SDK/docs are available.
+- Hubtel implementation uses an optional custom `x-hubtel-signature` (mapped to `HUBTEL_WEBHOOK_SECRET`) for authenticity, or handles standard Basic Auth depending on your exact configuration. See `src/lib/hubtel.ts`.
 
 ## Implementation Details
 The `PaymentService.processSuccessfulPayment` method handles post-payment logic:

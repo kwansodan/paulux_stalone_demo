@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 
@@ -8,7 +7,7 @@ export class PaymentService {
      * Updates payment status, confirms booking, and syncs to Google Calendar.
      * idempotent: Safe to call multiple times for the same reference.
      */
-    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'APPS_AND_MOBILES' = 'PAYSTACK') {
+    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'HUBTEL' = 'PAYSTACK') {
         console.log(`Processing successful payment for reference: ${reference} via ${provider}`);
 
         // 1. Find the payment record

@@ -7,14 +7,14 @@ export class GatewaySelectionService {
         const metrics = await paymentAllocationService.calculateDailyAllocation(bookingDate)
         const threshold = await gatewayMetricsService.getRoutingThreshold()
 
-        // Rule 3: Edge case: First booking of day → Use Apps & Mobiles
+        // Rule 3: Edge case: First booking of day → Use Hubtel
         if (metrics.totalAmount === 0) {
-            return { gateway: PaymentProvider.APPS_AND_MOBILES, metrics }
+            return { gateway: PaymentProvider.HUBTEL, metrics }
         }
 
-        // Rule 1 & 4: If paystack_percentage ≤ threshold% → Use Apps & Mobiles
+        // Rule 1 & 4: If paystack_percentage ≤ threshold% → Use Hubtel
         if (metrics.paystackPercentage <= threshold) {
-            return { gateway: PaymentProvider.APPS_AND_MOBILES, metrics }
+            return { gateway: PaymentProvider.HUBTEL, metrics }
         }
 
         // Rule 2: Else → Use Paystack
@@ -23,3 +23,4 @@ export class GatewaySelectionService {
 }
 
 export const gatewaySelectionService = new GatewaySelectionService()
+
