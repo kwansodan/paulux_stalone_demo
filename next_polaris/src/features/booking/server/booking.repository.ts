@@ -107,7 +107,14 @@ export class BookingRepository {
       const confirmedBookings = bookings.filter(
         b => b.status === BookingStatus.CONFIRMED
       )
-      const revenue = confirmedBookings.reduce((sum, b) => sum + Number(b.service.price), 0)
+      const revenue = confirmedBookings.reduce((sum, booking) => {
+        const bookingPaymentSum = booking.payments
+          .filter(p => p.status === PaymentStatus.PAID || p.status === PaymentStatus.PARTIAL)
+          .reduce((paymentSum, payment) => paymentSum + Number(payment.amount), 0);
+
+        return sum + bookingPaymentSum;
+      }, 0);
+
       queryResult['revenue'] = revenue
     }
 

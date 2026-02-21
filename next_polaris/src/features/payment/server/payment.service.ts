@@ -1,6 +1,8 @@
 
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { truncate } from "node:fs/promises";
+import { calculatePaymentStatus } from "../utils/helpers";
 
 export class PaymentService {
     /**
@@ -23,6 +25,7 @@ export class PaymentService {
                 booking: {
                     include: {
                         service: true,
+                        payments: true,
                     },
                 },
             },
@@ -54,8 +57,8 @@ export class PaymentService {
         // 3. Update booking status to CONFIRMED if not already
         // We fetch the booking again or use the included one, but we need to update it
         let booking = payment.booking;
-
-        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== 'PAID') {
+        const bookingPaymentStatus = calculatePaymentStatus(booking)
+        if (booking.status !== 'CONFIRMED' || bookingPaymentStatus !== 'PAID') {
             booking = await prisma.booking.update({
                 where: { id: payment.bookingId },
                 data: {
@@ -64,6 +67,7 @@ export class PaymentService {
                 },
                 include: {
                     service: true,
+                    payments: true
                 },
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
@@ -100,7 +104,7 @@ export class PaymentService {
 
         const invoice = await prisma.invoice.findUnique({
             where: { id: invoiceId },
-            include: { booking: { include: { service: true } } }
+            include: { booking: { include: { service: true, payments: true } } }
         });
 
         if (!invoice) throw new Error("Invoice not found");
@@ -129,14 +133,15 @@ export class PaymentService {
 
         // 3. Update booking status to CONFIRMED
         let booking = invoice.booking;
-        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== 'PAID') {
+        const bookingPaymentStatus = calculatePaymentStatus(booking)
+        if (booking.status !== 'CONFIRMED' || bookingPaymentStatus !== 'PAID') {
             booking = await prisma.booking.update({
                 where: { id: invoice.bookingId },
                 data: {
                     status: 'CONFIRMED',
                     paymentStatus: 'PAID',
                 },
-                include: { service: true }
+                include: { service: true, payments: true }
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }

@@ -104,10 +104,15 @@ export class PaymentRepository {
     const startOfWeek = new Date(today)
     startOfWeek.setDate(today.getDate() - today.getDay())
 
-    const [totalDeposits, weeklyRevenue] = await Promise.all([
+    const [totalDepositsToday, weeklyRevenue] = await Promise.all([
       prisma.payment.aggregate({
         _sum: { amount: true },
-        where: { status: PaymentStatus.PAID }
+        where: {
+          createdAt: { gte: startOfDay, lt: endOfDay },
+          status: {
+            in: [PaymentStatus.PAID, PaymentStatus.PARTIAL]
+          }
+        }
       }),
       prisma.payment.aggregate({
         _sum: { amount: true },
@@ -120,49 +125,80 @@ export class PaymentRepository {
 
     const todaysBookings = await prisma.booking.findMany({
       where: {
-        bookingDate: today.toDateString(),
-        status: BookingStatus.CONFIRMED,
+        bookingDate: today.toISOString().split('T')[0],
+        status: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
+        }
       },
       include: { service: true, payments: true }
     })
 
-    const filteredBookings = todaysBookings.filter(booking => {
-      // Check all payments are PAID
-      if (!booking.payments.every(p => p.status === PaymentStatus.PAID)) {
-        return false
-      }
 
-      const minDepositAmount = (booking.service.minDepositPercent / 100) * Number(booking.service.price)
+    // const filteredBookings = todaysBookings.filter(booking => {
+    //   // Check all payments are PAID
+    //   if (!booking.payments.every(p => p.status === PaymentStatus.PAID)) {
+    //     return false
+    //   }
 
-      // Check if any payment meets min deposit amount
-      const anyPaymentMeets = booking.payments.some(p => Number(p.amount) >= minDepositAmount)
+    //   const minDepositAmount = ((booking.minDepositPercent || booking.service.minDepositPercent) / 100) * Number(booking.service.price)
 
-      if (anyPaymentMeets) return true
+    //   // Check if any payment meets min deposit amount
+    //   const anyPaymentMeets = booking.payments.some(p => Number(p.amount) >= minDepositAmount)
 
-      // Otherwise check sum of all payments
-      const sumPayments = booking.payments.reduce((acc, p) => acc + Number(p.amount), 0)
-      return sumPayments >= minDepositAmount
+    //   if (anyPaymentMeets) return true
+
+    //   // Otherwise check sum of all payments
+    //   const sumPayments = booking.payments.reduce((acc, p) => acc + Number(p.amount), 0)
+    //   return sumPayments >= minDepositAmount
+    // })
+
+
+    // Get ALL bookings up to today (for totalBalanceDueToday)
+    const allBookingsUpToToday = await prisma.booking.findMany({
+      where: {
+        bookingDate: {
+          lte: today.toISOString().split('T')[0]  // On or before today
+        },
+        status: {
+          in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.PENDING]
+        }
+      },
+      include: { service: true, payments: true }
     })
 
-    let balanceDueToday = 0
-    let pendingCollections = 0
+    // Calculate totalBalanceDueToday (all unpaid from day 1 till today)
+    let totalBalanceDueToday = 0
 
-    for (const b of filteredBookings) {
-      const deposit = b.payments.reduce((s, p) => s + Number(p.amount), 0)
-      const total = Number(b.service.price)
-      const balance = total - deposit
+    for (const booking of allBookingsUpToToday) {
+      const servicePrice = Number(booking.service.price)
+      const totalPayments = booking.payments
+        .filter(p => p.status !== PaymentStatus.REFUNDED)
+        .reduce((sum, p) => sum + Number(p.amount), 0)
 
-      if (balance > 0) {
-        balanceDueToday += balance
-        pendingCollections++
+      const unpaidBalance = servicePrice - totalPayments
+
+      if (unpaidBalance > 0) {
+        totalBalanceDueToday += unpaidBalance
+      }
+    }
+
+    let todaysPendingCollections = 0
+
+    for (const booking of todaysBookings) {
+      const servicePrice = Number(booking.service.price)
+      const totalPayments = booking.payments.reduce((sum, p) => sum + Number(p.amount), 0)
+      const unpaidBalance = servicePrice - totalPayments
+
+      if (unpaidBalance > 0) {
+        todaysPendingCollections++
       }
     }
 
     return {
-      totalDeposits: Number(totalDeposits._sum.amount ?? 0),
-      totalBalanceDueToday: balanceDueToday,
+      totalDepositsToday: Number(totalDepositsToday._sum.amount ?? 0),
+      totalBalanceDueToday: totalBalanceDueToday,
       thisWeeksRevenue: Number(weeklyRevenue._sum.amount ?? 0),
-      todaysPendingCollections: pendingCollections
+      todaysPendingCollections: todaysPendingCollections
     }
   }
 

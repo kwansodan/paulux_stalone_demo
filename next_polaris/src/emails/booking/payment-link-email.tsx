@@ -1,5 +1,6 @@
 import React from 'react';
-import { Html, Head, Body, Tailwind, Container, Section, Text, Button, Heading } from "@react-email/components"
+import { Html, Head, Body, Tailwind, Container, Section, Text, Button, Heading, Img } from "@react-email/components"
+import { getBaseUrl } from '@/utils/url';
 
 interface PaymentLinkEmailProps {
     customerName: string;
@@ -26,10 +27,12 @@ const PaymentLinkEmail = ({
                     <Container className="bg-white rounded-lg shadow-sm max-w-2xl mx-auto p-8">
                         <Section className="mb-6">
                             <div className="flex items-center gap-3 mb-8">
-                                <div className="w-10 h-10 bg-fuchsia-100 rounded-full flex items-center justify-center">
-                                    <span className="text-fuchsia-600 text-xl font-bold">P</span>
-                                </div>
-                                <Text className="text-xl font-semibold m-0">Polaris</Text>
+                                <Img
+                                    src={getBaseUrl() + "/images/polarisicon.png"}
+                                    alt="Polaris Logo"
+                                    width={100}
+                                    height={50}
+                                />
                             </div>
                         </Section>
 

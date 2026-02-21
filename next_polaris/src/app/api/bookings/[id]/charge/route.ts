@@ -1,7 +1,9 @@
 import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { paymentProcessingService } from "@/features/payment/server/payment-processing.service";
-import { BookingStatus, PaymentStatus } from "@generated/prisma/client";
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers";
+import { BookingStatus, PaymentProvider, PaymentStatus, SupportedCurrency } from "@generated/prisma/client";
+import { Decimal, JsonValue } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(
@@ -22,7 +24,8 @@ export async function POST(
             );
         }
 
-        if (booking.paymentStatus === PaymentStatus.PAID) {
+        const bookingPaymentStatus = calculatePaymentStatus(booking)
+        if (bookingPaymentStatus === PaymentStatus.PAID) {
             return NextResponse.json(
                 { success: false, message: "Booking is already paid" },
                 { status: 400 }
@@ -57,3 +60,4 @@ export async function POST(
         );
     }
 }
+

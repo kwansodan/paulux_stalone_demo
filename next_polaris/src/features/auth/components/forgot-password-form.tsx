@@ -58,57 +58,62 @@ export function PasswordForgotForm() {
   return (
     <div className="w-145 ">
       {step === 1 && (
-        <CardCompact
-          title="Forgot Password"
-          description="Enter email to receive you password reset link"
-          headerIcon={<Sparkles className="w-6 h-6 text-purple-600" />}
-          className="w-full bg-white rounded-3xl border-0 shadow-none max-w-142.5"
-          content={
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Email Field */}
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <div className="space-y-2">
-                      <FormLabel className="text-sm font-normal text-foreground">
-                        Email
-                      </FormLabel>
-                      <Input
-                        placeholder="enter email"
-                        className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
-                        {...field}
-                      />
-                      {form.formState.errors.email && (
-                        <p className="text-red-500 text-sm mt-1">
-                          {form.formState.errors.email.message}
-                        </p>
-                      )}
-                    </div>
+        <div className=" flex-col space-y-4 items-center justify-center bg-gray-100">
+          <div className="w-full flex justify-start">
+            <BackButton href={signInPath()} label='Back to Login' />
+          </div>
+          <CardCompact
+            title="Forgot Password"
+            description="Enter email to receive you password reset link"
+            headerIcon={<Sparkles className="w-6 h-6 text-purple-600" />}
+            className="w-full bg-white rounded-3xl border-0 shadow-none max-w-142.5"
+            content={
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                  {/* Email Field */}
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <div className="space-y-2">
+                        <FormLabel className="text-sm font-normal text-foreground">
+                          Email
+                        </FormLabel>
+                        <Input
+                          placeholder="enter email"
+                          className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+                          {...field}
+                        />
+                        {form.formState.errors.email && (
+                          <p className="text-red-500 text-sm mt-1">
+                            {form.formState.errors.email.message}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  />
+
+
+                  <Button
+                    type="submit"
+                    disabled={forgotPasswordMutation.isPending}
+                    className="w-full h-12 bg-[#A800B7] hover:bg-[#A800B7]/90 text-white rounded-lg font-normal text-base mt-8"
+                  >
+                    {forgotPasswordMutation.isPending ? 'Submittig...' : 'Submit'}
+                  </Button>
+
+                  {forgotPasswordMutation.isError && (
+                    <p className="text-red-500 text-sm text-center">
+                      {isAxiosError(forgotPasswordMutation.error)
+                        ? forgotPasswordMutation.error.response?.data?.message || forgotPasswordMutation.error.message
+                        : "Submission failed. Please check your credentials."}
+                    </p>
                   )}
-                />
-
-
-                <Button
-                  type="submit"
-                  disabled={forgotPasswordMutation.isPending}
-                  className="w-full h-12 bg-[#A800B7] hover:bg-[#A800B7]/90 text-white rounded-lg font-normal text-base mt-8"
-                >
-                  {forgotPasswordMutation.isPending ? 'Submittig...' : 'Submit'}
-                </Button>
-
-                {forgotPasswordMutation.isError && (
-                  <p className="text-red-500 text-sm text-center">
-                    {isAxiosError(forgotPasswordMutation.error)
-                      ? forgotPasswordMutation.error.response?.data?.message || forgotPasswordMutation.error.message
-                      : "Submission failed. Please check your credentials."}
-                  </p>
-                )}
-              </form>
-            </Form>
-          }
-        />)}
+                </form>
+              </Form>
+            }
+          />
+        </div>)}
       {step === 2 && email && (
         <div className=" flex-col items-center justify-center bg-gray-100">
           <div className="w-full flex justify-start">
