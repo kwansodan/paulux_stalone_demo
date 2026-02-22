@@ -4,6 +4,11 @@ services:
     image: postgres:15-alpine
     container_name: polaris_db
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
@@ -34,6 +39,11 @@ services:
         - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
     container_name: polaris_app
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
     env_file: .env
     ports:
       - "3000:3000"
@@ -46,38 +56,10 @@ services:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
 
-  # MinIO Object Storage (S3-compatible)
-  minio:
-    image: minio/minio:latest
-    container_name: polaris_minio
-    restart: unless-stopped
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
-      # Expose MinIO to nginx-proxy if needed, or keep internal/mapped ports
-      # VIRTUAL_HOST=minio.polarisbeauty.biz
-      # VIRTUAL_PORT=9001
-    command: server /data --console-address ":9001"
-    ports:
-      - "9005:9000" # API
-      - "9001:9001" # Console UI
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
-      interval: 30s
-      timeout: 20s
-      retries: 3
-    networks:
-      - polaris_network
-
 volumes:
   postgres_data:
     driver: local
   app_cache:
-    driver: local
-  minio_data:
     driver: local
 
 networks:

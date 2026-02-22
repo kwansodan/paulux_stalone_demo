@@ -128,16 +128,29 @@ export class PaymentService {
 
         // 3. Update booking status to CONFIRMED
         let booking = invoice.booking;
-        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== 'PAID') {
+
+        // Sum total amount paid
+        const allInvoices = await prisma.invoice.findMany({
+            where: {
+                bookingId: invoice.bookingId,
+                status: 'PAID'
+            }
+        });
+        const totalPaid = allInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+        const isFullyPaid = totalPaid >= Number(booking.service.price);
+        const newPaymentStatus = isFullyPaid ? 'PAID' : 'PARTIAL';
+
+        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== newPaymentStatus) {
             booking = await prisma.booking.update({
                 where: { id: invoice.bookingId },
                 data: {
                     status: 'CONFIRMED',
-                    paymentStatus: 'PAID',
+                    paymentStatus: newPaymentStatus,
                 },
                 include: { service: true }
             });
-            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
+            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED with payment status ${newPaymentStatus}`);
         }
 
         // 4. Create Google Calendar Event

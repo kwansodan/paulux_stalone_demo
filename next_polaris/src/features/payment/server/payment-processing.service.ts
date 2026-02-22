@@ -144,7 +144,7 @@ export class PaymentProcessingService {
                 providerResponse = await initializePaystack(
                     email,
                     amountPesewas,
-                    bookingReference,
+                    invoiceNumber, // Pass invoiceNumber instead of bookingReference
                     callbackUrl,
                     'GHS'
                 )
@@ -165,7 +165,7 @@ export class PaymentProcessingService {
             else if (gateway === PaymentProvider.HUBTEL) {
                 providerResponse = await initializeHubtel({
                     amountPesewas,
-                    clientReference: bookingReference,
+                    clientReference: invoiceNumber, // Pass invoiceNumber instead of bookingReference
                     callbackUrl: callbackUrl!,
                     description: `Invoice ${invoiceNumber} payment`
                 })
