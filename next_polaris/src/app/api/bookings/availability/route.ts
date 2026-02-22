@@ -4,7 +4,7 @@ import { blockedDateRepository } from "@/features/blocked-date/server/blockedDat
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { serviceRepository } from "@/features/service/server/service.repository"
 import { isPastSlot } from "@/features/booking/utils/helpers"
-import { requireRoleApi } from "@/app/_auth/require-role-api"
+import { isTime24HoursInAdvance } from "@/utils/helpers"
 
 function addMinutes(time: string, mins: number) {
   const [h, m] = time.split(":").map(Number)
@@ -55,10 +55,11 @@ export async function GET(req: NextRequest) {
 
     if (end <= hours.endTime) {
       const isPast = isPastSlot(dateObj, current)
+      const is24HoursAhead = isTime24HoursInAdvance(dateObj, current)
 
       let available = false
 
-      if (!isPast) {
+      if (!isPast && is24HoursAhead) {
         available = !isPast && await bookingRepository.isSlotAvailable(
           dateObj,
           current

@@ -6,7 +6,7 @@ import { isPastSlot } from "@/features/booking/utils/helpers";
 import { BookingSchema } from "@/features/booking/utils/validation";
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { serviceRepository } from "@/features/service/server/service.repository";
-import { isTimeWithinRange } from "@/utils/helpers";
+import { isTime24HoursInAdvance, isTimeWithinRange } from "@/utils/helpers";
 import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -151,6 +151,17 @@ export async function POST(request: NextRequest) {
     )) {
       return NextResponse.json(
         { success: false, error: "Selected time is already in the past" },
+        { status: 409 }
+      )
+    }
+
+    // Check if booking is at least 24 hours in advance
+    if (!isTime24HoursInAdvance(
+      new Date(validatedBody.bookingDate),
+      validatedBody.bookingTime
+    )) {
+      return NextResponse.json(
+        { success: false, error: "Booking must be made at least 24 hours in advance" },
         { status: 409 }
       )
     }

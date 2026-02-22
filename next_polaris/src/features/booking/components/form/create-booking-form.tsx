@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo } from "react"
+import { getMinBookingDate } from "../../utils/helpers"
 
 
 
@@ -211,7 +212,7 @@ export default function CreateBookingForm({
                 </Label>
                 <Input
                   type="date"
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getMinBookingDate()}
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
                 />

@@ -12,6 +12,12 @@ export function isPastSlot(date: Date, time: string) {
 }
 
 
+export function getMinBookingDate(): string {
+  const now = new Date()
+  const minDate = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+  return minDate.toISOString().split("T")[0]
+}
+
 
 export function formatDate(
   date: string | Date,
