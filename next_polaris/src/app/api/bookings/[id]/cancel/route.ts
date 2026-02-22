@@ -4,6 +4,7 @@ import { CancelBookingSchema } from "@/features/booking/utils/validation"
 import { BookingStatus } from "@generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 import { initiateRefund } from "@/lib/paystack"
+import { inngest } from "@/lib/inngest"
 // import { requireRoleApi } from "@/app/_auth/require-role-api"
 
 export async function POST(
@@ -81,6 +82,13 @@ export async function POST(
 
     // Cancel the booking
     const cancelled = await bookingRepository.cancelBooking(bookingId, reason)
+
+    await inngest.send({
+      name: "app/booking.booking-cancel",
+      data: {
+        bookingId: bookingId
+      }
+    }).then((data) => console.log("BOOKING EVENT SENT", data)).catch((error) => console.log("ERROR SENDING BOOKING EVENT", error))
 
     return NextResponse.json({
       success: true,

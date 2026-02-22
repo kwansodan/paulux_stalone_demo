@@ -9,6 +9,7 @@ import { toast } from "sonner"
 import { useCancelBooking } from "@/features/booking/client/hooks/use-booking"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
 import Modal from "@/components/modal"
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
 type Props = {
   booking: any
@@ -26,10 +27,10 @@ export default function BookingSummary({ booking }: Props) {
 
   const price = booking.service ? Number(booking.service.price) : 0
   const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
-
+  const bookingPaymentStatus = calculatePaymentStatus(booking)
   // Verify payment on mount if reference exists and status is pending
   useEffect(() => {
-    if (reference && booking.paymentStatus === 'PENDING' && !isVerifying) {
+    if (reference && bookingPaymentStatus === 'PENDING' && !isVerifying) {
       const verifyPayment = async () => {
         setIsVerifying(true);
         try {
@@ -55,7 +56,7 @@ export default function BookingSummary({ booking }: Props) {
       };
       verifyPayment();
     }
-  }, [reference, booking.paymentStatus, router, isVerifying]);
+  }, [reference, bookingPaymentStatus, router, isVerifying]);
 
   const handleShare = async () => {
     if (!summaryRef.current) return

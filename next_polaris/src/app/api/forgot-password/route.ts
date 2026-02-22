@@ -24,19 +24,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
     }
 
-
-    console.log("SIGNING KEY:", process.env.INNGEST_SIGNING_KEY);
-    console.log("INNGEST_DEV:", process.env.INNGEST_DEV);
     await inngest.send({
       name: "app/password.password-reset",
       data: {
         userId: user.id
       }
-    }).then((res) => {
-      console.log("INNGEST SEND RESPONSE:", res);
-    }).catch((err) => {
-      console.error("INGGEST SEND ERROR:", err);
-    });
+    })
 
     return NextResponse.json({ success: true, message: "Check Email For Password Link." }, { status: 200 })
 

@@ -3,13 +3,14 @@ import { PaymentGetPayload } from "@generated/prisma/models"
 export enum PaymentStatus {
   PENDING = "PENDING",
   PAID = "PAID",
+  PARTIAL = "PARTIAL",
   REFUNDED = "REFUNDED",
   FAILED = "FAILED",
 }
 
 
 export type PaymentMetrics = {
-  totalDeposits: number
+  totalDepositsToday: number
   totalBalanceDueToday: number
   thisWeeksRevenue: number
   todaysPendingCollections: number
