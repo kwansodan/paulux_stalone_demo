@@ -135,13 +135,14 @@ export class BookingRepository {
       return null
     }
 
-    return {
-      ...result,
-      service: {
-        ...result.service,
-        price: result.service.price.toString()
-      }
-    }
+    return result
+    // return {
+    //   ...result,
+    //   service: {
+    //     ...result.service,
+    //     price: result.service.price.toString()
+    //   }
+    // }
   }
 
   async findByReference(reference: string) {
