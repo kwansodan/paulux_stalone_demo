@@ -6,7 +6,7 @@ type Props = {
 
 export default function ScheduleItem({ booking }: Props) {
   return (
-    <div className="flex items-center justify-between py-3 border-b">
+    <div className="flex items-center justify-between py-3 border-b last:border-b-0">
 
       <div>
         <p className="font-medium">{booking.clientName}</p>

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo } from "react"
+import { getMinBookingDate } from "../../utils/helpers"
 
 
 
@@ -37,11 +38,13 @@ export default function CreateBookingForm({
       serviceId: '',
       bookingDate: '',
       bookingTime: '',
+      minDepositPercent: undefined,
       createdById: user.id,
     }
   })
 
   const date = form.watch("bookingDate")
+  const minDepositPercent = form.watch("minDepositPercent")
   const serviceId = form.watch("serviceId")
   const selectedService = useMemo(() => services?.find((service) => service.id === serviceId), [serviceId])
 
@@ -172,12 +175,29 @@ export default function CreateBookingForm({
             )}
           />
 
+
+          {/* Payment */}
+          <FormField
+            control={form.control}
+            name="minDepositPercent"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label className="text-sm font-normal text-foreground">Minimum deposit (%)</Label>
+                <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} max={100} {...field} />
+                {form.formState.errors.minDepositPercent && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.minDepositPercent.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
           {selectedService && (
             <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600">
               <div className="flex gap-2 items-center ">
-                <p className="font-semibold">Minimum deposit required: </p><span className="text-[20px] text-fuchsia-700 font-semibold">GHS {(selectedService.minDepositPercent / 100) * Number(selectedService?.price)}</span>
+                <p className="font-semibold">Minimum deposit required: </p><span className="text-[20px] text-fuchsia-700 font-semibold">GHS {((Number(minDepositPercent) || selectedService.minDepositPercent) / 100) * Number(selectedService?.price)}</span>
               </div>
-              <p className="font-normal text-sm">{selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
+              <p className="font-normal text-sm">{Number(minDepositPercent) || selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
             </div>
           )}
 
@@ -192,7 +212,7 @@ export default function CreateBookingForm({
                 </Label>
                 <Input
                   type="date"
-                  min={new Date().toISOString().split("T")[0]}
+                  min={getMinBookingDate()}
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
                 />

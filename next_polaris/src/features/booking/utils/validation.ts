@@ -37,6 +37,13 @@ export const BookingInputSchema = z.object({
     .regex(timeRegex, "Time must be HH:mm"),
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
+  minDepositPercent: z
+    .string()
+    .optional()
+    .refine(
+      (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100),
+      "Must be 0–100"
+    ),
   paymentStatus: PaymentStatusEnum.optional(),
 });
 
@@ -44,6 +51,7 @@ export const BookingInputSchema = z.object({
 export const BookingSchema = BookingInputSchema.extend({
   id: z.string().uuid().optional(),
   bookingReference: z.string().optional(),
+  minDepositPercent: z.string().optional(),
   status: BookingStatusEnum.default("PENDING"),
   paymentStatus: PaymentStatusEnum.default("PENDING"),
   paymentRef: z.string().optional().nullable(),

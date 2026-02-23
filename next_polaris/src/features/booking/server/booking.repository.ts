@@ -107,7 +107,14 @@ export class BookingRepository {
       const confirmedBookings = bookings.filter(
         b => b.status === BookingStatus.CONFIRMED
       )
-      const revenue = confirmedBookings.reduce((sum, b) => sum + Number(b.service.price), 0)
+      const revenue = confirmedBookings.reduce((sum, booking) => {
+        const bookingPaymentSum = booking.payments
+          .filter(p => p.status === PaymentStatus.PAID || p.status === PaymentStatus.PARTIAL)
+          .reduce((paymentSum, payment) => paymentSum + Number(payment.amount), 0);
+
+        return sum + bookingPaymentSum;
+      }, 0);
+
       queryResult['revenue'] = revenue
     }
 
@@ -128,13 +135,14 @@ export class BookingRepository {
       return null
     }
 
-    return {
-      ...result,
-      service: {
-        ...result.service,
-        price: result.service.price.toString()
-      }
-    }
+    return result
+    // return {
+    //   ...result,
+    //   service: {
+    //     ...result.service,
+    //     price: result.service.price.toString()
+    //   }
+    // }
   }
 
   async findByReference(reference: string) {
@@ -149,15 +157,22 @@ export class BookingRepository {
   async isSlotAvailable(
     date: Date,
     time: string,
-    serviceId: string,
     excludeBookingId?: string
   ): Promise<boolean> {
     const dateString = date.toISOString().split('T')[0]
-    const existingBooking = await prisma.booking.findFirst({
+    const dayOfWeek = date.getUTCDay()
+
+    // Get capacity for this day
+    const businessHour = await prisma.businessHour.findUnique({
+      where: { dayOfWeek },
+      select: { maxConcurrentBookings: true }
+    })
+
+    if (!businessHour) return false
+    const bookingCount = await prisma.booking.count({
       where: {
         bookingDate: dateString,
         bookingTime: time,
-        serviceId,
         status: {
           in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
         },
@@ -167,7 +182,7 @@ export class BookingRepository {
       },
     })
 
-    return !existingBooking
+    return bookingCount < businessHour.maxConcurrentBookings
   }
 
 

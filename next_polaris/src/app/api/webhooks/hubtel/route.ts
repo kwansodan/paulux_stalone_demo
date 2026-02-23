@@ -4,6 +4,7 @@ import { paymentService } from "@/features/payment/server/payment.service";
 import { auditLogService } from "@/features/payment/server/audit-log.service";
 import { InvoiceStatus } from "@generated/prisma/client";
 import { verifyWebhook } from "@/lib/hubtel";
+import { inngest } from "@/lib/inngest";
 
 export async function POST(req: NextRequest) {
     try {
@@ -59,6 +60,17 @@ export async function POST(req: NextRequest) {
                 bookingId: invoice.bookingId,
                 newValue: { status: InvoiceStatus.PAID },
                 metadata: { trans_id: transactionId },
+            });
+
+            // Notify all admins
+            const amountPaid = Data.Amount ?? 0;
+            await inngest.send({
+                name: "app/payment.payment-received",
+                data: {
+                    bookingId: invoice.bookingId,
+                    amountPaid: Number(amountPaid),
+                    provider: "HUBTEL",
+                },
             });
 
             console.log(`Successfully processed Hubtel payment for ${reference}`);

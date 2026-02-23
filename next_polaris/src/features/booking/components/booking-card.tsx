@@ -11,6 +11,7 @@ import { BookingWithService } from "../types"
 import { formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer } from "../client/hooks/use-booking"
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
 type BookingCardProps = {
   booking: BookingWithService
@@ -22,6 +23,7 @@ type BookingCardProps = {
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
+  const bookingPaymentStatus = calculatePaymentStatus(booking)
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
 
@@ -39,12 +41,12 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             <span>{booking.status}</span>
           </div>
           <div className={`px-2 py-0.5 flex justify-center items-center rounded-full text-[10px] font-medium leading-tight
-              ${booking.paymentStatus === "PAID" && "border bg-emerald-50 text-emerald-800 border-emerald-800"}
-              ${booking.paymentStatus === "PARTIAL" && "border bg-sky-50 text-sky-700 border-sky-700"}
-              ${booking.paymentStatus === "PENDING" && "border bg-orange-50 text-orange-700 border-orange-700"}
-              ${booking.paymentStatus === "FAILED" && "border bg-rose-50 text-rose-700 border-rose-700"}
+              ${bookingPaymentStatus === "PAID" && "border bg-emerald-50 text-emerald-800 border-emerald-800"}
+              ${bookingPaymentStatus === "PARTIAL" && "border bg-sky-50 text-sky-700 border-sky-700"}
+              ${bookingPaymentStatus === "PENDING" && "border bg-orange-50 text-orange-700 border-orange-700"}
+              ${bookingPaymentStatus === "FAILED" && "border bg-rose-50 text-rose-700 border-rose-700"}
             `}>
-            <span>{booking.paymentStatus}</span>
+            <span>{bookingPaymentStatus}</span>
           </div>
         </div>
         <p className="font-medium text-sm text-gray-900">{booking.clientName}</p>
@@ -70,21 +72,23 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
               <span className="w-full">Edit</span>
             </DropdownMenuItem>
           )}
-          {booking.status !== 'COMPLETED' && (<DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
+          {!['CANCELLED', 'COMPLETED', 'PENDING'].includes(booking.status) && (<DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
             <CircleCheck className="text-green-600" />
             <span className="w-full">Mark as completed</span>
           </DropdownMenuItem>)}
-          {booking.paymentStatus !== 'PAID' && (
+
+          {bookingPaymentStatus !== 'PAID' && (!booking.payments?.length || booking.payments.some(p => p.status === 'PENDING')) && (
             <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
             </DropdownMenuItem>
           )}
-          <DropdownMenuItem onClick={() => onCancel(booking.id)} className="flex gap-2 text-red-600">
-            <CircleX className="text-red-600" />
-            <span className="w-full">Cancel order</span>
-
-          </DropdownMenuItem>
+          {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (
+            <DropdownMenuItem onClick={() => onCancel(booking.id)} className="flex gap-2 text-red-600">
+              <CircleX className="text-red-600" />
+              <span className="w-full">Cancel order</span>
+            </DropdownMenuItem>
+          )}
         </DropdownMenuContent>
       </DropdownMenu>
 

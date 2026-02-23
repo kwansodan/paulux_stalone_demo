@@ -2,7 +2,7 @@
 
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { CancelBookingInput, CancelBookingSchema } from "@/features/booking/utils/validation"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
@@ -26,10 +26,14 @@ export default function CancelBookingForm({
     resolver: zodResolver(CancelBookingSchema),
     defaultValues: { reason: "" },
   })
+  const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: (data: CancelBookingInput) => cancelBooking(booking.id, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["bookings", booking.bookingDate],
+      })
       toast("Booking cancelled!!")
       onSuccess()
     },

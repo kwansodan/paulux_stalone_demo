@@ -156,11 +156,11 @@ export function useMarkAsCompleted() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.bookingDate, data.data.serviceId],
+        queryKey: ["slots", data.data.data.bookingDate, data.data.data.serviceId],
       })
 
       queryClient.invalidateQueries({
-        queryKey: ["bookings", data.data.bookingDate],
+        queryKey: ["bookings", data.data.data.bookingDate],
       })
 
       // console.log('Successfully created Booking', data)
@@ -183,11 +183,11 @@ export function useCancelBooking() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.bookingDate, data.data.serviceId],
+        queryKey: ["slots", data.data.data.booking.bookingDate, data.data.data.serviceId],
       })
 
       queryClient.invalidateQueries({
-        queryKey: ["bookings", data.data.bookingDate],
+        queryKey: ["bookings", data.data.data.booking.bookingDate],
       })
 
       // console.log('Successfully created Booking', data)

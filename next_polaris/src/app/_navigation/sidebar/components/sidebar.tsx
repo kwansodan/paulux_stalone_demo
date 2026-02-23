@@ -8,10 +8,11 @@ import { SidebarItem } from './sidebar-item'
 import { NavItem } from '../types'
 import { navItems } from '../constants'
 import { usePathname } from 'next/navigation'
-import { signInPath } from '@/app/paths'
+import { dashboardPath, signInPath } from '@/app/paths'
 import Modal from '@/components/modal'
 import { Button } from '@/components/ui/button'
 import { useSignout } from '@/features/auth/client/hooks/use-sign-out'
+import Link from 'next/link'
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(true)
@@ -40,13 +41,15 @@ const Sidebar = () => {
               <Menu className="w-5 h-5" />
             </button>
 
-            <Image
-              src="/images/polarisicon.png"
-              alt="Company Logo"
-              width={100}
-              height={50}
-              priority
-            />
+            <Link href={dashboardPath()}>
+              <Image
+                src="/images/polarisicon.png"
+                alt="Company Logo"
+                width={100}
+                height={50}
+                priority
+              />
+            </Link>
             {/* <div className="flex items-center gap-2">
               <span className="font-semibold text-xl text-gray-900">PolarisBooking</span>
             </div> */}

@@ -26,9 +26,17 @@ export async function GET(
 
     const booking = await bookingRepository.findById(bookingId);
 
+    const bookingForResponse = {
+      ...booking,
+      service: {
+        ...booking!.service,
+        price: booking!.service.price.toString()
+      }
+    }
+
     return NextResponse.json({
       success: true,
-      data: booking
+      data: bookingForResponse
     }, { status: 200 })
 
   } catch (error) {

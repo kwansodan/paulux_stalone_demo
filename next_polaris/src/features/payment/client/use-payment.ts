@@ -27,7 +27,7 @@ export function usePaymentMetrics(initial: PaymentMetrics) {
     },
     initialData: initial,
     select: (data) => ({
-      totalDeposits: Number(data.totalDeposits) || 0,
+      totalDepositsToday: Number(data.totalDepositsToday) || 0,
       totalBalanceDueToday: Number(data.totalBalanceDueToday) || 0,
       thisWeeksRevenue: Number(data.thisWeeksRevenue) || 0,
       todaysPendingCollections: Number(data.todaysPendingCollections) || 0,
