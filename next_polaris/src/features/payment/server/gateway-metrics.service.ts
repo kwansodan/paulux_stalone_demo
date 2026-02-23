@@ -7,7 +7,7 @@ export interface GatewayMetrics {
         percentage: number;
         lastWebhookAt: Date | null;
     };
-    appsAndMobiles: {
+    hubtel: {
         totalAmount: number;
         percentage: number;
         lastWebhookAt: Date | null;
@@ -26,7 +26,7 @@ export class GatewayMetricsService {
             by: ['gateway'],
             where: {
                 status: InvoiceStatus.PAID,
-                gateway: { in: [PaymentProvider.PAYSTACK, PaymentProvider.APPS_AND_MOBILES] }
+                gateway: { in: [PaymentProvider.PAYSTACK, PaymentProvider.HUBTEL] }
             },
             _sum: {
                 amount: true
@@ -34,7 +34,7 @@ export class GatewayMetricsService {
         });
 
         const paystackSum = Number(totals.find(t => t.gateway === PaymentProvider.PAYSTACK)?._sum.amount || 0);
-        const amSum = Number(totals.find(t => t.gateway === PaymentProvider.APPS_AND_MOBILES)?._sum.amount || 0);
+        const amSum = Number(totals.find(t => t.gateway === PaymentProvider.HUBTEL)?._sum.amount || 0);
         const totalAmount = paystackSum + amSum;
 
         // 2. Get last webhook timestamps
@@ -55,7 +55,7 @@ export class GatewayMetricsService {
                 action: "WEBHOOK_RECEIVED",
                 metadata: {
                     path: ['provider'],
-                    equals: 'APPS_AND_MOBILES'
+                    equals: 'HUBTEL'
                 }
             },
             orderBy: { createdAt: 'desc' },
@@ -74,7 +74,7 @@ export class GatewayMetricsService {
                 percentage: totalAmount > 0 ? (paystackSum / totalAmount) * 100 : 0,
                 lastWebhookAt: lastPaystackWebhook?.createdAt || null
             },
-            appsAndMobiles: {
+            hubtel: {
                 totalAmount: amSum,
                 percentage: totalAmount > 0 ? (amSum / totalAmount) * 100 : 0,
                 lastWebhookAt: lastAMWebhook?.createdAt || null
@@ -108,3 +108,4 @@ export class GatewayMetricsService {
 }
 
 export const gatewayMetricsService = new GatewayMetricsService();
+

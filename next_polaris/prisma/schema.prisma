@@ -99,7 +99,7 @@ model Service {
 
 enum PaymentProvider {
   PAYSTACK
-  APPS_AND_MOBILES
+  HUBTEL
   MANUAL
 }
 

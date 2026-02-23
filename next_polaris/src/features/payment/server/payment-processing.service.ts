@@ -2,7 +2,7 @@ import { invoiceService } from "@/features/invoice/server/invoice.service"
 import { auditLogService } from "./audit-log.service"
 import { gatewaySelectionService } from "./gateway-selection.service"
 import { initializeTransaction as initializePaystack } from "@/lib/paystack"
-import { initializeAppsAndMobilesTransaction as initializeAM } from "@/lib/apps-and-mobiles"
+import { initializeOnlineCheckout as initializeHubtel } from "@/lib/hubtel"
 import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
 
 export interface InitializePaymentDTO {
@@ -19,7 +19,7 @@ export class PaymentProcessingService {
     async initializePayment(data: InitializePaymentDTO & { forcedGateway?: PaymentProvider }) {
         const { bookingId, email, amount, bookingReference, callbackUrl, forcedGateway, parentInvoiceId, transactionType } = data
 
-        // 1. Select initial gateway
+        // STEP 1 — Select gateway (automatic or forced)
         let gateway: PaymentProvider
         let metrics: any = null
 
@@ -31,7 +31,7 @@ export class PaymentProcessingService {
             metrics = selection.metrics
         }
 
-        // 2. Create Invoice record (status: 'PENDING')
+        // STEP 2 — Create invoice (always BEFORE calling payment provider)
         const invoiceNumber = `INV-${Date.now()}`
         const invoice = await invoiceService.createInvoice({
             bookingId,
@@ -43,12 +43,14 @@ export class PaymentProcessingService {
             transactionType
         })
 
-        await invoiceService.updateInvoiceStatus(invoice.id, InvoiceStatus.PENDING,
+        await invoiceService.updateInvoiceStatus(
+            invoice.id,
+            InvoiceStatus.PENDING,
             { gateway },
             { selectionMetrics: metrics }
         )
 
-        // 3. Try to initialize with retries and failover
+        // STEP 3 — Initialize payment with retry + failover
         return this.initializeWithResilience(gateway, {
             invoiceId: invoice.id,
             bookingId,
@@ -61,12 +63,14 @@ export class PaymentProcessingService {
         })
     }
 
+    /**
+     * Handles retries and gateway failover
+     */
     private async initializeWithResilience(gateway: PaymentProvider, details: any) {
-        // Attempt 1, 2 (2s delay), 3 (5s delay)
         const retryDelays = [0, 2000, 5000]
         let lastError: any = null
 
-        // --- RETRY LOOP ---
+        // RETRY LOOP
         for (let i = 0; i < retryDelays.length; i++) {
             if (retryDelays[i] > 0) {
                 console.log(`Retrying initialization with ${gateway} in ${retryDelays[i]}ms (Attempt ${i + 1})...`)
@@ -79,12 +83,12 @@ export class PaymentProcessingService {
             lastError = result.message
         }
 
-        // --- FAILOVER LOGIC ---
-        // Only failover if it's not a subsequent payment (top-up) and we have an alternate gateway
+        // FAILOVER LOGIC (only for first payments, not top-ups)
         if (!details.isSubsequent) {
-            const alternateGateway = gateway === PaymentProvider.PAYSTACK
-                ? PaymentProvider.APPS_AND_MOBILES
-                : PaymentProvider.PAYSTACK
+            const alternateGateway =
+                gateway === PaymentProvider.PAYSTACK
+                    ? PaymentProvider.HUBTEL
+                    : PaymentProvider.PAYSTACK
 
             console.warn(`All retry attempts failed for ${gateway}. Attempting failover to ${alternateGateway}...`)
 
@@ -96,10 +100,10 @@ export class PaymentProcessingService {
                 metadata: { error: lastError }
             })
 
-            // Update invoice with new gateway
+            // Update invoice to new gateway
             await invoiceService.updateInvoiceStatus(details.invoiceId, InvoiceStatus.PENDING, { gateway: alternateGateway })
 
-            // Try initialization with alternate gateway (one attempt only for simplicity)
+            // Single attempt on failover gateway
             return this.initializeGatewayTransaction(alternateGateway, details)
         }
 
@@ -109,43 +113,71 @@ export class PaymentProcessingService {
         }
     }
 
-    private async initializeGatewayTransaction(gateway: PaymentProvider, details: {
-        invoiceId: string,
-        bookingId: string,
-        email: string,
-        amount: number,
-        bookingReference: string,
-        callbackUrl?: string,
-        invoiceNumber: string
-    }) {
+    /**
+     * Initializes payment with the selected gateway
+     */
+    private async initializeGatewayTransaction(
+        gateway: PaymentProvider,
+        details: {
+            invoiceId: string,
+            bookingId: string,
+            email: string,
+            amount: number,
+            bookingReference: string,
+            callbackUrl?: string,
+            invoiceNumber: string
+        }
+    ) {
         const { invoiceId, bookingId, email, amount, bookingReference, callbackUrl, invoiceNumber } = details
 
         try {
             let paymentUrl = ""
             let providerResponse: any = null
 
+            // Convert GHS → pesewas once
+            const amountPesewas = Math.round(amount * 100)
+
+            /**
+             * PAYSTACK FLOW
+             */
             if (gateway === PaymentProvider.PAYSTACK) {
-                const amountPesewas = Math.round(amount * 100)
                 providerResponse = await initializePaystack(
                     email,
                     amountPesewas,
-                    bookingReference,
+                    invoiceNumber, // Pass invoiceNumber instead of bookingReference
                     callbackUrl,
                     'GHS'
                 )
+
                 paymentUrl = providerResponse.data.authorization_url
-            } else {
-                const amountPesewas = Math.round(amount * 100)
-                providerResponse = await initializeAM(
-                    email,
-                    amountPesewas,
-                    bookingReference,
-                    callbackUrl
-                )
-                paymentUrl = providerResponse.data.payment_url
             }
 
-            // Log success
+            /**
+             * HUBTEL FLOW (replaces Apps & Mobiles)
+             *
+             * Hubtel requires:
+             * - amount in pesewas
+             * - clientReference (your booking reference)
+             * - callback URL for webhook
+             *
+             * Returns a paylink for redirect.
+             */
+            else if (gateway === PaymentProvider.HUBTEL) {
+                providerResponse = await initializeHubtel({
+                    amountPesewas,
+                    clientReference: invoiceNumber, // Pass invoiceNumber instead of bookingReference
+                    callbackUrl: callbackUrl!,
+                    description: `Invoice ${invoiceNumber} payment`
+                })
+
+                if (!providerResponse.success) {
+                    throw new Error(providerResponse.message || "Hubtel initialization failed")
+                }
+
+                paymentUrl = providerResponse.paylinkUrl!
+            }
+
+            // AUDIT LOG — successful initialization
             await auditLogService.logAction({
                 action: "PAYMENT_INITIALIZED",
                 invoiceId,
@@ -162,7 +194,6 @@ export class PaymentProcessingService {
             }
 
         } catch (error: any) {
-            // Log partial failure for retries
             console.error(`Attempt failed for ${gateway}:`, error.message)
 
             await auditLogService.logAction({

@@ -3,9 +3,9 @@ import { InvoiceStatus, PaymentProvider } from "@generated/prisma/client"
 
 export interface AllocationMetrics {
     paystackTotal: number
-    appsAndMobilesTotal: number
+    hubtelTotal: number
     paystackPercentage: number
-    appsAndMobilesPercentage: number
+    hubtelPercentage: number
     totalAmount: number
 }
 
@@ -32,29 +32,30 @@ export class PaymentAllocationService {
         })
 
         let paystackTotal = 0
-        let appsAndMobilesTotal = 0
+        let hubtelTotal = 0
 
         invoices.forEach((invoice) => {
             const amount = Number(invoice.amount)
             if (invoice.gateway === PaymentProvider.PAYSTACK) {
                 paystackTotal += amount
-            } else if (invoice.gateway === PaymentProvider.APPS_AND_MOBILES) {
-                appsAndMobilesTotal += amount
+            } else if (invoice.gateway === PaymentProvider.HUBTEL) {
+                hubtelTotal += amount
             }
         })
 
-        const totalAmount = paystackTotal + appsAndMobilesTotal
+        const totalAmount = paystackTotal + hubtelTotal
         const paystackPercentage = totalAmount > 0 ? (paystackTotal / totalAmount) * 100 : 0
-        const appsAndMobilesPercentage = totalAmount > 0 ? (appsAndMobilesTotal / totalAmount) * 100 : 0
+        const hubtelPercentage = totalAmount > 0 ? (hubtelTotal / totalAmount) * 100 : 0
 
         return {
             paystackTotal,
-            appsAndMobilesTotal,
+            hubtelTotal,
             paystackPercentage,
-            appsAndMobilesPercentage,
+            hubtelPercentage,
             totalAmount,
         }
     }
 }
 
 export const paymentAllocationService = new PaymentAllocationService()
+

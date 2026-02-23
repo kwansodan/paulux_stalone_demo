@@ -1,4 +1,3 @@
-
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { truncate } from "node:fs/promises";
@@ -10,7 +9,7 @@ export class PaymentService {
      * Updates payment status, confirms booking, and syncs to Google Calendar.
      * idempotent: Safe to call multiple times for the same reference.
      */
-    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'APPS_AND_MOBILES' = 'PAYSTACK') {
+    async processSuccessfulPayment(reference: string, data: any, provider: 'PAYSTACK' | 'HUBTEL' = 'PAYSTACK') {
         console.log(`Processing successful payment for reference: ${reference} via ${provider}`);
 
         // 1. Find the payment record
@@ -133,17 +132,29 @@ export class PaymentService {
 
         // 3. Update booking status to CONFIRMED
         let booking = invoice.booking;
-        const bookingPaymentStatus = calculatePaymentStatus(booking)
-        if (booking.status !== 'CONFIRMED' || bookingPaymentStatus !== 'PAID') {
+
+        // Sum total amount paid
+        const allInvoices = await prisma.invoice.findMany({
+            where: {
+                bookingId: invoice.bookingId,
+                status: 'PAID'
+            }
+        });
+        const totalPaid = allInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+        const isFullyPaid = totalPaid >= Number(booking.service.price);
+        const newPaymentStatus = isFullyPaid ? 'PAID' : 'PARTIAL';
+
+        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== newPaymentStatus) {
             booking = await prisma.booking.update({
                 where: { id: invoice.bookingId },
                 data: {
                     status: 'CONFIRMED',
-                    paymentStatus: 'PAID',
+                    paymentStatus: newPaymentStatus,
                 },
                 include: { service: true, payments: true }
             });
-            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
+            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED with payment status ${newPaymentStatus}`);
         }
 
         // 4. Create Google Calendar Event

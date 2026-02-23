@@ -1,10 +1,12 @@
 import { BookingCancelEventArgs } from "@/features/auth/events/event-booking-cancel";
 import { PasswordResetEventArgs } from "@/features/auth/events/event-password-reset";
+import { PaymentReceivedEventArgs } from "@/features/payment/events/event-payment-received";
 import { EventSchemas, Inngest } from "inngest";
 
 type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
+  "app/payment.payment-received": PaymentReceivedEventArgs;
 };
 
 // Create a client to send and receive events
