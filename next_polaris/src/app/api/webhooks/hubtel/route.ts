@@ -19,16 +19,91 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Invalid signature" }, { status: 401 });
         }
 
-        const { ResponseCode, Data } = payload;
+        const { ResponseCode, responseCode, Data, data, Status, status } = payload;
+        const code = ResponseCode || responseCode;
+        const isSuccess = code === "0000" || Status === "Success" || status === "Successful";
 
-        if (!Data) {
-            return NextResponse.json({ message: "Invalid payload format" }, { status: 400 });
+        // 1. Distinguish between Payment and Refund callback
+        // Payment has Data.ClientReference, Refund has data.orderId
+        const isRefund = !!(data && data.orderId && !Data);
+
+        if (isRefund) {
+            console.log(`Received Hubtel Refund webhook: orderId=${data.orderId}, code=${code}`);
+
+            // 1. Find the payment associated with this orderId
+            // The orderId from Hubtel matches our providerRef (TransactionId/CheckoutId)
+            const payment = await prisma.payment.findFirst({
+                where: {
+                    provider: 'HUBTEL',
+                    providerRef: data.orderId
+                },
+                include: { booking: true }
+            });
+
+            if (!payment) {
+                console.error(`Payment not found for Hubtel refund orderId: ${data.orderId}`);
+                return NextResponse.json({ message: "Payment not found" }, { status: 404 });
+            }
+
+            // IDEMPOTENCY CHECK: If already refunded, just return OK
+            if (payment.status === 'REFUNDED') {
+                console.log(`Refund for orderId ${data.orderId} already processed. Skipping.`);
+                return NextResponse.json({ message: "Already processed" }, { status: 200 });
+            }
+
+            // 2. Log refund callback
+            await auditLogService.logAction({
+                action: "REFUND_CALLBACK_RECEIVED",
+                bookingId: payment.bookingId,
+                metadata: { provider: "HUBTEL", body: payload },
+            });
+
+            if (code === "0000" || code === "000" || status === "Successful") {
+                // SUCCESS REFUND
+                await prisma.$transaction([
+                    // Update payment status
+                    prisma.payment.update({
+                        where: { id: payment.id },
+                        data: { status: 'REFUNDED' }
+                    }),
+                    // Update booking payment status (if this was the only payment or we want to show it's partially refunded)
+                    // For simplicity, we just set to REFUNDED if this payment is refunded.
+                    // A more robust approach would recalculate based on remaining PAID payments.
+                    prisma.booking.update({
+                        where: { id: payment.bookingId },
+                        data: { paymentStatus: 'REFUNDED' }
+                    })
+                ]);
+
+                await auditLogService.logAction({
+                    action: "REFUND_COMPLETED",
+                    bookingId: payment.bookingId,
+                    newValue: { status: "REFUNDED" },
+                    metadata: { orderId: data.orderId }
+                });
+
+                console.log(`Successfully processed refund for orderId: ${data.orderId}`);
+            } else {
+                // FAILED REFUND
+                console.warn(`Refund failed for orderId: ${data.orderId}. Code: ${code}`);
+                await auditLogService.logAction({
+                    action: "REFUND_FAILED",
+                    bookingId: payment.bookingId,
+                    metadata: { code, message: payload.message || payload.Message }
+                });
+            }
+
+            return NextResponse.json({ message: "Refund callback processed" }, { status: 200 });
         }
 
-        const reference = Data.ClientReference;
-        const transactionId = Data.TransactionId;
+        const reference = Data?.ClientReference;
+        const transactionId = Data?.CheckoutId || Data?.TransactionId;
 
-        console.log(`Received Hubtel webhook: reference=${reference}, status=${ResponseCode}`);
+        if (!reference) {
+            return NextResponse.json({ message: "Invalid payload: missing reference" }, { status: 400 });
+        }
+
+        console.log(`Received Hubtel payment webhook: reference=${reference}, status=${code}`);
 
         // 2. Find the invoice
         const invoice = await prisma.invoice.findUnique({
@@ -41,6 +116,12 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: "Invoice not found" }, { status: 404 });
         }
 
+        // IDEMPOTENCY CHECK: If already paid, just return OK
+        if (invoice.status === InvoiceStatus.PAID) {
+            console.log(`Invoice ${reference} already marked as PAID. Skipping.`);
+            return NextResponse.json({ message: "Already processed" }, { status: 200 });
+        }
+
         // 3. Log the webhook receipt
         await auditLogService.logAction({
             action: "WEBHOOK_RECEIVED",
@@ -49,10 +130,13 @@ export async function POST(req: NextRequest) {
             metadata: { provider: "HUBTEL", body: payload },
         });
 
-        // 4. Handle status update based on ResponseCode
-        if (ResponseCode === "0000") {
+        // 4. Handle status update
+        if (isSuccess) {
             // SUCCESS PAYMENT
             await paymentService.confirmInvoicePayment(invoice.id, transactionId || reference, payload);
+
+            // ... (rest of the logic remains same)
+
 
             await auditLogService.logAction({
                 action: "PAYMENT_COMPLETED",
@@ -74,6 +158,7 @@ export async function POST(req: NextRequest) {
             });
 
             console.log(`Successfully processed Hubtel payment for ${reference}`);
+
         } else {
             // FAILED OR PENDING PAYMENT
             await prisma.invoice.update({
