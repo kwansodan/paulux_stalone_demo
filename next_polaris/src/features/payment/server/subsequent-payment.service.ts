@@ -113,9 +113,10 @@ export class SubsequentPaymentService {
          * - amount in GHS (decimal string)
          */
         else if (originalInvoice.gateway === PaymentProvider.HUBTEL) {
+            const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel/refund`;
             refundResponse = await refundHubtel(
                 payment.providerRef,
-                amount // Hubtel expects GHS, NOT pesewas
+                callbackUrl // Hubtel's refundTransaction helper expects a callbackUrl string
             )
         }
 
