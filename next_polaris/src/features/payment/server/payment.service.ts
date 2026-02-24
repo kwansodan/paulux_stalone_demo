@@ -174,6 +174,61 @@ export class PaymentService {
 
         return { success: true, invoice: updatedInvoice, booking, payment };
     }
+
+    /**
+     * Initiates a refund for a specific payment via Hubtel.
+     */
+    async initiateRefund(paymentId: string, callbackUrl: string) {
+        console.log(`Initiating refund for payment: ${paymentId}`);
+
+        // 1. Fetch payment with booking details
+        const payment = await prisma.payment.findUnique({
+            where: { id: paymentId },
+            include: { booking: true }
+        });
+
+        if (!payment) throw new Error("Payment not found");
+        if (payment.provider !== 'HUBTEL') throw new Error("Refunds are only supported for Hubtel payments via this API.");
+        if (payment.status !== 'PAID') throw new Error("Only fully paid payments can be refunded.");
+
+        // 2. SAFEGUARD: Check 45-day limit
+        const now = new Date();
+        const paymentDate = new Date(payment.createdAt);
+        const diffInDays = (now.getTime() - paymentDate.getTime()) / (1000 * 3600 * 24);
+
+        if (diffInDays > 45) {
+            throw new Error("Refunds via API are only supported for transactions made within the last 45 days. Please contact Hubtel support for older transactions.");
+        }
+
+        // 3. SAFEGUARD: Check if amount is >= 1 GHS (Hubtel requirement)
+        if (Number(payment.amount) < 1) {
+            throw new Error("Refund cannot be processed - order amount is less than 1 GHS.");
+        }
+
+        // 4. Retrieve Hubtel Order ID
+        // In Hubtel payment callbacks, Data.TransactionId or Data.CheckoutId usually acts as the orderId.
+        // We store the webhook payload in rawPayload.success_processing.data
+        const rawData = (payment.rawPayload as any)?.success_processing?.data;
+        const orderId = rawData?.Data?.CheckoutId || rawData?.Data?.TransactionId || payment.providerRef;
+
+        if (!orderId) throw new Error("Hubtel Order ID (transaction ID) not found for this payment.");
+
+        // 5. Call Hubtel Refund API
+        const { refundTransaction } = await import("@/lib/hubtel");
+        const result = await refundTransaction(orderId, callbackUrl);
+
+        // 6. Log the initiation
+        await prisma.paymentAuditLog.create({
+            data: {
+                bookingId: payment.bookingId,
+                action: "REFUND_INITIATED",
+                newValue: { status: "REFUND_PENDING", orderId },
+                metadata: { paymentId: payment.id, hubtelResponse: result.raw }
+            }
+        });
+
+        return result;
+    }
 }
 
 export const paymentService = new PaymentService();

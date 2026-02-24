@@ -4,6 +4,8 @@ import { gatewaySelectionService } from "./gateway-selection.service"
 import { initializeTransaction as initializePaystack } from "@/lib/paystack"
 import { initializeOnlineCheckout as initializeHubtel } from "@/lib/hubtel"
 import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
+import { inngest } from "@/lib/inngest"
+
 
 export interface InitializePaymentDTO {
     bookingId: string
@@ -163,18 +165,37 @@ export class PaymentProcessingService {
              * Returns a paylink for redirect.
              */
             else if (gateway === PaymentProvider.HUBTEL) {
+                // For Hubtel Pay Proxy:
+                // callbackUrl: Server endpoint to receive status updates (webhook)
+                // returnUrl: Where customer goes after success
+                // cancellationUrl: Where customer goes after cancel/fail
+
+                const serverWebhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel`;
+
                 providerResponse = await initializeHubtel({
                     amountPesewas,
-                    clientReference: invoiceNumber, // Pass invoiceNumber instead of bookingReference
-                    callbackUrl: callbackUrl!,
+                    clientReference: invoiceNumber,
+                    callbackUrl: serverWebhookUrl,    // 服务器通知地址
+                    returnUrl: callbackUrl!,          // 支付成功跳转地址
+                    cancelUrl: callbackUrl!,          // 支付取消跳转地址
                     description: `Invoice ${invoiceNumber} payment`
                 })
+
 
                 if (!providerResponse.success) {
                     throw new Error(providerResponse.message || "Hubtel initialization failed")
                 }
 
                 paymentUrl = providerResponse.paylinkUrl!
+
+                // Trigger background status check (fallback in case webhook is missed)
+                await inngest.send({
+                    name: "app/payment.hubtel-check-status",
+                    data: {
+                        invoiceNumber,
+                        invoiceId,
+                    }
+                })
             }
 
             // AUDIT LOG — successful initialization
