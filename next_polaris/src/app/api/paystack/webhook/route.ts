@@ -27,8 +27,15 @@ export async function POST(req: NextRequest) {
 
         console.log(`Received Paystack event: ${event}`);
 
+        // Dynamically resolve reference (refund events use transaction_reference)
+        const reference = data.reference || data.transaction_reference;
+
+        if (!reference) {
+            console.error(`No reference found for event: ${event}`);
+            return NextResponse.json({ message: 'No reference found in payload' }, { status: 400 });
+        }
+
         // Try to find an invoice and log the receipt
-        const reference = data.reference;
         const invoice = await prisma.invoice.findUnique({
             where: { invoiceNumber: reference },
             include: { booking: true }
@@ -95,6 +102,35 @@ export async function POST(req: NextRequest) {
                 } catch (serviceError: any) {
                     console.error('Error in payment service:', serviceError);
                 }
+            }
+        }
+
+        // Handle refund needs attention
+        if (event === 'refund.needs-attention') {
+            console.warn(`Refund needs attention for transaction: ${reference}`);
+
+            const payment = await prisma.payment.findUnique({
+                where: {
+                    provider_providerRef: { provider: 'PAYSTACK', providerRef: reference },
+                },
+            });
+
+            if (payment) {
+                await prisma.payment.update({
+                    where: { id: payment.id },
+                    data: {
+                        rawPayload: {
+                            ...(typeof payment.rawPayload === 'object' ? payment.rawPayload : {}),
+                            refund: {
+                                status: 'needs-attention',
+                                event,
+                                data,
+                                processedAt: new Date().toISOString(),
+                            },
+                        },
+                    },
+                });
+                console.log(`Logged refund.needs-attention for payment ${payment.id}`);
             }
         }
 

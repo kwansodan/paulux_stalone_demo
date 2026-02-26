@@ -51,8 +51,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       const booking = await createBookingMutation.mutateAsync(payload)
       console.log("Booking created:", booking.id)
 
-      // Step 2: Initialize Paystack payment
-      const paystackResponse = await fetch('/api/paystack/initialize', {
+      // Step 2: Initialize unified payment
+      const paymentResponse = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -60,40 +60,27 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           amount: amount,
           bookingReference: booking.bookingReference,
           bookingId: booking.id,
-        }),
-      })
-
-      if (!paystackResponse.ok) {
-        const errorData = await paystackResponse.json()
-        throw new Error(errorData.message || 'Failed to initialize payment')
-      }
-
-      const paystackData = await paystackResponse.json()
-      console.log("Paystack initialized:", paystackData.data.reference)
-
-      // Step 3: Create payment record with PENDING status
-      const paymentResponse = await fetch('/api/payments', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          bookingId: booking.id,
-          provider: 'PAYSTACK',
-          providerRef: paystackData.data.reference,
-          amount: amount,
-          currency: 'GHS',
-          status: 'PENDING',
+          transactionType: 'initial'
         }),
       })
 
       if (!paymentResponse.ok) {
         const errorData = await paymentResponse.json()
-        throw new Error(errorData.message || 'Failed to create payment record')
+        throw new Error(errorData.message || 'Failed to initialize payment')
       }
 
-      console.log("Payment record created")
+      const paymentData = await paymentResponse.json()
+      console.log("Payment initialized:", paymentData.invoiceNumber)
 
-      // Step 4: Redirect to Paystack payment page
-      window.location.href = paystackData.data.authorization_url
+      // Note: The unified API creates the payment record (via generic invoicing and callbacks), 
+      // but if we need a direct redirect, the unified API returns paymentData.paymentUrl
+
+      // Step 3: Redirect to payment page
+      if (paymentData.paymentUrl) {
+        window.location.href = paymentData.paymentUrl
+      } else {
+        throw new Error("Missing payment URL from gateway.")
+      }
 
     } catch (error) {
       console.error("Error proceeding to payment:", error)
