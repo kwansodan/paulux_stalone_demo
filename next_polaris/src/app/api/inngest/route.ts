@@ -6,9 +6,9 @@ import { paymentReceivedEvent } from "@/features/payment/events/event-payment-re
 import { hubtelStatusCheckEvent } from "@/features/payment/events/event-hubtel-status-check";
 // import { NextRequest, NextResponse } from "next/server";
 
-// console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
-// console.log("BASE URL:", process.env.INNGEST_BASE_URL);
-// console.log("SIGNING KEY URL:", process.env.INNGEST_SIGNING_KEY);
+console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
+console.log("BASE URL:", process.env.INNGEST_BASE_URL);
+console.log("SIGNING KEY URL:", process.env.INNGEST_SIGNING_KEY);
 
 // Create an API that serves zero functions
 export const { GET, POST, PUT } = serve({

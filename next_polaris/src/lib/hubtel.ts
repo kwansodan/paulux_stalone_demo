@@ -35,7 +35,7 @@ if (!HUBTEL_CLIENT_ID || !HUBTEL_CLIENT_SECRET) {
  * All calls MUST be done server-side using these credentials.
  */
 function createHubtelClient(baseURL: string): AxiosInstance {
-  const token = Buffer.from(`${HUBTEL_CLIENT_ID}:${HUBTEL_CLIENT_SECRET}`, 'utf8').toString('base64');
+  const token = Buffer.from(`${HUBTEL_CLIENT_ID?.trim()}:${HUBTEL_CLIENT_SECRET?.trim()}`, 'utf8').toString('base64');
   return axios.create({
     baseURL: baseURL,
     headers: {

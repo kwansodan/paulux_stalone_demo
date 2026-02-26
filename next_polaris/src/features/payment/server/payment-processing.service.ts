@@ -83,6 +83,12 @@ export class PaymentProcessingService {
             if (result.success) return result
 
             lastError = result.message
+
+            // If it's a 400 Bad Request (like invalid amount or duplicate ref), don't retry same params
+            if (lastError && lastError.toLowerCase().includes('status code 400')) {
+                console.warn(`Stopping retries for ${gateway} due to 400 Bad Request`);
+                break;
+            }
         }
 
         // FAILOVER LOGIC (only for first payments, not top-ups)
