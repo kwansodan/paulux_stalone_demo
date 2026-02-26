@@ -52,6 +52,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       console.log("Booking created:", booking.id)
 
       // Step 2: Initialize unified payment
+      const callbackUrl = `${window.location.origin}/customer/booking/summary/${booking.id}`
+
       const paymentResponse = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -60,7 +62,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           amount: amount,
           bookingReference: booking.bookingReference,
           bookingId: booking.id,
-          transactionType: 'initial'
+          transactionType: 'initial',
+          callbackUrl,
         }),
       })
 

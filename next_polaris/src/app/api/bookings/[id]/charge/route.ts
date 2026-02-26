@@ -37,7 +37,7 @@ export async function POST(
             email: booking.clientEmail,
             amount: Number(booking.service.price),
             bookingReference: booking.bookingReference,
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation?reference=${booking.bookingReference}`
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation`
         });
 
         if (paymentResult.success && paymentResult.paymentUrl) {
