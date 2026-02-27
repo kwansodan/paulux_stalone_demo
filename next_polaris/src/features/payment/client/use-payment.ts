@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation } from "@tanstack/react-query"
 import { PaymentMetrics } from "../types"
 import { api } from "@/lib/api"
 
@@ -32,5 +32,18 @@ export function usePaymentMetrics(initial: PaymentMetrics) {
       thisWeeksRevenue: Number(data.thisWeeksRevenue) || 0,
       todaysPendingCollections: Number(data.todaysPendingCollections) || 0,
     }),
+  })
+}
+export function useCollectPayment() {
+  return useMutation({
+    mutationFn: async (bookingId: string) => {
+      const { data } = await api.post(`/bookings/${bookingId}/top-up`)
+      return data.data
+    },
+    onSuccess: (data) => {
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl
+      }
+    }
   })
 }

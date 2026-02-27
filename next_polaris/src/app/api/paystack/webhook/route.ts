@@ -292,15 +292,8 @@ export async function POST(req: NextRequest) {
 
                 console.log(`Updated payment ${payment.id} to REFUNDED`);
 
-                // Update booking paymentStatus to REFUNDED
-                await prisma.booking.update({
-                    where: { id: payment.bookingId },
-                    data: {
-                        paymentStatus: 'REFUNDED',
-                    },
-                });
-
-                console.log(`Updated booking payment status to REFUNDED`);
+                // Use centralized refresh logic
+                await paymentService.refreshBookingPaymentStatus(payment.bookingId);
             } else {
                 console.error(`Payment not found for refund reference: ${transaction_reference}`);
             }

@@ -1,17 +1,25 @@
 "use client"
 import { useState } from "react"
 import { DataTable } from "@/components/data-table"
-import { usePayments } from "../client/use-payment"
+import { usePayments, useCollectPayment } from "../client/use-payment"
 import { PaymentsFilters } from "./payment-filters"
 import { PaymentFilters, PaymentWithBookingAndService } from "../types"
 import { SerializedService } from "@/features/service/types"
+import { Loader2 } from "lucide-react"
 
 export default function PaymentManager({ services }: { services: SerializedService[] }) {
-  const [filters, setFilters] = useState<PaymentFilters|null>(null)
+  const [filters, setFilters] = useState<PaymentFilters | null>(null)
 
-  const { data = [], isLoading } = usePayments(filters??{})
+  const { data = [], isLoading } = usePayments(filters ?? {})
+
+  const collectPayment = useCollectPayment()
 
   const columns = [
+    {
+      key: "bookingId",
+      label: "Booking ID",
+      render: (p: PaymentWithBookingAndService) => <span className="text-xs font-mono">{p.bookingId}</span>
+    },
     {
       key: "customer",
       label: "Customer name",
@@ -24,20 +32,49 @@ export default function PaymentManager({ services }: { services: SerializedServi
     },
     { key: "service", label: "Service", render: (p: PaymentWithBookingAndService) => p.booking.service.name },
     { key: "amount", label: "Deposit paid", render: (p: PaymentWithBookingAndService) => <p className="text-lime-700">{`GHS ${p.amount}`}</p> },
-    { key: "due", label: "Amount Due", render: (p: PaymentWithBookingAndService) => <p className={(Number(p.booking.service.price) - Number(p.amount)) === 0? "text-gray-600": "text-[#D10505]"}>
-      {(Number(p.booking.service.price) - Number(p.amount)) === 0? "Settled":`GHS ${(Number(p.booking.service.price) - Number(p.amount)).toFixed(2)}`}
-      </p>},
+    {
+      key: "due",
+      label: "Amount Due",
+      render: (p: PaymentWithBookingAndService) => {
+        const totalPaid = p.booking.payments
+          .filter(pay => pay.status === "PAID")
+          .reduce((sum, pay) => sum + Number(pay.amount), 0)
+        const due = Number(p.booking.service.price) - totalPaid
+        return (
+          <p className={due === 0 ? "text-gray-600" : "text-[#D10505]"}>
+            {due === 0 ? "Settled" : `GHS ${due.toFixed(2)}`}
+          </p>
+        )
+      }
+    },
     { key: "status", label: "Payment status", render: (p: PaymentWithBookingAndService) => p.status },
     { key: "createdAt", label: "Created At", render: (p: PaymentWithBookingAndService) => new Date(p.createdAt).toDateString() },
     {
       key: "action",
       label: "Action",
-      render: (p: PaymentWithBookingAndService) =>
-        p.status !== "PAID" ? (
-          <button className="text-lime-600 bg-[#F9FAFB] border border-lime-700 rounded-lg px-3 py-1">+ Collect</button>
-        ) : (
-          <button className="text-gray-600 bg-gray-100 border border-gray-500 rounded-lg px-3 py-1 cursor-not-allowed">Collected</button>
+      render: (p: PaymentWithBookingAndService) => {
+        const isFullyPaid = p.booking.paymentStatus === "PAID"
+        const isCollecting = collectPayment.isPending && collectPayment.variables === p.bookingId
+
+        if (isFullyPaid) {
+          return (
+            <button className="text-gray-600 bg-gray-100 border border-gray-500 rounded-lg px-3 py-1 cursor-not-allowed">
+              Collected
+            </button>
+          )
+        }
+
+        return (
+          <button
+            onClick={() => collectPayment.mutate(p.bookingId)}
+            disabled={collectPayment.isPending}
+            className="text-lime-600 bg-[#F9FAFB] border border-lime-700 rounded-lg px-3 py-1 hover:bg-lime-50 flex items-center gap-2"
+          >
+            {isCollecting && <Loader2 className="w-3 h-3 animate-spin" />}
+            + Collect
+          </button>
         )
+      }
     }
   ]
 
