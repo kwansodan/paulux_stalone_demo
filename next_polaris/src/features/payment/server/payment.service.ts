@@ -56,13 +56,13 @@ export class PaymentService {
         // 3. Update booking status to CONFIRMED if not already
         // We fetch the booking again or use the included one, but we need to update it
         let booking = payment.booking;
-        const bookingPaymentStatus = calculatePaymentStatus(booking)
-        if (booking.status !== 'CONFIRMED' || bookingPaymentStatus !== 'PAID') {
+        const bookingPaymentStatus = await this.refreshBookingPaymentStatus(payment.bookingId);
+
+        if (booking.status !== 'CONFIRMED') {
             booking = await prisma.booking.update({
                 where: { id: payment.bookingId },
                 data: {
                     status: 'CONFIRMED',
-                    paymentStatus: 'PAID',
                 },
                 include: {
                     service: true,
@@ -133,28 +133,25 @@ export class PaymentService {
         // 3. Update booking status to CONFIRMED
         let booking = invoice.booking;
 
-        // Sum total amount paid
-        const allInvoices = await prisma.invoice.findMany({
-            where: {
-                bookingId: invoice.bookingId,
-                status: 'PAID'
-            }
+        // Fetch booking again with updated payments to get accurate status
+        const bookingWithPayments = await prisma.booking.findUnique({
+            where: { id: invoice.bookingId },
+            include: { service: true, payments: true }
         });
-        const totalPaid = allInvoices.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
-        const isFullyPaid = totalPaid >= Number(booking.service.price);
-        const newPaymentStatus = isFullyPaid ? 'PAID' : 'PARTIAL';
+        if (!bookingWithPayments) throw new Error("Booking not found after payment");
 
-        if (booking.status !== 'CONFIRMED' || booking.paymentStatus !== newPaymentStatus) {
+        const newPaymentStatus = await this.refreshBookingPaymentStatus(invoice.bookingId);
+
+        if (booking.status !== 'CONFIRMED') {
             booking = await prisma.booking.update({
                 where: { id: invoice.bookingId },
                 data: {
                     status: 'CONFIRMED',
-                    paymentStatus: newPaymentStatus,
                 },
                 include: { service: true, payments: true }
             });
-            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED with payment status ${newPaymentStatus}`);
+            console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
 
         // 4. Create Google Calendar Event
@@ -173,6 +170,31 @@ export class PaymentService {
         }
 
         return { success: true, invoice: updatedInvoice, booking, payment };
+    }
+
+    /**
+     * Recalculates and updates the payment status of a booking.
+     * Useful after payments, refunds, or manual adjustments.
+     */
+    async refreshBookingPaymentStatus(bookingId: string) {
+        const booking = await prisma.booking.findUnique({
+            where: { id: bookingId },
+            include: { service: true, payments: true }
+        });
+
+        if (!booking) throw new Error("Booking not found");
+
+        const newStatus = calculatePaymentStatus(booking);
+
+        if (booking.paymentStatus !== newStatus) {
+            await prisma.booking.update({
+                where: { id: bookingId },
+                data: { paymentStatus: newStatus }
+            });
+            console.log(`Updated booking ${booking.bookingReference} payment status to ${newStatus}`);
+        }
+
+        return newStatus;
     }
 
     /**

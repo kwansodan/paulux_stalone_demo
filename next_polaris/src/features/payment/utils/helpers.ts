@@ -9,26 +9,25 @@ export function calculatePaymentStatus(booking: BookingWithServiceAndPayment): P
     return PaymentStatus.PENDING;
   }
 
-  const statuses = booking.payments.map(p => p.status);
+  // Filter for PAID payments only for summing
+  const paidPayments = booking.payments.filter(p => p.status === PaymentStatus.PAID);
 
-  // Priority order: PAID > PARTIAL > PENDING > REFUNDED > FAILED
-  if (statuses.every(s => s === PaymentStatus.PAID)) {
+  if (paidPayments.length === 0) {
+    const statuses = booking.payments.map(p => p.status);
+    if (statuses.includes(PaymentStatus.FAILED)) return PaymentStatus.FAILED;
+    if (statuses.includes(PaymentStatus.REFUNDED)) return PaymentStatus.REFUNDED;
+    return PaymentStatus.PENDING;
+  }
+
+  const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const servicePrice = Number(booking.service.price);
+
+  if (totalPaid >= servicePrice) {
     return PaymentStatus.PAID;
   }
-  if (statuses.includes(PaymentStatus.PAID)) {
-    return PaymentStatus.PENDING; // Incomplete
-  }
-  if (statuses.every(s => s === PaymentStatus.PARTIAL)) {
+
+  if (totalPaid > 0) {
     return PaymentStatus.PARTIAL;
-  }
-  if (statuses.includes(PaymentStatus.PARTIAL)) {
-    return PaymentStatus.PARTIAL;
-  }
-  if (statuses.every(s => s === PaymentStatus.REFUNDED)) {
-    return PaymentStatus.REFUNDED;
-  }
-  if (statuses.includes(PaymentStatus.FAILED)) {
-    return PaymentStatus.FAILED;
   }
 
   return PaymentStatus.PENDING;

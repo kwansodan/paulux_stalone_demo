@@ -60,20 +60,13 @@ export async function POST(req: NextRequest) {
 
             if (code === "0000" || code === "000" || status === "Successful") {
                 // SUCCESS REFUND
-                await prisma.$transaction([
-                    // Update payment status
-                    prisma.payment.update({
-                        where: { id: payment.id },
-                        data: { status: 'REFUNDED' }
-                    }),
-                    // Update booking payment status (if this was the only payment or we want to show it's partially refunded)
-                    // For simplicity, we just set to REFUNDED if this payment is refunded.
-                    // A more robust approach would recalculate based on remaining PAID payments.
-                    prisma.booking.update({
-                        where: { id: payment.bookingId },
-                        data: { paymentStatus: 'REFUNDED' }
-                    })
-                ]);
+                await prisma.payment.update({
+                    where: { id: payment.id },
+                    data: { status: 'REFUNDED' }
+                });
+
+                // Use centralized refresh logic
+                await paymentService.refreshBookingPaymentStatus(payment.bookingId);
 
                 await auditLogService.logAction({
                     action: "REFUND_COMPLETED",

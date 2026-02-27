@@ -23,6 +23,7 @@ export class PaymentRepository {
         booking: {
           include: {
             service: true,
+            payments: true,
           }
         }
       },
