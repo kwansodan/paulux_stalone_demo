@@ -35,7 +35,15 @@ if (!HUBTEL_CLIENT_ID || !HUBTEL_CLIENT_SECRET) {
  * All calls MUST be done server-side using these credentials.
  */
 function createHubtelClient(baseURL: string): AxiosInstance {
-  const token = Buffer.from(`${HUBTEL_CLIENT_ID?.trim()}:${HUBTEL_CLIENT_SECRET?.trim()}`, 'utf8').toString('base64');
+  const user = HUBTEL_CLIENT_ID?.trim() || '';
+  const pass = HUBTEL_CLIENT_SECRET?.trim() || '';
+  const token = Buffer.from(`${user}:${pass}`, 'utf8').toString('base64');
+
+  // Debug log for auth format (masked)
+  if (process.env.NODE_ENV !== 'production') {
+    console.log(`[Hubtel] Auth header prepared for ID: ${user.substring(0, 3)}... and Secret: ${pass.substring(0, 3)}...`);
+  }
+
   return axios.create({
     baseURL: baseURL,
     headers: {
@@ -161,20 +169,31 @@ export async function initializeOnlineCheckout(params: OnlineCheckoutInitParams)
     const paylinkUrl = data.data?.checkoutUrl || data.checkoutUrl;
 
     if (!paylinkUrl) {
+      console.warn('[Hubtel] No paylinkUrl in success response:', JSON.stringify(data));
       return {
         success: false,
         raw: data,
-        message: 'No paylink returned by Hubtel. ResponseCode: ' + data.responseCode,
+        message: 'No paylink returned by Hubtel. ResponseCode: ' + (data.responseCode || data.ResponseCode),
       };
     }
 
     return { success: true, paylinkUrl, raw: data };
   } catch (err: any) {
-    console.error('Hubtel initializeOnlineCheckout error:', err.response?.data || err.message || err);
+    const errorData = err.response?.data;
+    const statusCode = err.response?.status;
+
+    console.error(`[Hubtel] initializeOnlineCheckout error (Status: ${statusCode}):`, {
+      message: err.message,
+      hubtelResponse: errorData,
+      endpoint: HUBTEL_PAY_PROXY_URL + endpoint
+    });
+
     return {
       success: false,
-      raw: err.response?.data || err.message,
-      message: 'Failed to initialize Hubtel checkout',
+      raw: errorData || err.message,
+      message: statusCode === 401
+        ? 'Hubtel authentication failed (401). Please check your CLIENT_ID and CLIENT_SECRET.'
+        : 'Failed to initialize Hubtel checkout',
     };
   }
 }
