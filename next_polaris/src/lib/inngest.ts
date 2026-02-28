@@ -7,7 +7,6 @@ type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
   "app/payment.payment-received": PaymentReceivedEventArgs;
-  "app/payment.hubtel-check-status": { data: { invoiceNumber: string; invoiceId: string } };
 };
 
 // Create a client to send and receive events

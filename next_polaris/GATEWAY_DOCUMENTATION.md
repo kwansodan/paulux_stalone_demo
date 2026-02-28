@@ -1,27 +1,25 @@
 # Payment Gateway Documentation
 
-This document outlines the payment gateway configurations for the Polaris application.
+This document outlines the payment gateway configuration for the Polaris application. The system now uses a dual Paystack setup for redundancy and load balancing.
 
-## Paystack
+## Primary Paystack
 - **Environment Variables**:
-  - `PAYSTACK_SECRET_KEY`: Private key for server-side verification.
-  - `NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`: Public key for client-side transactions.
-- **Webhook Endpoint**: `/api/paystack/webhook`
-- **Provider Enum**: `PAYSTACK`
+  - `PRIMARY_PAYSTACK_SECRET_KEY`: Private key for server-side verification.
+  - `NEXT_PUBLIC_PRIMARY_PAYSTACK_PUBLIC_KEY`: Public key for client-side transactions.
+- **Webhook Endpoint**: `/api/paystack-primary/webhook`
+- **Provider Enum**: `PRIMARY_PAYSTACK`
 
-## Hubtel
+## Secondary Paystack
 - **Environment Variables**:
-  - `HUBTEL_CLIENT_ID`: Hubtel API Key Client ID.
-  - `HUBTEL_CLIENT_SECRET`: Hubtel API Key secret.
-  - `HUBTEL_MERCHANT_ACCOUNT`: Merchant ID if required.
-  - `HUBTEL_WEBHOOK_SECRET`: Optional secret header for webhook verifications (`x-hubtel-signature`).
-- **Webhook Endpoint**: `/api/webhooks/hubtel`
-- **Provider Enum**: `HUBTEL`
+  - `SECONDARY_PAYSTACK_SECRET_KEY`: Private key for server-side verification.
+  - `NEXT_PUBLIC_SECONDARY_PAYSTACK_PUBLIC_KEY`: Public key for client-side transactions.
+- **Webhook Endpoint**: `/api/paystack-secondary/webhook`
+- **Provider Enum**: `SECONDARY_PAYSTACK`
 
 ## Webhook Security
-All webhooks should implement signature verification to ensure authenticity.
-- Paystack uses the `x-paystack-signature` header.
-- Hubtel implementation uses an optional custom `x-hubtel-signature` (mapped to `HUBTEL_WEBHOOK_SECRET`) for authenticity, or handles standard Basic Auth depending on your exact configuration. See `src/lib/hubtel.ts`.
+All webhooks implement signature verification to ensure authenticity.
+- Paystack Primary uses `PRIMARY_PAYSTACK_SECRET_KEY` to verify signatures.
+- Paystack Secondary uses `SECONDARY_PAYSTACK_SECRET_KEY` to verify signatures.
 
 ## Implementation Details
 The `PaymentService.processSuccessfulPayment` method handles post-payment logic:

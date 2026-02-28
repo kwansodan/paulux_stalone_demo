@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { CancelBookingSchema } from "@/features/booking/utils/validation"
-import { BookingStatus } from "@generated/prisma/client"
+import { BookingStatus, PaymentProvider } from "@generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 import { initiateRefund } from "@/lib/paystack"
 import { inngest } from "@/lib/inngest"
-// import { requireRoleApi } from "@/app/_auth/require-role-api"
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    // const auth = await requireRoleApi(["ADMIN"])
-    // if (!auth.ok) return auth.response
-
     const awaitedParams = await params;
     const bookingId = awaitedParams.id
     const body = await request.json()
@@ -36,12 +32,14 @@ export async function POST(
       )
     }
 
-    // Find all PAID payments for this booking
+    // Find all PAID payments for this booking (Both Primary and Secondary)
     const paidPayments = await prisma.payment.findMany({
       where: {
         bookingId: bookingId,
         status: 'PAID',
-        provider: 'PAYSTACK',
+        provider: {
+          in: [PaymentProvider.PRIMARY_PAYSTACK, PaymentProvider.SECONDARY_PAYSTACK]
+        },
       },
     })
 
@@ -50,13 +48,14 @@ export async function POST(
     // Initiate refunds for all paid Paystack payments
     for (const payment of paidPayments) {
       try {
-        console.log(`Initiating refund for payment ${payment.id}, reference: ${payment.providerRef}`)
+        console.log(`Initiating refund for payment ${payment.id}, reference: ${payment.providerRef} (${payment.provider})`)
 
         const refundResponse = await initiateRefund(
           payment.providerRef,
           undefined, // Full refund
           `Booking cancelled: ${reason || 'No reason provided'}`,
-          'Your booking has been cancelled and a refund has been initiated. Please allow up to 10 business days for the refund to reflect in your account.'
+          'Your booking has been cancelled and a refund has been initiated.',
+          payment.provider as PaymentProvider
         )
 
         refundResults.push({

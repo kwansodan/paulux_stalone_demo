@@ -1,11 +1,20 @@
 import axios from 'axios';
 import crypto from 'crypto';
+import { PaymentProvider } from '@generated/prisma/client';
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY;
+const PRIMARY_SECRET_KEY = process.env.PRIMARY_PAYSTACK_SECRET_KEY;
+const SECONDARY_SECRET_KEY = process.env.SECONDARY_PAYSTACK_SECRET_KEY;
 const PAYSTACK_BASE_URL = 'https://api.paystack.co';
 
-if (!PAYSTACK_SECRET_KEY) {
-    console.warn('PAYSTACK_SECRET_KEY is not defined in environment variables');
+if (!PRIMARY_SECRET_KEY) {
+    console.warn('PRIMARY_PAYSTACK_SECRET_KEY is not defined in environment variables');
+}
+if (!SECONDARY_SECRET_KEY) {
+    console.warn('SECONDARY_PAYSTACK_SECRET_KEY is not defined in environment variables');
+}
+
+function getSecretKey(provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK): string | undefined {
+    return provider === PaymentProvider.SECONDARY_PAYSTACK ? SECONDARY_SECRET_KEY : PRIMARY_SECRET_KEY;
 }
 
 export interface PaystackInitializeResponse {
@@ -56,6 +65,7 @@ export interface PaystackRefundResponse {
  * @param callbackUrl URL to redirect to after payment
  * @param currency Currency code (default: GHS)
  * @param channels Payment channels to enable (e.g., ['card', 'mobile_money'])
+ * @param provider The Paystack account to use
  */
 export async function initializeTransaction(
     email: string,
@@ -63,8 +73,10 @@ export async function initializeTransaction(
     reference: string,
     callbackUrl?: string,
     currency: string = 'GHS',
-    channels: string[] = ['card', 'mobile_money']
+    channels: string[] = ['card', 'mobile_money'],
+    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): Promise<PaystackInitializeResponse> {
+    const secretKey = getSecretKey(provider);
     try {
         const response = await axios.post(
             `${PAYSTACK_BASE_URL}/transaction/initialize`,
@@ -78,7 +90,7 @@ export async function initializeTransaction(
             },
             {
                 headers: {
-                    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+                    Authorization: `Bearer ${secretKey}`,
                     'Content-Type': 'application/json',
                 },
             }
@@ -86,7 +98,7 @@ export async function initializeTransaction(
 
         return response.data;
     } catch (error) {
-        console.error('Error initializing Paystack transaction:', error);
+        console.error(`Error initializing Paystack transaction (${provider}):`, error);
         throw error;
     }
 }
@@ -97,13 +109,16 @@ export async function initializeTransaction(
  * @param amount Optional amount to refund in pesewas (if not provided, full refund)
  * @param merchantNote Optional note for internal reference
  * @param customerNote Optional note that will be sent to the customer
+ * @param provider The Paystack account to use
  */
 export async function initiateRefund(
     transactionReference: string,
     amount?: number,
     merchantNote?: string,
-    customerNote?: string
+    customerNote?: string,
+    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): Promise<PaystackRefundResponse> {
+    const secretKey = getSecretKey(provider);
     try {
         const payload: any = {
             transaction: transactionReference,
@@ -124,7 +139,7 @@ export async function initiateRefund(
             payload,
             {
                 headers: {
-                    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+                    Authorization: `Bearer ${secretKey}`,
                     'Content-Type': 'application/json',
                 },
             }
@@ -132,7 +147,7 @@ export async function initiateRefund(
 
         return response.data;
     } catch (error: any) {
-        console.error('Error initiating Paystack refund:', error.response?.data || error.message);
+        console.error(`Error initiating Paystack refund (${provider}):`, error.response?.data || error.message);
         throw error;
     }
 }
@@ -186,23 +201,26 @@ export interface PaystackVerifyResponse {
 /**
  * Verify a Paystack transaction
  * @param reference The transaction reference to verify
+ * @param provider The Paystack account to use
  */
 export async function verifyTransaction(
-    reference: string
+    reference: string,
+    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): Promise<PaystackVerifyResponse> {
+    const secretKey = getSecretKey(provider);
     try {
         const response = await axios.get(
             `${PAYSTACK_BASE_URL}/transaction/verify/${reference}`,
             {
                 headers: {
-                    Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
+                    Authorization: `Bearer ${secretKey}`,
                 },
             }
         );
 
         return response.data;
     } catch (error: any) {
-        console.error('Error verifying Paystack transaction:', error.response?.data || error.message);
+        console.error(`Error verifying Paystack transaction (${provider}):`, error.response?.data || error.message);
         throw error;
     }
 }
@@ -212,15 +230,18 @@ export async function verifyTransaction(
  * Verify Paystack webhook signature
  * @param signature X-Paystack-Signature header
  * @param body Raw request body
+ * @param provider The Paystack account to verify against
  */
 export function verifyPaystackSignature(
     signature: string,
-    body: any
+    body: any,
+    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): boolean {
-    if (!PAYSTACK_SECRET_KEY) return false;
+    const secretKey = getSecretKey(provider);
+    if (!secretKey) return false;
 
     const hash = crypto
-        .createHmac('sha512', PAYSTACK_SECRET_KEY)
+        .createHmac('sha512', secretKey)
         .update(JSON.stringify(body))
         .digest('hex');
 

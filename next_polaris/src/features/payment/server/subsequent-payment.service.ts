@@ -3,14 +3,7 @@ import { invoiceService } from "@/features/invoice/server/invoice.service"
 import { paymentProcessingService } from "./payment-processing.service"
 import { auditLogService } from "./audit-log.service"
 import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
-import { refundTransaction as refundHubtel } from "@/lib/hubtel"
-
-
-
-// Using any for Paystack since we don't have types here
-const refundPaystack = async (ref: string, amount?: number) => {
-    return { status: true, message: "Refund initiated" }
-}
+import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack"
 
 export interface TopUpDTO {
     bookingId: string
@@ -95,29 +88,19 @@ export class SubsequentPaymentService {
         let refundResponse: any = null
 
         /**
-         * PAYSTACK REFUND
+         * PAYSTACK REFUND (Handles both Primary and Secondary)
          * Amount must be in pesewas
          */
-        if (originalInvoice.gateway === PaymentProvider.PAYSTACK) {
-            refundResponse = await refundPaystack(
+        if (originalInvoice.gateway === PaymentProvider.PRIMARY_PAYSTACK || originalInvoice.gateway === PaymentProvider.SECONDARY_PAYSTACK) {
+            refundResponse = await initiatePaystackRefund(
                 payment.providerRef,
-                amount ? Math.round(amount * 100) : undefined
+                amount ? Math.round(amount * 100) : undefined,
+                reason || `Refund for booking ${bookingId}`,
+                undefined,
+                originalInvoice.gateway
             )
-        }
-
-        /**
-         * HUBTEL REFUND
-         *
-         * Hubtel expects:
-         * - transactionId / reference
-         * - amount in GHS (decimal string)
-         */
-        else if (originalInvoice.gateway === PaymentProvider.HUBTEL) {
-            const callbackUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel/refund`;
-            refundResponse = await refundHubtel(
-                payment.providerRef,
-                callbackUrl // Hubtel's refundTransaction helper expects a callbackUrl string
-            )
+        } else {
+            throw new Error(`Refund not supported for provider: ${originalInvoice.gateway}`)
         }
 
         /**

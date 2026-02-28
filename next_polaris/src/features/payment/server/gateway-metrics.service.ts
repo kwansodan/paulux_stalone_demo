@@ -2,22 +2,22 @@ import { prisma } from "@/lib/prisma";
 import { InvoiceStatus, PaymentProvider } from "@generated/prisma/client";
 
 export interface GatewayMetrics {
-    paystack: {
+    primary: {
         totalAmount: number;
         percentage: number;
         lastWebhookAt: Date | null;
     };
-    hubtel: {
+    secondary: {
         totalAmount: number;
         percentage: number;
         lastWebhookAt: Date | null;
     };
     totalAmount: number;
-    routingThreshold: number; // Percentage for Paystack
+    routingThreshold: number; // Percentage for Primary
 }
 
 export class GatewayMetricsService {
-    private readonly ROUTING_KEY = "PAYSTACK_ROUTING_THRESHOLD";
+    private readonly ROUTING_KEY = "PRIMARY_PAYSTACK_ROUTING_THRESHOLD";
     private readonly DEFAULT_THRESHOLD = 40; // 40%
 
     async getMetrics(): Promise<GatewayMetrics> {
@@ -26,36 +26,36 @@ export class GatewayMetricsService {
             by: ['gateway'],
             where: {
                 status: InvoiceStatus.PAID,
-                gateway: { in: [PaymentProvider.PAYSTACK, PaymentProvider.HUBTEL] }
+                gateway: { in: [PaymentProvider.PRIMARY_PAYSTACK, PaymentProvider.SECONDARY_PAYSTACK] }
             },
             _sum: {
                 amount: true
             }
         });
 
-        const paystackSum = Number(totals.find(t => t.gateway === PaymentProvider.PAYSTACK)?._sum.amount || 0);
-        const amSum = Number(totals.find(t => t.gateway === PaymentProvider.HUBTEL)?._sum.amount || 0);
-        const totalAmount = paystackSum + amSum;
+        const primarySum = Number(totals.find(t => t.gateway === PaymentProvider.PRIMARY_PAYSTACK)?._sum.amount || 0);
+        const secondarySum = Number(totals.find(t => t.gateway === PaymentProvider.SECONDARY_PAYSTACK)?._sum.amount || 0);
+        const totalAmount = primarySum + secondarySum;
 
         // 2. Get last webhook timestamps
-        const lastPaystackWebhook = await prisma.paymentAuditLog.findFirst({
+        const lastPrimaryWebhook = await prisma.paymentAuditLog.findFirst({
             where: {
                 action: "WEBHOOK_RECEIVED",
                 metadata: {
                     path: ['provider'],
-                    equals: 'PAYSTACK'
+                    equals: PaymentProvider.PRIMARY_PAYSTACK
                 }
             },
             orderBy: { createdAt: 'desc' },
             select: { createdAt: true }
         });
 
-        const lastAMWebhook = await prisma.paymentAuditLog.findFirst({
+        const lastSecondaryWebhook = await prisma.paymentAuditLog.findFirst({
             where: {
                 action: "WEBHOOK_RECEIVED",
                 metadata: {
                     path: ['provider'],
-                    equals: 'HUBTEL'
+                    equals: PaymentProvider.SECONDARY_PAYSTACK
                 }
             },
             orderBy: { createdAt: 'desc' },
@@ -69,15 +69,15 @@ export class GatewayMetricsService {
         const routingThreshold = thresholdSetting ? parseInt(thresholdSetting.value) : this.DEFAULT_THRESHOLD;
 
         return {
-            paystack: {
-                totalAmount: paystackSum,
-                percentage: totalAmount > 0 ? (paystackSum / totalAmount) * 100 : 0,
-                lastWebhookAt: lastPaystackWebhook?.createdAt || null
+            primary: {
+                totalAmount: primarySum,
+                percentage: totalAmount > 0 ? (primarySum / totalAmount) * 100 : 0,
+                lastWebhookAt: lastPrimaryWebhook?.createdAt || null
             },
-            hubtel: {
-                totalAmount: amSum,
-                percentage: totalAmount > 0 ? (amSum / totalAmount) * 100 : 0,
-                lastWebhookAt: lastAMWebhook?.createdAt || null
+            secondary: {
+                totalAmount: secondarySum,
+                percentage: totalAmount > 0 ? (secondarySum / totalAmount) * 100 : 0,
+                lastWebhookAt: lastSecondaryWebhook?.createdAt || null
             },
             totalAmount,
             routingThreshold

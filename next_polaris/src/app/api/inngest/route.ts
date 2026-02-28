@@ -3,7 +3,6 @@ import { inngest } from "@/lib/inngest";
 import { passwordResetEvent } from "@/features/auth/events/event-password-reset";
 import { bookingCancelledEvent } from "@/features/auth/events/event-booking-cancel";
 import { paymentReceivedEvent } from "@/features/payment/events/event-payment-received";
-import { hubtelStatusCheckEvent } from "@/features/payment/events/event-hubtel-status-check";
 // import { NextRequest, NextResponse } from "next/server";
 
 console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
@@ -18,7 +17,6 @@ export const { GET, POST, PUT } = serve({
     passwordResetEvent,
     bookingCancelledEvent,
     paymentReceivedEvent,
-    hubtelStatusCheckEvent,
   ],
   signingKey: process.env.INNGEST_SIGNING_KEY
 });

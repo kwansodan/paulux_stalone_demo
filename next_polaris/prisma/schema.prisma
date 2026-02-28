@@ -98,8 +98,8 @@ model Service {
 }
 
 enum PaymentProvider {
-  PAYSTACK
-  HUBTEL
+  PRIMARY_PAYSTACK
+  SECONDARY_PAYSTACK
   MANUAL
 }
 
