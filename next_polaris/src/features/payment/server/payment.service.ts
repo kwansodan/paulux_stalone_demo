@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { truncate } from "node:fs/promises";
 import { calculatePaymentStatus } from "../utils/helpers";
+import { auditLogService } from "./audit-log.service";
 
 export class PaymentService {
     /**
