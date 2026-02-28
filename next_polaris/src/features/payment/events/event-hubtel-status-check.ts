@@ -36,7 +36,8 @@ export const hubtelStatusCheckEvent = inngest.createFunction(
                 await paymentService.confirmInvoicePayment(
                     invoiceId,
                     statusResult.transactionId || invoiceNumber,
-                    statusResult.raw
+                    statusResult.raw,
+                    statusResult.amount ? Number(statusResult.amount) : undefined
                 );
             });
 

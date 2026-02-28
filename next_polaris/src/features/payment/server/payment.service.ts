@@ -98,7 +98,7 @@ export class PaymentService {
         return { success: true, paymentId: payment.id, bookingId: booking.id };
     }
 
-    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: any) {
+    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: any, actualAmount?: number) {
         console.log(`Confirming invoice payment: ${invoiceId}`);
 
         const invoice = await prisma.invoice.findUnique({
@@ -108,7 +108,26 @@ export class PaymentService {
 
         if (!invoice) throw new Error("Invoice not found");
 
-        // 1. Update Invoice status to PAID
+        // 1. Verify amount if provided (Mandatory for Hubtel)
+        if (actualAmount !== undefined) {
+            const expectedAmount = Number(invoice.amount);
+            const tolerance = 0.01; // Allow for minor rounding differences
+
+            if (Math.abs(actualAmount - expectedAmount) > tolerance) {
+                console.error(`CRITICAL: Amount mismatch for invoice ${invoice.invoiceNumber}. Expected: ${expectedAmount}, Received: ${actualAmount}`);
+
+                await auditLogService.logAction({
+                    action: "PAYMENT_AMOUNT_MISMATCH",
+                    invoiceId: invoice.id,
+                    bookingId: invoice.bookingId,
+                    metadata: { expected: expectedAmount, received: actualAmount, providerRef }
+                });
+
+                throw new Error(`Amount mismatch: Expected ${expectedAmount}, Received ${actualAmount}`);
+            }
+        }
+
+        // 2. Update Invoice status to PAID
         const updatedInvoice = await prisma.invoice.update({
             where: { id: invoice.id },
             data: {
@@ -117,13 +136,13 @@ export class PaymentService {
             }
         });
 
-        // 2. Create Payment record for tracking
+        // 3. Create Payment record for tracking
         const payment = await prisma.payment.create({
             data: {
                 bookingId: invoice.bookingId,
                 provider: invoice.gateway || 'PAYSTACK', // Fallback to PAYSTACK if not set
                 providerRef: providerRef,
-                amount: invoice.amount,
+                amount: actualAmount !== undefined ? actualAmount : invoice.amount,
                 currency: invoice.currency,
                 status: 'PAID',
                 rawPayload: payload,

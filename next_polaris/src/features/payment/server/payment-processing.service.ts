@@ -1,4 +1,5 @@
 import { invoiceService } from "@/features/invoice/server/invoice.service"
+import { prisma } from "@/lib/prisma"
 import { auditLogService } from "./audit-log.service"
 import { gatewaySelectionService } from "./gateway-selection.service"
 import { initializeTransaction as initializePaystack } from "@/lib/paystack"
@@ -178,13 +179,22 @@ export class PaymentProcessingService {
 
                 const serverWebhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel`;
 
+                // Fetch customer details if not in DTO (we need name and phone for Hubtel)
+                const booking = await prisma.booking.findUnique({
+                    where: { id: bookingId },
+                    select: { clientName: true, clientPhone: true, clientEmail: true }
+                });
+
                 providerResponse = await initializeHubtel({
                     amountPesewas,
                     clientReference: invoiceNumber,
-                    callbackUrl: serverWebhookUrl,    // 服务器通知地址
-                    returnUrl: callbackUrl!,          // 支付成功跳转地址
-                    cancelUrl: callbackUrl!,          // 支付取消跳转地址
-                    description: `Invoice ${invoiceNumber} payment`
+                    callbackUrl: serverWebhookUrl,
+                    returnUrl: callbackUrl!,
+                    cancelUrl: callbackUrl!,
+                    description: `Invoice ${invoiceNumber} payment`,
+                    customerName: booking?.clientName,
+                    customerPhone: booking?.clientPhone,
+                    customerEmail: booking?.clientEmail || email
                 })
 
 

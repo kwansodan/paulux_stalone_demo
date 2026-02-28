@@ -126,7 +126,8 @@ export async function POST(req: NextRequest) {
         // 4. Handle status update
         if (isSuccess) {
             // SUCCESS PAYMENT
-            await paymentService.confirmInvoicePayment(invoice.id, transactionId || reference, payload);
+            const amountPaid = Data?.Amount ? Number(Data.Amount) : undefined;
+            await paymentService.confirmInvoicePayment(invoice.id, transactionId || reference, payload, amountPaid);
 
             // ... (rest of the logic remains same)
 
@@ -140,12 +141,11 @@ export async function POST(req: NextRequest) {
             });
 
             // Notify all admins
-            const amountPaid = Data.Amount ?? 0;
             await inngest.send({
                 name: "app/payment.payment-received",
                 data: {
                     bookingId: invoice.bookingId,
-                    amountPaid: Number(amountPaid),
+                    amountPaid: Number(amountPaid ?? 0),
                     provider: "HUBTEL",
                 },
             });
