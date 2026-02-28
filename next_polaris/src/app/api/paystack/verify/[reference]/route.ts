@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/features/payment/server/payment.service';
+import { PaymentProvider } from '@generated/prisma/client';
 
 export async function GET(
     req: NextRequest,
@@ -18,8 +19,28 @@ export async function GET(
             );
         }
 
-        // Verify transaction with Paystack
-        const verificationResponse = await verifyTransaction(reference);
+        // 1. Identify which provider this reference belongs to
+        // We can check the Payment table or Invoice table
+        let provider = PaymentProvider.PRIMARY_PAYSTACK; // Default
+
+        const existingPayment = await prisma.payment.findFirst({
+            where: { providerRef: reference }
+        });
+
+        if (existingPayment) {
+            provider = existingPayment.provider as PaymentProvider;
+        } else {
+            // Check invoice if payment doesn't exist yet
+            const invoice = await prisma.invoice.findUnique({
+                where: { invoiceNumber: reference }
+            });
+            if (invoice?.gateway) {
+                provider = invoice.gateway as PaymentProvider;
+            }
+        }
+
+        // 2. Verify transaction with Paystack (using identified provider)
+        const verificationResponse = await verifyTransaction(reference, provider);
 
         if (!verificationResponse.status) {
             return NextResponse.json(
@@ -30,11 +51,11 @@ export async function GET(
 
         const { data } = verificationResponse;
 
-        // Find the payment record in our database
+        // 3. Find the payment record in our database
         const payment = await prisma.payment.findUnique({
             where: {
                 provider_providerRef: {
-                    provider: 'PAYSTACK',
+                    provider: provider,
                     providerRef: reference,
                 },
             },

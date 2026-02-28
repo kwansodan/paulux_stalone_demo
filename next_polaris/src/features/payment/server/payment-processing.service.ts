@@ -2,8 +2,7 @@ import { invoiceService } from "@/features/invoice/server/invoice.service"
 import { prisma } from "@/lib/prisma"
 import { auditLogService } from "./audit-log.service"
 import { gatewaySelectionService } from "./gateway-selection.service"
-import { initializeTransaction as initializePaystack } from "@/lib/paystack"
-import { initializeOnlineCheckout as initializeHubtel } from "@/lib/hubtel"
+import { initializeTransaction } from "@/lib/paystack"
 import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
 import { inngest } from "@/lib/inngest"
 
@@ -95,9 +94,9 @@ export class PaymentProcessingService {
         // FAILOVER LOGIC (only for first payments, not top-ups)
         if (!details.isSubsequent) {
             const alternateGateway =
-                gateway === PaymentProvider.PAYSTACK
-                    ? PaymentProvider.HUBTEL
-                    : PaymentProvider.PAYSTACK
+                gateway === PaymentProvider.PRIMARY_PAYSTACK
+                    ? PaymentProvider.SECONDARY_PAYSTACK
+                    : PaymentProvider.PRIMARY_PAYSTACK
 
             console.warn(`All retry attempts failed for ${gateway}. Attempting failover to ${alternateGateway}...`)
 
@@ -147,71 +146,22 @@ export class PaymentProcessingService {
             const amountPesewas = Math.round(amount * 100)
 
             /**
-             * PAYSTACK FLOW
+             * PAYSTACK FLOW (handles both Primary and Secondary)
              */
-            if (gateway === PaymentProvider.PAYSTACK) {
-                providerResponse = await initializePaystack(
+            if (gateway === PaymentProvider.PRIMARY_PAYSTACK || gateway === PaymentProvider.SECONDARY_PAYSTACK) {
+                providerResponse = await initializeTransaction(
                     email,
                     amountPesewas,
                     invoiceNumber, // Pass invoiceNumber instead of bookingReference
                     callbackUrl,
-                    'GHS'
+                    'GHS',
+                    ['card', 'mobile_money'],
+                    gateway
                 )
 
                 paymentUrl = providerResponse.data.authorization_url
-            }
-
-            /**
-             * HUBTEL FLOW (replaces Apps & Mobiles)
-             *
-             * Hubtel requires:
-             * - amount in pesewas
-             * - clientReference (your booking reference)
-             * - callback URL for webhook
-             *
-             * Returns a paylink for redirect.
-             */
-            else if (gateway === PaymentProvider.HUBTEL) {
-                // For Hubtel Pay Proxy:
-                // callbackUrl: Server endpoint to receive status updates (webhook)
-                // returnUrl: Where customer goes after success
-                // cancellationUrl: Where customer goes after cancel/fail
-
-                const serverWebhookUrl = `${process.env.NEXT_PUBLIC_APP_URL}/api/webhooks/hubtel`;
-
-                // Fetch customer details if not in DTO (we need name and phone for Hubtel)
-                const booking = await prisma.booking.findUnique({
-                    where: { id: bookingId },
-                    select: { clientName: true, clientPhone: true, clientEmail: true }
-                });
-
-                providerResponse = await initializeHubtel({
-                    amountPesewas,
-                    clientReference: invoiceNumber,
-                    callbackUrl: serverWebhookUrl,
-                    returnUrl: callbackUrl!,
-                    cancelUrl: callbackUrl!,
-                    description: `Invoice ${invoiceNumber} payment`,
-                    customerName: booking?.clientName,
-                    customerPhone: booking?.clientPhone,
-                    customerEmail: booking?.clientEmail || email
-                })
-
-
-                if (!providerResponse.success) {
-                    throw new Error(providerResponse.message || "Hubtel initialization failed")
-                }
-
-                paymentUrl = providerResponse.paylinkUrl!
-
-                // Trigger background status check (fallback in case webhook is missed)
-                await inngest.send({
-                    name: "app/payment.hubtel-check-status",
-                    data: {
-                        invoiceNumber,
-                        invoiceId,
-                    }
-                })
+            } else {
+                throw new Error(`Unsupported payment provider: ${gateway}`)
             }
 
             // AUDIT LOG — successful initialization

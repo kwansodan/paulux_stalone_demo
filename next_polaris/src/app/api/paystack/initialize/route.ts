@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { initializeTransaction } from '@/lib/paystack';
+import { PaymentProvider } from '@generated/prisma/client';
 
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { email, amount, bookingReference, bookingId } = body;
+        const { email, amount, bookingReference, bookingId, provider } = body;
 
         if (!email || !amount || !bookingReference || !bookingId) {
             return NextResponse.json(
@@ -13,15 +14,18 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Convert bookingReference to string if it isn't already, essential for consistency
+        // Convert bookingReference to string if it isn't already
         const reference = String(bookingReference);
 
         // Amount is expected in Pesewas (GHS subunit) by Paystack
         const amountPesewas = Math.round(Number(amount) * 100);
 
-        // Construct callback URL using bookingId for better UX
+        // Construct callback URL
         const origin = process.env.BASE_URL || req.nextUrl.origin;
         const callbackUrl = `${origin}/customer/booking/summary/${bookingId}?reference=${reference}`;
+
+        // Default to PRIMARY_PAYSTACK if not provided
+        const selectedProvider = provider || PaymentProvider.PRIMARY_PAYSTACK;
 
         const paystackResponse = await initializeTransaction(
             email,
@@ -29,7 +33,8 @@ export async function POST(req: NextRequest) {
             reference,
             callbackUrl,
             'GHS', // Currency
-            ['card', 'mobile_money'] // Channels (Mobile Money covers MTN, Telecel, etc.)
+            ['card', 'mobile_money'],
+            selectedProvider
         );
 
         return NextResponse.json(paystackResponse);
