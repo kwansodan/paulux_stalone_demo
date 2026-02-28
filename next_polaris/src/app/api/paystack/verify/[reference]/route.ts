@@ -21,7 +21,7 @@ export async function GET(
 
         // 1. Identify which provider this reference belongs to
         // We can check the Payment table or Invoice table
-        let provider = PaymentProvider.PRIMARY_PAYSTACK; // Default
+        let provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK; // Default
 
         const existingPayment = await prisma.payment.findFirst({
             where: { providerRef: reference }
