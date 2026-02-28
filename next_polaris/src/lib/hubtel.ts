@@ -67,6 +67,8 @@ export interface OnlineCheckoutInitParams {
   returnUrl?: string; // where the user returns after paying (optional)
   cancelUrl?: string; // cancellation redirect (optional)
   customerPhone?: string; // optional, helpful for mobile-money flows
+  customerName?: string;
+  customerEmail?: string;
 }
 
 export interface OnlineCheckoutInitResult {
@@ -150,14 +152,22 @@ export async function initializeOnlineCheckout(params: OnlineCheckoutInitParams)
 
   const endpoint = '/items/initiate';
 
+  // Sanitize description: avoid special characters (&*!%@) as per Hubtel rules
+  const sanitizedDescription = (params.description || `Payment for ${params.clientReference}`)
+    .replace(/[&*!%@]/g, '')
+    .substring(0, 100);
+
   const body: any = {
     totalAmount: params.amountPesewas / 100, // API expects float
-    description: params.description || `Payment for ${params.clientReference}`,
+    description: sanitizedDescription,
     callbackUrl: params.callbackUrl,
     returnUrl: params.returnUrl,
     merchantAccountNumber: HUBTEL_MERCHANT_ACCOUNT,
     cancellationUrl: params.cancelUrl,
     clientReference: params.clientReference,
+    payeeName: params.customerName,
+    payeeMobileNumber: params.customerPhone,
+    payeeEmail: params.customerEmail,
   };
 
   try {
