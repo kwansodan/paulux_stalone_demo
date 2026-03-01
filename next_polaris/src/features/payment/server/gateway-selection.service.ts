@@ -12,13 +12,21 @@ export class GatewaySelectionService {
             return { gateway: PaymentProvider.SECONDARY_PAYSTACK, metrics }
         }
 
-        // Rule 1 & 4: If primary_percentage ≤ threshold% → Use Secondary (previously Hubtel)
-        // Note: The metrics names in paymentAllocationService will be updated too
-        if (metrics.primaryPercentage <= threshold) {
+        // Calculate distance to threshold
+        const primaryThreshold = threshold
+        const secondaryThreshold = 100 - threshold
+
+        // If primary percentage is below its threshold, route to primary
+        if (metrics.primaryPercentage < primaryThreshold) {
+            return { gateway: PaymentProvider.PRIMARY_PAYSTACK, metrics }
+        }
+
+        // If secondary percentage is below its threshold, route to secondary
+        if (metrics.secondaryPercentage < secondaryThreshold) {
             return { gateway: PaymentProvider.SECONDARY_PAYSTACK, metrics }
         }
 
-        // Rule 2: Else → Use Primary (previously Paystack)
+        // Default to Primary
         return { gateway: PaymentProvider.PRIMARY_PAYSTACK, metrics }
     }
 }
