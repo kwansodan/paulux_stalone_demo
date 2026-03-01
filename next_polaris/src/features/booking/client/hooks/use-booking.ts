@@ -78,14 +78,10 @@ export function useBookingMetrics(initial: IBookingMetrics) {
       const res = await api.get("/bookings", { params: { includeCount: true } })
       const { bookings, count }: { bookings: BookingWithService[]; count: number } = res.data.data;
 
-      const confirmedBookings: BookingWithService[] = bookings.filter(
-        b => b.status === BookingStatus.CONFIRMED
-      )
-
       const metrics = {
         totalBookings: count ?? bookings.length,
         cancelled: bookings.filter(b => b.status === "CANCELLED").length,
-        unpaid: bookings.length - confirmedBookings.length,
+        unpaid: bookings.filter(b => b.paymentStatus !== "PAID").length,
         completed: bookings.filter(b => b.status === "COMPLETED").length,
       }
 
