@@ -278,13 +278,16 @@ export default function BookingSummary({ booking }: Props) {
               <div className="mt-3 border-t border-fuchsia-100" />
             </div>
 
-            {/* Reschedule booking – UI stub, no functionality yet */}
-            {/* <Button
-              className="w-full h-12 rounded-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-medium flex items-center justify-center gap-2"
-            >
-              <Clock className="h-4 w-4" />
-              Reschedule booking
-            </Button> */}
+            {booking.status !== "CANCELLED" && (
+              <Button
+                className="w-full h-12 rounded-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-medium flex items-center justify-center gap-2"
+                onClick={() => router.push(`/customer/booking/reschedule/${booking.id}`)}
+                disabled={isPending}
+              >
+                <Clock className="h-4 w-4" />
+                Reschedule booking
+              </Button>
+            )}
 
             {booking.status !== "CANCELLED" && (
               <Button
