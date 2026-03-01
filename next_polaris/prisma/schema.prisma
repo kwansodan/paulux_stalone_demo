@@ -116,6 +116,7 @@ model Payment {
 
   status     PaymentStatus
   rawPayload Json?
+  reason     String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

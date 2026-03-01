@@ -4,7 +4,11 @@ import { gatewayMetricsService } from '@/features/payment/server/gateway-metrics
 export async function GET() {
     try {
         const metrics = await gatewayMetricsService.getMetrics();
-        return NextResponse.json(metrics);
+        return NextResponse.json({
+            success: true,
+            message: "Successfully retrieved gateway payment metrics",
+            data: metrics
+        });
     } catch (error: any) {
         console.error('Error fetching gateway metrics:', error);
         return NextResponse.json(

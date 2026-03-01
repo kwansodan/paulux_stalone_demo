@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { paymentRepository } from "@/features/payment/server/payment.repository"
+import { PaymentProvider, PaymentStatus } from "@generated/prisma/client"
 
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl
@@ -7,20 +8,25 @@ export async function GET(req: NextRequest) {
   const search = searchParams.get("search")
   const serviceId = searchParams.get("serviceId")
   const date = searchParams.get("date")
+  const gateway = searchParams.get("gateway")
+  const status = searchParams.get("status")
 
-  let where: any = {}
+  const where: any = {}
+  const and: any[] = []
 
   if (search) {
-    where.booking = {
+    and.push({
       OR: [
-        { clientName: { contains: search, mode: "insensitive" } },
-        { clientEmail: { contains: search, mode: "insensitive" } },
-      ]
-    }
+        { booking: { clientName: { contains: search, mode: "insensitive" } } },
+        { booking: { clientEmail: { contains: search, mode: "insensitive" } } },
+        { booking: { bookingReference: { contains: search, mode: "insensitive" } } },
+        { providerRef: { contains: search, mode: "insensitive" } },
+      ],
+    })
   }
 
   if (serviceId) {
-    where.booking = { ...(where.booking ?? {}), serviceId }
+    and.push({ booking: { serviceId } })
   }
 
   if (date) {
@@ -30,10 +36,24 @@ export async function GET(req: NextRequest) {
     const end = new Date(date)
     end.setHours(23, 59, 59, 999) // end of day
 
-    where.createdAt = {
-      gte: start,
-      lte: end,
-    }
+    and.push({
+      createdAt: {
+        gte: start,
+        lte: end,
+      },
+    })
+  }
+
+  if (gateway) {
+    and.push({ provider: gateway as PaymentProvider })
+  }
+
+  if (status) {
+    and.push({ status: status as PaymentStatus })
+  }
+
+  if (and.length > 0) {
+    where.AND = and
   }
 
   const payments = await paymentRepository.getAll(where)
