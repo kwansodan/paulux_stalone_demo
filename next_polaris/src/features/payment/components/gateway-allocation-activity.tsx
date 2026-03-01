@@ -58,6 +58,27 @@ export default function GatewayAllocationActivity() {
       ),
     },
     {
+      key: "type",
+      label: "Type",
+      render: (p: PaymentWithBookingAndService) => {
+        let typeStr = "Top up";
+        if (p.status === "REFUNDED") {
+          typeStr = "Refund";
+        } else if (p.booking && p.booking.payments) {
+          // Find the earliest payment for this booking
+          const earliestPayment = [...p.booking.payments].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          )[0];
+
+          if (earliestPayment && earliestPayment.id === p.id) {
+            typeStr = "Initial";
+          }
+        }
+
+        return <span className="text-gray-900 capitalize">{typeStr}</span>;
+      },
+    },
+    {
       key: "customer",
       label: "Customer name",
       render: (p: PaymentWithBookingAndService) => (
@@ -93,10 +114,10 @@ export default function GatewayAllocationActivity() {
           p.status === "PAID"
             ? "bg-emerald-50 text-emerald-700"
             : p.status === "FAILED"
-            ? "bg-rose-50 text-rose-700"
-            : p.status === "REFUNDED"
-            ? "bg-amber-50 text-amber-700"
-            : "bg-sky-50 text-sky-700"
+              ? "bg-rose-50 text-rose-700"
+              : p.status === "REFUNDED"
+                ? "bg-amber-50 text-amber-700"
+                : "bg-sky-50 text-sky-700"
 
         return <span className={`${base} ${color}`}>{label}</span>
       },
