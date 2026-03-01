@@ -77,7 +77,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             <span className="w-full">Mark as completed</span>
           </DropdownMenuItem>)}
 
-          {bookingPaymentStatus !== 'PAID' && (!booking.payments?.length || booking.payments.some(p => p.status === 'PENDING')) && (
+          {booking.status !== 'CANCELLED' && bookingPaymentStatus !== 'PAID' && (!booking.payments?.length || booking.payments.some(p => p.status === 'PENDING')) && (
             <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
