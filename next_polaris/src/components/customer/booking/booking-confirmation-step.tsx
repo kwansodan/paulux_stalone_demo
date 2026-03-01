@@ -52,7 +52,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       console.log("Booking created:", booking.id)
 
       // Step 2: Initialize unified payment
-      const callbackUrl = `${window.location.origin}/customer/booking/summary/${booking.id}`
+      // Include a flag so the summary page knows we came directly from payment
+      const callbackUrl = `${window.location.origin}/customer/booking/summary/${booking.id}?from=payment`
 
       const paymentResponse = await fetch('/api/payments/initialize', {
         method: 'POST',

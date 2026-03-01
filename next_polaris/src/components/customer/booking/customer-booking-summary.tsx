@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Upload, User, Hash, Mail, Phone, Clock, FileText } from "lucide-react"
+import { Upload, User, Hash, Mail, Phone, Clock } from "lucide-react"
 import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
 import { useRef, useState, useEffect } from "react"
@@ -10,6 +10,7 @@ import { useCancelBooking } from "@/features/booking/client/hooks/use-booking"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
 import Modal from "@/components/modal"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
+import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
 type Props = {
   booking: any
@@ -24,6 +25,7 @@ export default function BookingSummary({ booking }: Props) {
   const [isVerifying, setIsVerifying] = useState(false);
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
+  const fromPayment = searchParams.get('from') === 'payment';
 
   const price = booking.service ? Number(booking.service.price) : 0
   const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
@@ -265,39 +267,244 @@ export default function BookingSummary({ booking }: Props) {
           </div>
 
         </div>
-
-        {/* Cancellation Policy */}
-        {/* <div className="">
-          <p className="text-xs text-gray-600">
-            <span className="font-medium">Cancellation policy:</span> Free cancellation
-            up to 24 hours before your appointment. Late cancellations may be subject to{" "}
-            <span className="text-fuchsia-600 underline">fees</span>.
-          </p>
-        </div> */}
       </div>
 
-      {/* Cancel Button */}
-      {/* {booking.status !== "CANCELLED" && (
-        <div className="mt-6 flex justify-center">
-          <Button
-            variant="ghost"
-            onClick={handleCancelBooking}
-            disabled={isPending}
-            className="text-gray-500 hover:text-red-600"
-          >
-            {isPending ? "Cancelling..." : "Cancel my booking"}
-          </Button>
+      {/* Manage booking + policies (hidden when coming directly from payment redirect) */}
+      {!fromPayment && (
+        <div className="mt-6 space-y-4">
+          <div className="rounded-3xl bg-pink-50 px-5 py-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Manage booking</h2>
+              <div className="mt-3 border-t border-fuchsia-100" />
+            </div>
+
+            {/* Reschedule booking – UI stub, no functionality yet */}
+            {/* <Button
+              className="w-full h-12 rounded-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-medium flex items-center justify-center gap-2"
+            >
+              <Clock className="h-4 w-4" />
+              Reschedule booking
+            </Button> */}
+
+            {booking.status !== "CANCELLED" && (
+              <Button
+                variant="outline"
+                onClick={handleCancelBooking}
+                disabled={isPending}
+                className="w-full h-12 rounded-full border-red-500 text-red-600 hover:bg-red-50 text-sm font-medium"
+              >
+                {isPending ? "Cancelling..." : "Cancel booking"}
+              </Button>
+            )}
+
+            <p className="text-xs text-gray-600">
+              <span className="font-medium">Cancellation policy:</span> Free cancellation up to 24
+              hours before your appointment. Late cancellations may be subject to fees.
+            </p>
+          </div>
+
+          <div className="flex items-center justify-center gap-3 text-xs text-gray-500">
+            <PolicyBottomSheet triggerLabel="Privacy Policy" title="Privacy Policy">
+              <p className="mb-4 text-sm">
+                Polaris, we respect your privacy and committed to protecting your personal information.
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">1. Information We Collect</h3>
+                  <p className="text-sm mb-2">When you book an appointment, we collect:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Full name</li>
+                    <li>Email address</li>
+                    <li>Phone number</li>
+                    <li>Selected service and appointment details</li>
+                    <li>Payment confirmation reference (via Paystack)</li>
+                  </ul>
+                  <p className="text-sm mt-2">
+                    We do not store your card details. Payments are securely processed by Paystack.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">2. How We Use Your Information</h3>
+                  <p className="text-sm mb-2">We use your information to:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Process and manage your bookings</li>
+                    <li>Send booking confirmations and updates</li>
+                    <li>Communicate appointment reminders or changes</li>
+                    <li>Improve our services and customer experience</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">3. Payment Security</h3>
+                  <p className="text-sm">
+                    All payments are securely processed by Paystack. We do not store debit/credit card details on our servers.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">4. Data Storage & Protection</h3>
+                  <p className="text-sm">
+                    Your booking information is stored securely using encrypted database systems. Access is restricted to authorized staff only.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">5. Data Sharing</h3>
+                  <p className="text-sm mb-2">We do not sell, rent, or trade your personal information.</p>
+                  <p className="text-sm mb-2">We may share limited information with:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Payment processors (Paystack)</li>
+                    <li>Email delivery providers (for booking confirmations)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">6. Your Rights</h3>
+                  <p className="text-sm mb-2">You may request to:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>View your stored information</li>
+                    <li>Correct inaccurate details</li>
+                    <li>Request deletion of your booking data (where legally permitted)</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">7. Contact Us</h3>
+                  <p className="text-sm">
+                    If you have any privacy-related concerns, please contact us at:<br />
+                    <strong>help@polaris.com</strong><br />
+                    <strong>+233 55 623 3900</strong>
+                  </p>
+                </div>
+              </div>
+            </PolicyBottomSheet>
+
+
+            <span>•</span>
+
+            <PolicyBottomSheet triggerLabel="Terms of Service" title="Terms of Service">
+              <p className="mb-4 text-sm">
+                By using our booking system, you agree to the following terms:
+              </p>
+
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">1. Booking Policy</h3>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>All appointments must be booked at least 24 hours in advance.</li>
+                    <li>A valid name, email, and phone number are required.</li>
+                    <li>Payment is required before admin approval.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">2. Appointment Confirmation</h3>
+                  <p className="text-sm">
+                    After payment, your booking will be marked as pending until approved by salon staff. You will receive a confirmation email once approved.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">3. Cancellations</h3>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>Cancellations are allowed up to 24 hours before your appointment.</li>
+                    <li>Late cancellations (within 24 hours) may not be eligible for refunds.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">4. No-Show Policy</h3>
+                  <p className="text-sm">
+                    Failure to attend your appointment without prior cancellation may result in forfeiture of payment.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">5. Pricing</h3>
+                  <p className="text-sm">
+                    All prices are displayed in Ghana Cedis (GHS) and are subject to change without prior notice. Price changes do not affect confirmed bookings.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">6. Service Refusal</h3>
+                  <p className="text-sm">
+                    We reserve the right to refuse service in cases of inappropriate behavior, safety concerns, or violation of salon policies.
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">7. Modifications</h3>
+                  <p className="text-sm">
+                    We may update these terms at any time. Continued use of the booking system indicates acceptance of any updates.
+                  </p>
+                </div>
+              </div>
+            </PolicyBottomSheet>
+
+
+            <span>•</span>
+
+            <PolicyBottomSheet triggerLabel="Refund Policy" title="About our Refund Policy and Enforcement">
+              <div className="space-y-4">
+                <div>
+                  <h3 className="font-semibold mb-2">Eligible Refunds</h3>
+                  <p className="text-sm mb-2">Refunds may be considered if:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>The salon cancels your confirmed appointment.</li>
+                    <li>A booking is rejected after payment.</li>
+                    <li>A technical error results in duplicate charges.</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Non-Refundable Situations</h3>
+                  <p className="text-sm mb-2">Refunds will generally not be issued if:</p>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    <li>You cancel within 24 hours of your appointment.</li>
+                    <li>You fail to attend your appointment (no-show).</li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Refund Process</h3>
+                  <p className="text-sm mb-2">
+                    Refunds are processed manually and may take 5-10 business days depending on your payment provider.
+                  </p>
+                  <p className="text-sm mb-2">
+                    To request a refund, please contact:
+                  </p>
+                  <p className="text-sm font-medium mb-2">
+                    [Salon Email Address]
+                  </p>
+                  <p className="text-sm">
+                    Include your booking reference (BK-XXXXXX).
+                  </p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">Payment Processing Fees</h3>
+                  <p className="text-sm">
+                    Certain payment processing fees may be non-refundable.
+                  </p>
+                </div>
+              </div>
+            </PolicyBottomSheet>
+
+          </div>
         </div>
-      )} */}
+      )}
 
-
-      {/* <Modal
+      <Modal
         open={isCancelModalOpen}
         onClose={() => setIsCancelModalOpen(false)}
         title="Cancel Booking?"
-        subtitle={hasRefundablePayment()
-          ? "Your payment will be refunded. This may take up to 10 business days."
-          : "Are you sure you want to cancel this booking?"
+        subtitle={
+          hasRefundablePayment()
+            ? "Your payment will be refunded. This may take up to 10 business days."
+            : "Are you sure you want to cancel this booking?"
         }
         childrenClassName="max-h-[224px] "
         showSeparator={false}
@@ -305,21 +512,26 @@ export default function BookingSummary({ booking }: Props) {
         {hasRefundablePayment() && (
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
             <p className="text-sm text-blue-800">
-              <strong>Refund Information:</strong><br />
-              A full refund will be automatically initiated to your original payment method.
-              Please allow up to 10 business days for the refund to appear in your account.
+              <strong>Refund Information:</strong>
+              <br />
+              A full refund will be automatically initiated to your original payment method. Please
+              allow up to 10 business days for the refund to appear in your account.
             </p>
           </div>
         )}
         <div className="flex justify-end gap-3 pt-4">
-          <Button className="bg-[#D10505] hover:bg-[#D10505]/90" type="button" onClick={() => setIsCancelModalOpen(false)}>
+          <Button
+            className="bg-[#D10505] hover:bg-[#D10505]/90"
+            type="button"
+            onClick={() => setIsCancelModalOpen(false)}
+          >
             Close
           </Button>
-          <Button variant="outline" onClick={() => handleCancelSubmit()} disabled={isPending} >
+          <Button variant="outline" onClick={() => handleCancelSubmit()} disabled={isPending}>
             {isPending ? "Cancelling..." : "Cancel Booking"}
           </Button>
         </div>
-      </Modal> */}
+      </Modal>
     </>
   )
 }
