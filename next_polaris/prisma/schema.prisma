@@ -116,7 +116,6 @@ model Payment {
 
   status     PaymentStatus
   rawPayload Json?
-  /// Optional human‑readable reason for this payment / allocation
   reason     String?
 
   createdAt DateTime @default(now())
