@@ -12,6 +12,7 @@ type PaymentDTO = {
   currency: "GHS"
   status: PaymentStatus
   rawPayload?: any
+  reason?: string | null
 }
 
 export class PaymentRepository {
@@ -61,6 +62,7 @@ export class PaymentRepository {
           currency: dto.currency,
           status: dto.status,
           rawPayload: dto.rawPayload,
+          reason: dto.reason ?? undefined,
         },
       })
     }
