@@ -186,6 +186,21 @@ export class BookingRepository {
   }
 
 
+  async rescheduleBooking(id: string, bookingDate: string, bookingTime: string) {
+    return prisma.booking.update({
+      where: { id },
+      data: {
+        bookingDate,
+        bookingTime,
+      },
+      include: {
+        service: true,
+        payments: true,
+      },
+    })
+  }
+
+
   async updateStatus(id: string, status: BookingStatus) {
     let booking = await prisma.booking.update({
       where: { id },

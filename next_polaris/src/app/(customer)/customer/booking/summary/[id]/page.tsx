@@ -20,6 +20,18 @@ export default async function BookingSummaryPage({
 
   const booking = await bookingRepository.findById(bookingId)
 
+  const serializedBooking = {
+    ...booking,
+    payments: booking?.payments.map((p) => ({
+      ...p,
+      amount: p.amount.toString()
+    })),
+    service: {
+      ...booking?.service,
+      price: booking?.service.price.toString()
+    }
+  }
+
   // Check if this is a callback from Paystack
   const isPaymentCallback = !!reference;
   const paymentStatus = booking?.paymentStatus;
@@ -44,7 +56,7 @@ export default async function BookingSummaryPage({
         </div>
         <h1 className="text-2xl font-semibold text-gray-900">Booking Not Found</h1>
         <p className="text-gray-500 max-w-sm">
-          We couldn't find the booking you're looking for. It may have been cancelled or the link is invalid.
+          We couldn&apos;t find the booking you&apos;re looking for. It may have been cancelled or the link is invalid.
         </p>
       </div>
     )
@@ -74,7 +86,7 @@ export default async function BookingSummaryPage({
         </div>
       )}
 
-      <BookingSummary booking={booking} />
+      <BookingSummary booking={serializedBooking} />
     </div>
   )
 }

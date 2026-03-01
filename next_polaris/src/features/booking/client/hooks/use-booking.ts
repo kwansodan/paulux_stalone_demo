@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { BookingInput, BookingStatusEnum, BookingStatusInput, CancelBookingInput } from "../../utils/validation";
-import { api } from "@/lib/api";
+import { api, publicApi } from "@/lib/api";
 import { toast } from "sonner";
 import { BookingStatus } from "@generated/prisma/enums";
 import { BookingFilters, BookingWithService, IBookingMetrics } from "../../types";
@@ -114,6 +114,37 @@ export function useCreateBooking() {
     onError: (error) => {
       console.error("Failed to create booking", error)
       toast.error("Failed to create booking")
+    },
+  })
+}
+
+type PublicReschedulePayload = {
+  id: string
+  bookingDate: string
+  bookingTime: string
+}
+
+export function usePublicRescheduleBooking() {
+  return useMutation({
+    mutationFn: async ({ id, bookingDate, bookingTime }: PublicReschedulePayload) => {
+      const res = await publicApi.post(`/bookings/${id}/reschedule`, {
+        bookingDate,
+        bookingTime,
+      })
+      return res.data
+    },
+    onMutate: () => {
+      toast.loading("Rescheduling booking...", { id: "reschedule-booking" })
+    },
+    onSuccess: () => {
+      toast.success("Booking rescheduled successfully", { id: "reschedule-booking" })
+    },
+    onError: (error: any) => {
+      const message =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        "Failed to reschedule booking"
+      toast.error(message, { id: "reschedule-booking" })
     },
   })
 }
