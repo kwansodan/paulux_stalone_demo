@@ -184,6 +184,25 @@ export async function POST(request: NextRequest) {
       ...validatedBody,
     })
 
+    // --- Send SMS Notification ---
+    try {
+      const { sendSMS } = await import("@/lib/arkesal");
+      const clientName = createdBooking.clientName.split(" ")[0]; // First name
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://polarisbeauty.biz";
+      const summaryUrl = `${appUrl}/customer/booking/summary/${createdBooking.id}`;
+
+      const message = `Hello ${clientName}, your booking is confirmed! View details and track payment here: ${summaryUrl}`;
+
+      // Fire and forget so we don't hold up the response
+      sendSMS({
+        recipients: [createdBooking.clientPhone],
+        message
+      });
+    } catch (smsError) {
+      console.error("Non-fatal: Failed to trigger SMS dispatch", smsError);
+    }
+    // -----------------------------
+
     return NextResponse.json({ success: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {
     if (error instanceof NextResponse) return error
