@@ -1,12 +1,9 @@
 import { customerBookingPath, customerServicesPath, signInPath } from "@/app/paths"
-import {
-  Mail,
-  MapPin,
-  Phone,
-} from "lucide-react"
+import { Mail, MapPin, Phone } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import TiktokIcon from "tiktokIcon.svg"
+import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
 
 export const SOCIAL_ICONS = {
@@ -150,9 +147,142 @@ export default function LandingFooter() {
         </div>
       </div>
 
-      <div className="mt-10 text-xs text-white/50 flex flex-col gap-4">
-        <span className="underline">Privacy Policy</span>
-        <span className="underline">Terms of Service</span>
+      <div className="mt-10 text-xs text-white/70 flex flex-col gap-3">
+        <PolicyBottomSheet triggerLabel="Privacy Policy" title="Privacy Policy">
+          <p className="mb-4 text-sm">
+            Polaris, we respect your privacy and committed to protecting your personal information.
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">1. Information We Collect</h3>
+              <p className="text-sm mb-2">When you book an appointment, we collect:</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>Full name</li>
+                <li>Email address</li>
+                <li>Phone number</li>
+                <li>Selected service and appointment details</li>
+                <li>Payment confirmation reference (via Paystack)</li>
+              </ul>
+              <p className="text-sm mt-2">
+                We do not store your card details. Payments are securely processed by Paystack.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">2. How We Use Your Information</h3>
+              <p className="text-sm mb-2">We use your information to:</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>Process and manage your bookings</li>
+                <li>Send booking confirmations and updates</li>
+                <li>Communicate appointment reminders or changes</li>
+                <li>Improve our services and customer experience</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">3. Payment Security</h3>
+              <p className="text-sm">
+                All payments are securely processed by Paystack. We do not store debit/credit card details on our servers.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">4. Data Storage & Protection</h3>
+              <p className="text-sm">
+                Your booking information is stored securely using encrypted database systems. Access is restricted to authorized staff only.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">5. Data Sharing</h3>
+              <p className="text-sm mb-2">We do not sell, rent, or trade your personal information.</p>
+              <p className="text-sm mb-2">We may share limited information with:</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>Payment processors (Paystack)</li>
+                <li>Email delivery providers (for booking confirmations)</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">6. Your Rights</h3>
+              <p className="text-sm mb-2">You may request to:</p>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>View your stored information</li>
+                <li>Correct inaccurate details</li>
+                <li>Request deletion of your booking data (where legally permitted)</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">7. Contact Us</h3>
+              <p className="text-sm">
+                If you have any privacy-related concerns, please contact us at:<br />
+                <strong>help@polaris.com</strong><br />
+                <strong>+233 55 623 3900</strong>
+              </p>
+            </div>
+          </div>
+        </PolicyBottomSheet>
+        <PolicyBottomSheet triggerLabel="Terms of Service" title="Terms of Service">
+          <p className="mb-4 text-sm">
+            By using our booking system, you agree to the following terms:
+          </p>
+
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold mb-2">1. Booking Policy</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>All appointments must be booked at least 24 hours in advance.</li>
+                <li>A valid name, email, and phone number are required.</li>
+                <li>Payment is required before admin approval.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">2. Appointment Confirmation</h3>
+              <p className="text-sm">
+                After payment, your booking will be marked as pending until approved by salon staff. You will receive a confirmation email once approved.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">3. Cancellations</h3>
+              <ul className="list-disc pl-5 space-y-1 text-sm">
+                <li>Cancellations are allowed up to 24 hours before your appointment.</li>
+                <li>Late cancellations (within 24 hours) may not be eligible for refunds.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">4. No-Show Policy</h3>
+              <p className="text-sm">
+                Failure to attend your appointment without prior cancellation may result in forfeiture of payment.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">5. Pricing</h3>
+              <p className="text-sm">
+                All prices are displayed in Ghana Cedis (GHS) and are subject to change without prior notice. Price changes do not affect confirmed bookings.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">6. Service Refusal</h3>
+              <p className="text-sm">
+                We reserve the right to refuse service in cases of inappropriate behavior, safety concerns, or violation of salon policies.
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">7. Modifications</h3>
+              <p className="text-sm">
+                We may update these terms at any time. Continued use of the booking system indicates acceptance of any updates.
+              </p>
+            </div>
+          </div>
+        </PolicyBottomSheet>
       </div>
 
       <p className="text-left text-xs text-white/50 mt-4">
