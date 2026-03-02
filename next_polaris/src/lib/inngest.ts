@@ -1,6 +1,6 @@
-import { BookingCancelEventArgs } from "@/features/auth/events/event-booking-cancel";
-import { PasswordResetEventArgs } from "@/features/auth/events/event-password-reset";
-import { PaymentReceivedEventArgs } from "@/features/payment/events/event-payment-received";
+import type { BookingCancelEventArgs } from "@/features/auth/events/event-booking-cancel";
+import type { PasswordResetEventArgs } from "@/features/auth/events/event-password-reset";
+import type { PaymentReceivedEventArgs } from "@/features/payment/events/event-payment-received";
 import { EventSchemas, Inngest } from "inngest";
 
 type Events = {
