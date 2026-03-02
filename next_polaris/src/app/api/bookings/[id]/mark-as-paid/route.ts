@@ -13,7 +13,7 @@ export async function POST(
 ) {
     try {
         const auth = await requireRoleApi(["ADMIN"]);
-        if (!auth.ok) return auth.response;
+        if (!auth.ok || !auth.user) return auth.response || NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
         const bookingId = (await params).id;
 
