@@ -252,3 +252,33 @@ export function useChargeCustomer() {
   })
 }
 
+export function useMarkAsPaid() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/bookings/${id}/mark-as-paid`),
+    onMutate: () => {
+      toast.loading("Marking as paid...", { id: "mark-as-paid" })
+    },
+    onSuccess: (_data: any, variables: string) => {
+      queryClient.invalidateQueries({
+        queryKey: ["slots"],
+      })
+
+      queryClient.invalidateQueries({
+        queryKey: ["bookings"],
+      })
+
+      queryClient.invalidateQueries({
+        queryKey: ["booking", variables],
+      })
+
+      toast.success("Booking marked as paid successfully", { id: "mark-as-paid" })
+    },
+    onError: (error: any) => {
+      console.error("Failed to mark as paid", error)
+      const message = error.response?.data?.message || "Failed to mark as paid"
+      toast.error(message, { id: "mark-as-paid" })
+    },
+  })
+}
