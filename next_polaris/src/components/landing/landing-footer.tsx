@@ -2,7 +2,6 @@ import { customerBookingPath, customerServicesPath, signInPath } from "@/app/pat
 import { Mail, MapPin, Phone } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import TiktokIcon from "tiktokIcon.svg"
 import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
 
