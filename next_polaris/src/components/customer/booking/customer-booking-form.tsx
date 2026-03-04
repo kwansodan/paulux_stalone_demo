@@ -134,6 +134,7 @@ export default function CustomerBookingForm({
                 })
               }}
               onNext={nextStep}
+              onBack={prevStep}
               canProceed={canProceed()}
             />
           )}
