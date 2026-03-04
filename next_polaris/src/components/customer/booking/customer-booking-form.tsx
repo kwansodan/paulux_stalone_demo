@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import StepIndicator from "./step-indicator"
 import { SerializedService } from "@/features/service/types"
 import { Step } from "@/components/customer/booking/step-indicator"
@@ -38,15 +39,32 @@ const initialFormData: BookingFormData = {
   phone: "",
 }
 
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
+
 
 export default function CustomerBookingForm({
   services,
+  preSelectedServiceId
 }: {
-  services: SerializedService[]
+  services: SerializedService[];
+  preSelectedServiceId: string | null;
 }) {
+  const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
-  const [formData, setFormData] = useState<BookingFormData>(initialFormData)
+
+  const [formData, setFormData] = useState<BookingFormData>(() => {
+    if (preSelectedServiceId) {
+      const preSelectedService = services.find(
+        (service) => service.id === preSelectedServiceId
+      )
+      return {
+        ...initialFormData,
+        serviceId: preSelectedServiceId,
+        service: preSelectedService || null,
+      }
+    }
+    return initialFormData
+  })
+
 
   const updateFormData = (data: Partial<BookingFormData>) => {
     setFormData((prev) => ({ ...prev, ...data }))
@@ -59,7 +77,10 @@ export default function CustomerBookingForm({
   }
 
   const prevStep = () => {
-    if (currentStep > 1) {
+    if (currentStep === 1) {
+      // Go back to previous page in browser history
+      router.back()
+    } else if (currentStep > 1) {
       setCurrentStep((prev) => prev - 1)
     }
   }
@@ -113,6 +134,7 @@ export default function CustomerBookingForm({
                 })
               }}
               onNext={nextStep}
+              onBack={prevStep}
               canProceed={canProceed()}
             />
           )}

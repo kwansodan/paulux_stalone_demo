@@ -13,7 +13,6 @@ export default async function DashboardPage() {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
-
   const {
     bookings,
     count,
@@ -22,6 +21,7 @@ export default async function DashboardPage() {
     { bookingDate: today.toISOString().split('T')[0] },
     { includeCount: true, includeRevenue: true }
   )
+
 
   const pending =
     await bookingRepository.countByStatus("PENDING")

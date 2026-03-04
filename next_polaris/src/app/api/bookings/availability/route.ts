@@ -5,6 +5,7 @@ import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { serviceRepository } from "@/features/service/server/service.repository"
 import { isPastSlot } from "@/features/booking/utils/helpers"
 import { isTime24HoursInAdvance } from "@/utils/helpers"
+import { authRepository } from "@/features/auth/server/auth.repository"
 
 function addMinutes(time: string, mins: number) {
   const [h, m] = time.split(":").map(Number)
@@ -24,9 +25,18 @@ export async function GET(req: NextRequest) {
 
   const date = searchParams.get("date")
   const serviceId = searchParams.get("serviceId")
+  const userId = searchParams.get("userId")
 
   if (!date || !serviceId) {
     return NextResponse.json({ slots: [] })
+  }
+
+  let user
+  if (userId) {
+    user = await authRepository.findUserById(userId)
+    if (!user) {
+      return NextResponse.json({ success: false, message: "Invalid userId" }, { status: 400 })
+    }
   }
 
   const dateObj = new Date(date)
@@ -55,7 +65,7 @@ export async function GET(req: NextRequest) {
 
     if (end <= hours.endTime) {
       const isPast = isPastSlot(dateObj, current)
-      const is24HoursAhead = isTime24HoursInAdvance(dateObj, current)
+      const is24HoursAhead = user && user.role === "ADMIN" ? true : isTime24HoursInAdvance(dateObj, current)
 
       let available = false
 

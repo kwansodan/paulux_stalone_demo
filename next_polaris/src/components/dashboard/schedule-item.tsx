@@ -9,7 +9,11 @@ export default function ScheduleItem({ booking }: Props) {
     <div className="flex items-center justify-between py-3 border-b last:border-b-0">
 
       <div>
-        <p className="font-medium">{booking.clientName}</p>
+        <div className="flex gap-4 items-center">
+          <p className="font-medium  text-gray-900">{booking.clientName}</p>
+          <span className="px-0">|</span>
+          <p className="font-medium text-gray-900">{booking.clientPhone}</p>
+        </div>
         <p className="text-sm text-gray-500">
           {booking.service.name} · {booking.bookingTime}
         </p>

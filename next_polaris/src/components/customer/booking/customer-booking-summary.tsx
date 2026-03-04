@@ -27,8 +27,11 @@ export default function BookingSummary({ booking }: Props) {
   const reference = searchParams.get('reference');
   const fromPayment = searchParams.get('from') === 'payment';
 
-  const price = booking.service ? Number(booking.service.price) : 0
-  const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
+  // const price = booking.service ? Number(booking.service.price) : 0
+  // const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
+  const depositAmount = booking.payments
+    .filter((p: any) => p.status === "PAID" || p.status === "PARTIAL")
+    .reduce((paymentSum: number, payment: any) => paymentSum + Number(payment.amount), 0);
   const bookingPaymentStatus = calculatePaymentStatus(booking)
   // Verify payment on mount if reference exists and status is pending
   useEffect(() => {
@@ -258,7 +261,7 @@ export default function BookingSummary({ booking }: Props) {
                   <path d="M14 10H2C1.73499 9.99933 1.48103 9.89375 1.29364 9.70636C1.10625 9.51897 1.00067 9.26501 1 9V3C1.00067 2.73499 1.10625 2.48103 1.29364 2.29364C1.48103 2.10625 1.73499 2.00067 2 2H14C14.265 2.00067 14.519 2.10625 14.7064 2.29364C14.8938 2.48103 14.9993 2.73499 15 3V9C14.9996 9.26511 14.8942 9.51925 14.7067 9.70671C14.5193 9.89417 14.2651 9.99964 14 10ZM14 3H2V9H14V3Z" fill="#475568" />
                 </svg>
 
-                <span className="text-sm">Price</span>
+                <span className="text-sm">Amount Paid</span>
               </div>
               <span className="text-sm font-medium">
                 GHS {Number(depositAmount).toFixed(2)}
@@ -374,11 +377,16 @@ export default function BookingSummary({ booking }: Props) {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">7. Contact Us</h3>
+                  <h3 className="font-semibold mb-2">7. Disclaimer</h3>
+                  <p className="text-sm ">Our Works Are Recorded For Quality Checks, References & Advertisements Purposes Kindly Notify Us If You Do Not Want To Be Photographed. Also Note That Private Clients Do Not Qualify For Any Of Our Discount Offers</p>
+                </div>
+
+                <div>
+                  <h3 className="font-semibold mb-2">8. Contact Us</h3>
                   <p className="text-sm">
                     If you have any privacy-related concerns, please contact us at:<br />
-                    <strong>help@polaris.com</strong><br />
-                    <strong>+233 55 623 3900</strong>
+                    <strong>polarisbeautylounge@gmail.com</strong><br />
+                    <strong>+233 24 070 2107 | +233 50 485 1482</strong>
                   </p>
                 </div>
               </div>

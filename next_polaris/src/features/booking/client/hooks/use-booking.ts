@@ -20,12 +20,14 @@ export function updateBookingStatus(id: string, payload: BookingStatusInput) {
 }
 
 
-export function useAvailableSlots(date?: string, serviceId?: string) {
+export function useAvailableSlots(date?: string, serviceId?: string, userId?: string) {
   return useQuery({
     queryKey: ["slots", date, serviceId],
     enabled: !!date && !!serviceId,
     queryFn: async () => {
-      const res = await api.get(`/bookings/availability?date=${date}&serviceId=${serviceId}`)
+      let path = `/bookings/availability?date=${date}&serviceId=${serviceId}`
+      if(userId) path = path + `&userId=${userId}`
+      const res = await api.get(path)
       return res.data
     },
   })

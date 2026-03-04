@@ -50,7 +50,11 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             <span>{bookingPaymentStatus}</span>
           </div>
         </div>
-        <p className="font-medium text-sm text-gray-900">{booking.clientName}</p>
+        <div className="flex gap-4 items-center">
+          <p className="font-medium text-sm text-gray-900">{booking.clientName}</p>
+          <span className="px-0">|</span>
+          <p className="font-medium text-sm text-gray-900">{booking.clientPhone}</p>
+        </div>
         <p className="text-sm text-gray-500">
           {booking.service.name}
         </p>
