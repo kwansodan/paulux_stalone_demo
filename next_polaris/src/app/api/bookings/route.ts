@@ -184,6 +184,8 @@ export async function POST(request: NextRequest) {
       ...validatedBody,
     })
 
+
+
     return NextResponse.json({ success: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {
     if (error instanceof NextResponse) return error

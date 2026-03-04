@@ -5,12 +5,6 @@ import { getBaseUrl } from "@/utils/url";
 import { sendBookingCancelEmail } from "@/features/booking/emails/send-booking-cancel-email";
 
 
-export type BookingCancelEventArgs = {
-  data: {
-    bookingId: string;
-  }
-}
-
 export const bookingCancelledEvent = inngest.createFunction(
   { id: "booking-cancel" },
   { event: "app/booking.booking-cancel" },
@@ -24,7 +18,7 @@ export const bookingCancelledEvent = inngest.createFunction(
 
     const bookingSummaryLink = getBaseUrl() + customerBookingSummaryPath(bookingId)
 
-    if(!booking?.clientEmail){
+    if (!booking?.clientEmail) {
       throw new Error(`No client email for booking`)
     }
 

@@ -72,27 +72,26 @@ export default function AdminMobileMenu({
                         {/* Navigation */}
                         <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-1">
                             {navItems.map((item, index) => {
-                                if (item.separator) {
-                                    return <div key={`sep-${index}`} className="my-2 border-t mx-2" />
-                                }
-
                                 const isActive = activeIndex === index
 
                                 return (
-                                    <Link
-                                        key={item.title}
-                                        href={item.href || "#"}
-                                        onClick={() => onOpenChange(false)}
-                                        className={cn(
-                                            "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors",
-                                            isActive
-                                                ? "bg-fuchsia-50 text-fuchsia-600"
-                                                : "text-gray-600 hover:bg-gray-100"
-                                        )}
-                                    >
-                                        {item.icon && React.cloneElement(item.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
-                                        <span>{item.title}</span>
-                                    </Link>
+                                    <React.Fragment key={`frag-${item.title}`}>
+                                        {item.separator && <div className="my-2 border-t mx-2" />}
+                                        <Link
+                                            key={item.title}
+                                            href={item.href || "#"}
+                                            onClick={() => onOpenChange(false)}
+                                            className={cn(
+                                                "flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors",
+                                                isActive
+                                                    ? "bg-fuchsia-50 text-fuchsia-600"
+                                                    : "text-gray-600 hover:bg-gray-100"
+                                            )}
+                                        >
+                                            {item.icon && React.cloneElement(item.icon as React.ReactElement<any>, { className: "w-5 h-5" })}
+                                            <span>{item.title}</span>
+                                        </Link>
+                                    </React.Fragment>
                                 )
                             })}
                         </nav>

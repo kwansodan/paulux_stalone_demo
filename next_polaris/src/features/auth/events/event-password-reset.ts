@@ -4,12 +4,6 @@ import { generatePasswordResetLink } from "../utils/generate-password-reset-link
 import { sendEmailPasswordReset } from "../emails/send-email-password-reset";
 
 
-export type PasswordResetEventArgs = {
-  data: {
-    userId: string;
-  }
-}
-
 export const passwordResetEvent = inngest.createFunction(
   { id: "password-reset" },
   { event: "app/password.password-reset" },

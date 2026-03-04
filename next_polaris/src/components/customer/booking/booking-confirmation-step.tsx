@@ -1,7 +1,7 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Scissors, Calendar, Clock } from "lucide-react"
+import { Scissors, Calendar, Clock, Loader2 } from "lucide-react"
 import { useState } from "react"
 import { BookingFormData } from "./customer-booking-form"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
@@ -19,6 +19,7 @@ type Props = {
 export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const router = useRouter()
   const service = formData.service
+  const [isProcessing, setIsProcessing] = useState(false)
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
     (formData.minDepositPercent || service?.minDepositPercent || 0) < 100 ? "deposit" : "full"
   )
@@ -30,6 +31,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
 
   const handleProceedToPayment = async () => {
     try {
+      setIsProcessing(true)
       const amount = paymentOption === "deposit" ? depositAmount : price
 
       console.log("Proceeding to payment with:", {
@@ -88,12 +90,19 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
 
     } catch (error) {
       console.error("Error proceeding to payment:", error)
+      setIsProcessing(false) // Stop processing on error
     }
   }
 
 
   return (
-    <div className="space-y-6 ">
+    <div className="space-y-6 relative">
+      {isProcessing && (
+        <div className="absolute inset-x-0 -top-4 -bottom-4 z-50 flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm rounded-3xl">
+          <Loader2 className="w-10 h-10 animate-spin text-fuchsia-600 mb-4" />
+          <p className="text-sm font-medium text-gray-700">Redirecting to payment gateway...</p>
+        </div>
+      )}
       <div className="space-y-6 p-4 rounded-3xl shadow-sm">
         {/* Booking Summary */}
         <div className="bg-pink-50 rounded-2xl p-3 space-y-6">
@@ -260,10 +269,10 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         </Button>
         <Button
           onClick={handleProceedToPayment}
-          disabled={createBookingMutation.isPending}
+          disabled={createBookingMutation.isPending || isProcessing}
           className="flex-1 h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium"
         >
-          {createBookingMutation.isPending ? "Processing..." : "Proceed to payment"}
+          {createBookingMutation.isPending || isProcessing ? "Processing..." : "Proceed to payment"}
         </Button>
       </div>
     </div>

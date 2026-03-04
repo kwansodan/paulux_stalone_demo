@@ -32,11 +32,41 @@ export async function POST(
             );
         }
 
+        const servicePrice = Number(booking.service.price);
+        let amountToCharge = servicePrice;
+        let transactionType = 'initial';
+
+        // Filter for PAID payments
+        const paidPayments = booking.payments?.filter(p => p.status === PaymentStatus.PAID) || [];
+        const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+
+        const remainingBalance = servicePrice - totalPaid;
+
+        if (remainingBalance <= 0) {
+            return NextResponse.json(
+                { success: false, message: "Booking is already paid in full" },
+                { status: 400 }
+            );
+        }
+
+        if (totalPaid === 0) {
+            // First payment: Check if there's a minimum deposit
+            const minDepositPercent = booking.minDepositPercent ?? booking.service.minDepositPercent ?? 0;
+            if (minDepositPercent > 0 && minDepositPercent < 100) {
+                amountToCharge = servicePrice * (minDepositPercent / 100);
+            }
+        } else {
+            // Subsequent payment: Charge the remaining balance
+            amountToCharge = remainingBalance;
+            transactionType = 'subsequent';
+        }
+
         const paymentResult = await paymentProcessingService.initializePayment({
             bookingId: booking.id,
             email: booking.clientEmail,
-            amount: Number(booking.service.price),
+            amount: amountToCharge,
             bookingReference: booking.bookingReference,
+            transactionType,
             callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation`
         });
 

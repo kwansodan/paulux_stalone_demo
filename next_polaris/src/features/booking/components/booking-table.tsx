@@ -87,6 +87,7 @@ export default function BookingsTable() {
         const payment = row.payments?.[0]
         const isPending = !payment || payment.status === "PENDING"
 
+        if (row.status === "CANCELLED") return null
         if (!isPending) return null
 
         return (

@@ -3,14 +3,6 @@ import { prisma } from "@/lib/prisma";
 import { sendPaymentReceivedEmail } from "../emails/send-payment-received-email";
 import { UserRole } from "@generated/prisma/client";
 
-export type PaymentReceivedEventArgs = {
-    data: {
-        bookingId: string;
-        amountPaid: number;
-        provider: string;
-    };
-};
-
 export const paymentReceivedEvent = inngest.createFunction(
     { id: "payment-received-admin-notify" },
     { event: "app/payment.payment-received" },

@@ -47,7 +47,7 @@ ENV NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1
 
 # Generate Prisma client and build the application
 RUN npx prisma generate
-RUN NODE_OPTIONS="--max-old-space-size=4096" npm run build
+RUN npm run build
 
 # Production image, copy all the files and run next
 FROM base AS runner

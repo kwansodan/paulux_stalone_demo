@@ -12,14 +12,10 @@ export default async function ReportsPage() {
     { includeCount: true }
   )
 
-  const confirmedBookings = bookings.filter(
-    b => b.status === BookingStatus.CONFIRMED
-  )
-
   const metrics = {
     totalBookings: count ?? bookings.length,
     cancelled: bookings.filter(b => b.status === "CANCELLED").length,
-    unpaid: bookings.length - confirmedBookings.length,
+    unpaid: bookings.filter(b => b.paymentStatus !== "PAID").length,
     completed: bookings.filter(b => b.status === "COMPLETED").length,
   }
 

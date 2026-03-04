@@ -10,7 +10,7 @@ import {
 import { BookingWithService } from "../types"
 import { formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
-import { useMarkAsCompleted, useChargeCustomer } from "../client/hooks/use-booking"
+import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
 type BookingCardProps = {
@@ -23,6 +23,7 @@ type BookingCardProps = {
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
+  const markAsPaid = useMarkAsPaid()
   const bookingPaymentStatus = calculatePaymentStatus(booking)
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
@@ -81,10 +82,17 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             <span className="w-full">Mark as completed</span>
           </DropdownMenuItem>)}
 
-          {bookingPaymentStatus !== 'PAID' && (!booking.payments?.length || booking.payments.some(p => p.status === 'PENDING')) && (
+          {booking.status !== 'CANCELLED' && bookingPaymentStatus !== 'PAID' && (!booking.payments?.length || booking.payments.some(p => p.status === 'PENDING')) && (
             <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
+            </DropdownMenuItem>
+          )}
+
+          {(bookingPaymentStatus === 'PENDING' || bookingPaymentStatus === 'PARTIAL') && booking.status !== 'CANCELLED' && (
+            <DropdownMenuItem onClick={() => markAsPaid.mutate(booking.id)} className="flex gap-2 text-blue-600">
+              <CircleCheck className="text-blue-600" />
+              <span className="w-full">Mark as paid</span>
             </DropdownMenuItem>
           )}
           {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (

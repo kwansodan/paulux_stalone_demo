@@ -1,7 +1,24 @@
-import { BookingCancelEventArgs } from "@/features/auth/events/event-booking-cancel";
-import { PasswordResetEventArgs } from "@/features/auth/events/event-password-reset";
-import { PaymentReceivedEventArgs } from "@/features/payment/events/event-payment-received";
 import { EventSchemas, Inngest } from "inngest";
+
+export type BookingCancelEventArgs = {
+  data: {
+    bookingId: string;
+  }
+}
+
+export type PasswordResetEventArgs = {
+  data: {
+    userId: string;
+  }
+}
+
+export type PaymentReceivedEventArgs = {
+  data: {
+    bookingId: string;
+    amountPaid: number;
+    provider: string;
+  };
+};
 
 type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
