@@ -85,7 +85,7 @@ export async function GET(req: NextRequest) {
 
       let available = false
 
-      if (!isPast && is24HoursAhead) {
+      if (!isPast) {
         available = !isPast && await bookingRepository.isSlotAvailable(
           dateObj,
           current

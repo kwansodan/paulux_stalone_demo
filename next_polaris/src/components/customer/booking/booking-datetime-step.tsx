@@ -34,6 +34,22 @@ export default function BookingDateTimeStep({
       const today = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]
       onSelectDate(today)
     }
+
+    const eventSource = new EventSource("/api/bookings/events");
+
+    eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      if (data.type === "BOOKING_CREATED") {
+        // Trigger a refetch of available slots
+        if (selectedDate) {
+          onSelectDate(selectedDate);
+        }
+      }
+    };
+
+    return () => {
+      eventSource.close();
+    };
   }, [])
 
   const { data, isLoading, error } = useAvailableSlots(selectedDate ?? undefined, selectedServiceId ?? undefined)

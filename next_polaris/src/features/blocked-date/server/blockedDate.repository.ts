@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { BlockedDateInput } from "../utils/validation";
+import { BlockedDateInput, BlockedDateWithTimeRangeInput } from "../utils/validation";
 
 export class BlockedDateRepository {
 
@@ -14,6 +14,25 @@ export class BlockedDateRepository {
       create: {
         date: dateObj,
         reason: dto.reason,
+      },
+    });
+  }
+
+  upsertWithTimeRange(dto: BlockedDateWithTimeRangeInput) {
+    const dateObj = new Date(dto.date);
+
+    return prisma.blockedDate.upsert({
+      where: { date: dateObj },
+      update: {
+        reason: dto.reason,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
+      },
+      create: {
+        date: dateObj,
+        reason: dto.reason,
+        startTime: dto.startTime,
+        endTime: dto.endTime,
       },
     });
   }
