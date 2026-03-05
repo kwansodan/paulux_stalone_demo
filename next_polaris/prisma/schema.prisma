@@ -184,6 +184,8 @@ model BlockedDate {
   id        String   @id @default(uuid()) @db.Uuid
   date      DateTime @db.Date
   reason    String?
+  startTime DateTime? // Add this field
+  endTime   DateTime? // Add this field
   createdAt DateTime @default(now())
 
   @@unique([date])
