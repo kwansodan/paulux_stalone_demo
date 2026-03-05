@@ -12,9 +12,10 @@ import { SerializedService } from "@/features/service/types"
 import EditBookingForm from "./form/edit-booking-form"
 import { toast } from "sonner"
 import CancelBookingForm from "./form/cancel-booking-form"
-import { BookingFilter } from "./booking-client-shell"
+import { BookingFilter, PaymentFilter } from "./booking-client-shell"
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
-export default function SelectDayPanel({ selectedDate, user, services, filter }: { selectedDate: Date, user: User, services: SerializedService[], filter: BookingFilter }) {
+export default function SelectDayPanel({ selectedDate, user, services, filter, paymentFilter }: { selectedDate: Date, user: User, services: SerializedService[], filter: BookingFilter, paymentFilter: PaymentFilter }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<BookingWithService | undefined | null>(null)
@@ -26,11 +27,18 @@ export default function SelectDayPanel({ selectedDate, user, services, filter }:
   const bookings: BookingWithService[] = useMemo(() => data?.data.bookings ?? [], [data])
 
   const filteredBookings = useMemo(() => {
-    if (filter === 'all') return bookings
+    let result = bookings
 
-    return bookings.filter((b) => b.status.toLowerCase() === filter.toLowerCase())
+    if (filter !== 'all') {
+      result = result.filter((b) => b.status.toUpperCase() === filter.toUpperCase())
+    }
 
-  }, [filter, bookings])
+    if (paymentFilter !== 'all') {
+      result = result.filter((b) => calculatePaymentStatus(b) === paymentFilter)
+    }
+
+    return result
+  }, [filter, paymentFilter, bookings])
 
   function handleBookingAction(bookingId: string, action: 'edit' | 'delete') {
     setSelectedBooking(null)
