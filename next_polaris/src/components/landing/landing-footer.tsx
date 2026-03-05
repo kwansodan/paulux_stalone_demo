@@ -222,8 +222,8 @@ export default function LandingFooter() {
               <h3 className="font-semibold mb-2">8. Contact Us</h3>
               <p className="text-sm">
                 If you have any privacy-related concerns, please contact us at:<br />
-                <strong>polarisbeautylounge@gmail.com</strong><br />
-                <strong>+233 24 070 2107 | +233 50 485 1482</strong>
+                <strong>support@service4gh.com</strong><br />
+                <strong>+233 249733286</strong>
               </p>
             </div>
 

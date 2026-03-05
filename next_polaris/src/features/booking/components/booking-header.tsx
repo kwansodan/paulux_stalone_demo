@@ -6,18 +6,22 @@ import { useState } from "react";
 import CreateBookingForm from "./form/create-booking-form";
 import { SerializedService } from "@/features/service/types";
 import { User } from "@generated/prisma/client";
-import { BookingFilter } from "./booking-client-shell";
+import { BookingFilter, PaymentFilter } from "./booking-client-shell";
 
 export default function BookingHeader({
   services,
   authenticatedUser,
   selectedBookingFilter,
-  setSelectedBookingFilter
+  setSelectedBookingFilter,
+  selectedPaymentFilter,
+  setSelectedPaymentFilter
 }: {
   services: SerializedService[],
   authenticatedUser: User,
   selectedBookingFilter: string,
-  setSelectedBookingFilter: (filter: BookingFilter) => void
+  setSelectedBookingFilter: (filter: BookingFilter) => void,
+  selectedPaymentFilter: string,
+  setSelectedPaymentFilter: (filter: PaymentFilter) => void
 }) {
   const [open, setOpen] = useState(false)
   return (
@@ -45,6 +49,20 @@ export default function BookingHeader({
             <SelectItem value="all">All bookings</SelectItem>
             <SelectItem value="completed">Completed</SelectItem>
             <SelectItem value="cancelled">Cancelled</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={selectedPaymentFilter} onValueChange={setSelectedPaymentFilter}>
+          <SelectTrigger className="w-40 min-w-[140px] shadow-none">
+            <SelectValue placeholder="All payments" />
+          </SelectTrigger>
+          <SelectContent className="mt-11 shadow-sm">
+            <SelectItem value="all">All payments</SelectItem>
+            <SelectItem value="PENDING">Pending</SelectItem>
+            <SelectItem value="PAID">Paid</SelectItem>
+            <SelectItem value="PARTIAL">Partial</SelectItem>
+            <SelectItem value="REFUNDED">Refunded</SelectItem>
+            <SelectItem value="FAILED">Failed</SelectItem>
           </SelectContent>
         </Select>
       </div>
