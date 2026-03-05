@@ -47,7 +47,7 @@ export default function BookingsFilters({
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
       <div className="space-y-1">
         <Label className="text-sm font-normal text-foreground">
-          Date Range
+          Date of booking
         </Label>
         <DatePickerWithRange
           value={filters.from && filters.to ? { from: new Date(filters.from), to: new Date(filters.to) } : undefined}

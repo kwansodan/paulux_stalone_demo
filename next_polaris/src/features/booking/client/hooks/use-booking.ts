@@ -111,9 +111,13 @@ export function useCreateBooking() {
       toast.success("Booking created successfully!")
       return data
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Failed to create booking", error)
-      toast.error("Failed to create booking")
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to create booking"
+      toast.error(message)
     },
   })
 }
@@ -166,9 +170,13 @@ export function useEditBooking() {
       // console.log('Successfully created Booking', data)
       toast("Booking updated successfully")
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error("Failed to edit booking", error)
-      toast.error("Failed to edit booking")
+      const message =
+        error?.response?.data?.error ||
+        error?.response?.data?.message ||
+        "Failed to edit booking"
+      toast.error(message)
     },
   })
 }
