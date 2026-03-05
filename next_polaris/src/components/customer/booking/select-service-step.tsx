@@ -13,6 +13,7 @@ type Props = {
   selectedServiceId: string | null
   onSelectService: (service: SerializedService) => void
   onNext: () => void
+  onBack: () => void
   canProceed: boolean
 }
 
@@ -21,6 +22,7 @@ export default function SelectServiceStep({
   selectedServiceId,
   onSelectService,
   onNext,
+  onBack,
   canProceed,
 }: Props) {
   return (
@@ -44,7 +46,7 @@ export default function SelectServiceStep({
               <SelectItem key={service.id} value={service.id} className="uppercase">
                 <div className="flex items-center justify-between w-full gap-4">
                   <span className="truncate">{service.name}</span>
-                  <span className="bg-gray-300 rounded-full w-1 h-1"/>
+                  <span className="bg-gray-300 rounded-full w-1 h-1" />
                   <span className=" text-fuchsia-500">
                     GHS {Number(service.price).toFixed(2)}
                   </span>
@@ -57,13 +59,22 @@ export default function SelectServiceStep({
         </Select>
       </div>
 
-      <Button
-        onClick={onNext}
-        disabled={!canProceed}
-        className="w-full h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium"
-      >
-        Continue
-      </Button>
+      <div className="flex gap-3">
+        <Button
+          onClick={onBack}
+          variant="outline"
+          className="flex-1 h-14 rounded-full text-base font-medium border-gray-200"
+        >
+          Back
+        </Button>
+        <Button
+          onClick={onNext}
+          disabled={!canProceed}
+          className="flex-1 h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium"
+        >
+          Continue
+        </Button>
+      </div>
     </div>
   )
 }

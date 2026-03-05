@@ -64,7 +64,7 @@ export default function ServiceCard({
             GHS {Number(service.price).toFixed(2)}
           </span>
           <Link
-            href={customerBookingPath()}
+            href={customerBookingPath(service.id)}
             className="py-2.5 px-4 bg-fuchsia-600 flex gap-2 items-center justify-center hover:bg-fuchsia-700 rounded-full"
           >
             <ArrowRight className="h-5 w-5 text-white" />

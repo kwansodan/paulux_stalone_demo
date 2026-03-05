@@ -102,7 +102,7 @@ export default function LandingFooter() {
             </p>
             <p className="text-white/70 flex gap-2 items-center">
               <MapPin size={16} className="text-white" />
-              <Link href="https://maps.app.goo.gl/polaris" target="_blank" rel="noopener noreferrer">
+              <Link href="https://www.google.com/maps/dir//Polaris+Beauty+Lounge,+12+Brenya+Ave,+Accra/@5.5803904,-0.147456,12z/data=!4m8!4m7!1m0!1m5!1m1!1s0xfdf99004f607ca1:0xc7be968beb8f55be!2m2!1d-0.2312859!2d5.610236?entry=ttu&g_ep=EgoyMDI2MDIxNi4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">
                 Click Here To View Location
               </Link>
             </p>
@@ -214,11 +214,16 @@ export default function LandingFooter() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">7. Contact Us</h3>
+              <h3 className="font-semibold mb-2">7. Disclaimer</h3>
+              <p className="text-sm ">Our Works Are Recorded For Quality Checks, References & Advertisements Purposes Kindly Notify Us If You Do Not Want To Be Photographed. Also Note That Private Clients Do Not Qualify For Any Of Our Discount Offers</p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">8. Contact Us</h3>
               <p className="text-sm">
                 If you have any privacy-related concerns, please contact us at:<br />
-                <strong>help@polaris.com</strong><br />
-                <strong>+233 55 623 3900</strong>
+                <strong>polarisbeautylounge@gmail.com</strong><br />
+                <strong>+233 24 070 2107 | +233 50 485 1482</strong>
               </p>
             </div>
 

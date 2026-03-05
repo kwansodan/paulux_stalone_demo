@@ -2,7 +2,12 @@ export const signInPath = () => "/login"
 export const signUpPath = () => "/sign-up"
 export const homePath = () => "/home"
 export const customerServicesPath = () => "/customer/services"
-export const customerBookingPath = () => "/customer/booking"
+export const customerBookingPath = (serviceId?: string) => {
+  if (serviceId) {
+    return `/customer/booking?serviceId=${serviceId}`
+  }
+  return "/customer/booking"
+}
 export const customerBookingSummaryPath = (id:string) => `/customer/booking/summary/${id}`
 export const dashboardPath = () => "/dashboard"
 export const bookingsPath = () => "/bookings"
