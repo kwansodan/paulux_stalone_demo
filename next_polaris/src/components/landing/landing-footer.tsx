@@ -217,8 +217,8 @@ export default function LandingFooter() {
               <h3 className="font-semibold mb-2">7. Contact Us</h3>
               <p className="text-sm">
                 If you have any privacy-related concerns, please contact us at:<br />
-                <strong>help@polaris.com</strong><br />
-                <strong>+233 55 623 3900</strong>
+                <strong>support@service4gh.com</strong><br />
+                <strong>+233 249733286</strong>
               </p>
             </div>
 

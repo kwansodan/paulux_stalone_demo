@@ -3,10 +3,20 @@
 import { useRef, useState, useEffect } from "react"
 import ServiceCard from "./service-card"
 import { SerializedService } from "@/features/service/types"
+import SearchBar from "./SearchBar"
 
 export default function ServicesCarousel({ services }: { services: SerializedService[] }) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [filteredServices, setFilteredServices] = useState(services)
+
+  const handleSearch = () => {
+    const filtered = services.filter((service) =>
+      service.name.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    setFilteredServices(filtered)
+  }
 
   useEffect(() => {
     const scrollContainer = scrollRef.current
@@ -25,9 +35,15 @@ export default function ServicesCarousel({ services }: { services: SerializedSer
 
   return (
     <div className="w-full">
+      <SearchBar
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        handleSearch={handleSearch}
+      />
+
       <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
         <div className="flex gap-4 px-4 pb-4">
-          {services.map((service) => (
+          {filteredServices.map((service) => (
             <div key={service.id} className="shrink-0 w-[280px]">
               <ServiceCard service={service} />
             </div>
@@ -37,7 +53,7 @@ export default function ServicesCarousel({ services }: { services: SerializedSer
 
       {/* Indicator dots */}
       <div className="flex justify-center gap-1.5 mt-4">
-        {services.map((_, index) => (
+        {filteredServices.map((_, index) => (
           <button
             key={index}
             onClick={() => {
