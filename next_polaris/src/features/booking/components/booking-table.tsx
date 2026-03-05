@@ -39,6 +39,15 @@ export default function BookingsTable() {
     { key: "bookingReference", label: "Order number" },
     { key: "clientName", label: "Customer" },
     {
+      key: "bookedBy",
+      label: "Booked by",
+      render: (row: BookingWithServiceAndPayment) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.createdById ? "bg-fuchsia-100 text-fuchsia-700" : "bg-blue-50 text-blue-700"}`}>
+          {row.createdById ? "Admin" : "Customer"}
+        </span>
+      )
+    },
+    {
       key: "service.name",
       label: "Service",
       render: (row: BookingWithServiceAndPayment) => row.service.name
