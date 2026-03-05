@@ -3,7 +3,8 @@ import { customerBookingSummaryPath } from "@/app/paths";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { getBaseUrl } from "@/utils/url";
 import { sendBookingCancelEmail } from "@/features/booking/emails/send-booking-cancel-email";
-
+import { sendSMS } from "@/lib/arkesal";
+import { formatTime } from "@/features/booking/utils/helpers";
 
 export const bookingCancelledEvent = inngest.createFunction(
   { id: "booking-cancel" },
@@ -29,9 +30,32 @@ export const bookingCancelledEvent = inngest.createFunction(
       throw new Error(`${result.error.name}: ${result.error.message}`);
     }
 
+    if (booking?.clientPhone) {
+      try {
+        const timeFormatted = formatTime(booking.bookingTime);
+        const dateFormatted = new Date(booking.bookingDate).toLocaleDateString()
+        const message = `Hi ${booking.clientName}, your appointment for ${booking.service.name} on ${dateFormatted} at ${timeFormatted} has been cancelled. View details: ${bookingSummaryLink}`;
+
+        const smsResult = await sendSMS({
+          recipients: [booking.clientPhone],
+          message
+        });
+
+        if (!smsResult?.success) {
+          console.error("Failed to send cancellation SMS", smsResult);
+        } else {
+          console.log("Cancellation SMS sent successfully to", booking.clientPhone);
+        }
+      } catch (smsError) {
+        console.error("Error in SMS sending block:", smsError);
+      }
+    }
+
     return {
       event,
-      body: result
+      body: {
+        email: result,
+      }
     }
 
   }

@@ -146,7 +146,7 @@ export default function LandingFooter() {
         </div>
       </div>
 
-      <div className="mt-10 text-xs text-white/70 flex flex-col gap-3">
+      <div className="mt-10 text-xs text-white/70 flex flex-col items-start gap-3">
         <PolicyBottomSheet triggerLabel="Privacy Policy" title="Privacy Policy">
           <p className="mb-4 text-sm">
             Polaris, we respect your privacy and committed to protecting your personal information.
@@ -224,6 +224,13 @@ export default function LandingFooter() {
                 If you have any privacy-related concerns, please contact us at:<br />
                 <strong>polarisbeautylounge@gmail.com</strong><br />
                 <strong>+233 24 070 2107 | +233 50 485 1482</strong>
+              </p>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">8. Media & Discounts</h3>
+              <p className="text-sm">
+                Our works are recorded for quality checks, references & advertisements purposes. Kindly notify us if you do not want to be photographed. Also note that private clients do not qualify for any of our discount offers.
               </p>
             </div>
           </div>

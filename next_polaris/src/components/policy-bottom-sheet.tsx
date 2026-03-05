@@ -20,7 +20,7 @@ export function PolicyBottomSheet({
   return (
     <Dialog.Root>
       <Dialog.Trigger asChild>
-        <button className="text-xs underline text-gray-500 hover:text-gray-700">
+        <button className="text-left text-xs underline text-gray-500 hover:text-gray-700">
           {triggerLabel}
         </button>
       </Dialog.Trigger>

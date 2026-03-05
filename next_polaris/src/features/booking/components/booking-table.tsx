@@ -7,6 +7,7 @@ import { DataTable } from "@/components/data-table"
 import { useBookings, useChargeCustomer } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
 const initialFilters: BookingFilters = {
   from: undefined,
@@ -37,6 +38,15 @@ export default function BookingsTable() {
   const columns = [
     { key: "bookingReference", label: "Order number" },
     { key: "clientName", label: "Customer" },
+    {
+      key: "bookedBy",
+      label: "Booked by",
+      render: (row: BookingWithServiceAndPayment) => (
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.createdById ? "bg-fuchsia-100 text-fuchsia-700" : "bg-blue-50 text-blue-700"}`}>
+          {row.createdById ? "Admin" : "Customer"}
+        </span>
+      )
+    },
     {
       key: "service.name",
       label: "Service",
@@ -84,11 +94,11 @@ export default function BookingsTable() {
       key: "actions",
       label: "Actions",
       render: (row: BookingWithServiceAndPayment) => {
-        const payment = row.payments?.[0]
-        const isPending = !payment || payment.status === "PENDING"
+        const paymentStatus = calculatePaymentStatus(row)
+        const isUnpaidOrPartial = ['PENDING', 'PARTIAL', 'FAILED'].includes(paymentStatus)
 
-        if (row.status === "CANCELLED") return null
-        if (!isPending) return null
+        if (row.status === "CANCELLED" || row.status === "COMPLETED") return null
+        if (!isUnpaidOrPartial) return null
 
         return (
           <Button
