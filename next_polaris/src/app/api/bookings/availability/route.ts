@@ -56,6 +56,22 @@ export async function GET(req: NextRequest) {
 
   const duration = service.durationMinutes
 
+  // Check if the service has a latest booking time and adjust the end time accordingly
+  const latestBookingTime = service.latestBookingTime
+  if (latestBookingTime) {
+    const [latestHour, latestMinute] = latestBookingTime.split(":").map(Number)
+    const latestEndTime = new Date(dateObj)
+    latestEndTime.setHours(latestHour, latestMinute, 0, 0)
+
+    const hoursEndTime = new Date(dateObj);
+    const [endHour, endMinute] = hours.endTime.split(":").map(Number);
+    hoursEndTime.setHours(endHour, endMinute, 0, 0);
+
+    if (latestEndTime < hoursEndTime) {
+      hours.endTime = latestEndTime.toISOString().slice(11, 16)
+    }
+  }
+
   // 4) generate base slots
   const slots = []
   let current = hours.startTime
