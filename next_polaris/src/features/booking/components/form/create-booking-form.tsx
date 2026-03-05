@@ -50,7 +50,7 @@ export default function CreateBookingForm({
 
 
 
-  const { data, isLoading, error } = useAvailableSlots(date, serviceId)
+  const { data, isLoading, error } = useAvailableSlots(date, serviceId, user.id)
   const slots = data?.slots ?? []
 
   console.log("SLOTS", slots)
@@ -212,7 +212,7 @@ export default function CreateBookingForm({
                 </Label>
                 <Input
                   type="date"
-                  min={getMinBookingDate()}
+                  min={new Date().toISOString().split("T")[0]}
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
                 />

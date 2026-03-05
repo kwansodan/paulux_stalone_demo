@@ -3,12 +3,18 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 
 export const dynamic = 'force-dynamic'
 
-export default async function CustomerBookingPage() {
+export default async function CustomerBookingPage({
+  searchParams
+}: {
+  searchParams: Promise<{ serviceId?: string }>
+}) {
   const services = await serviceRepository.getAllServices({})
+  const params = await searchParams
+  const preSelectedService = params.serviceId || null
 
   return (
     <div className="p-6">
-      <CustomerBookingForm services={services} />
+      <CustomerBookingForm services={services} preSelectedServiceId={preSelectedService} />
     </div>
   )
 }
