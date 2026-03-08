@@ -31,6 +31,9 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Increase memory limit for Next.js build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 # Build arguments for public environment variables
 ARG NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 ARG NEXT_PUBLIC_APP_URL
