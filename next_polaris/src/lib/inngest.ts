@@ -28,6 +28,6 @@ type Events = {
 
 // Create a client to send and receive events
 export const inngest = new Inngest({
-  id: "app.ishmaelsroadstonextapp.com",
+  id: "app.polarisbeauty.biz",
   schemas: new EventSchemas().fromRecord<Events>(),
 });

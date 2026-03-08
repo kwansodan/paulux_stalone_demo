@@ -7,7 +7,7 @@ export const sendBookingCancelEmail = async (
   bookingSummaryLink: string
 ) => {
   return await resend.emails.send({
-    from: "no-reply@app.ishmaelsroadstonextapp.com",
+    from: "no-reply@app.polarisbeauty.biz",
     to: email,
     subject: "Your Polaris Booking Has Been Cancelled",
     react: <EmailBookingCancelled url={bookingSummaryLink} />,

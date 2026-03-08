@@ -11,16 +11,16 @@ export const sendPaymentLinkEmail = async (
     bookingTime: string
 ) => {
     return await resend.emails.send({
-        from: "no-reply@app.ishmaelsroadstonextapp.com",
+        from: "no-reply@app.polarisbeauty.biz",
         to: email,
         subject: `Payment Link for your ${serviceName} Booking`,
-        react: <PaymentLinkEmail 
-        customerName={ customerName } 
-        serviceName = { serviceName } 
-        amount = { amount } 
-        paymentUrl = { paymentUrl }
-        bookingDate = { bookingDate }
-        bookingTime = { bookingTime }
+        react: <PaymentLinkEmail
+            customerName={customerName}
+            serviceName={serviceName}
+            amount={amount}
+            paymentUrl={paymentUrl}
+            bookingDate={bookingDate}
+            bookingTime={bookingTime}
         />,
     });
 }

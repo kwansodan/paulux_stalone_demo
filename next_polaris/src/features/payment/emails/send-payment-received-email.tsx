@@ -14,7 +14,7 @@ export const sendPaymentReceivedEmail = async (
     bookingId: string,
 ) => {
     return await resend.emails.send({
-        from: "no-reply@app.ishmaelsroadstonextapp.com",
+        from: "no-reply@app.polarisbeauty.biz",
         to: adminEmail,
         subject: `Payment Received – ${clientName} (${bookingReference})`,
         react: (

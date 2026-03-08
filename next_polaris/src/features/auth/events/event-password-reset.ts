@@ -7,29 +7,30 @@ import { sendEmailPasswordReset } from "../emails/send-email-password-reset";
 export const passwordResetEvent = inngest.createFunction(
   { id: "password-reset" },
   { event: "app/password.password-reset" },
-  async ({ event }) => {
-
+  async ({ event, step }) => {
     const { userId } = event.data;
 
-    const user = await prisma.user.findUniqueOrThrow({
-      where: {
-        id: userId
+    const user = await step.run("fetch-user", async () => {
+      return prisma.user.findUniqueOrThrow({
+        where: { id: userId }
+      });
+    });
+
+    const passwordResetLink = await step.run("generate-reset-link", async () => {
+      return generatePasswordResetLink(user.id);
+    });
+
+    const emailResult = await step.run("send-reset-email", async () => {
+      const result = await sendEmailPasswordReset(user.email, passwordResetLink)
+      if (result.error) {
+        throw new Error(`${result.error.name}: ${result.error.message}`);
       }
-    })
-
-    const passwordResetLink = await generatePasswordResetLink(user.id);
-
-    const result = await sendEmailPasswordReset(user.email, passwordResetLink)
-
-    if (result.error) {
-      console.log("ERROR SENDING PASSWORD RESET", result)
-      throw new Error(`${result.error.name}: ${result.error.message}`);
-    }
+      return result;
+    });
 
     return {
       event,
-      body: result
+      body: emailResult
     }
-
   }
 )
