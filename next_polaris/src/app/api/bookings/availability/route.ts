@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
 
     if (end <= hours.endTime) {
       const isPast = isPastSlot(dateObj, current)
-      const is24HoursAhead = user && user.role === "ADMIN" ? true : isTime24HoursInAdvance(dateObj, current)
+      const is24HoursAhead = true // user && user.role === "ADMIN" ? true : isTime24HoursInAdvance(dateObj, current)
 
       let available = false
 

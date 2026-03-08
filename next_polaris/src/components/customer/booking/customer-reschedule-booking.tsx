@@ -20,10 +20,8 @@ export default function CustomerRescheduleBooking({ booking }: Props) {
     if (booking.bookingDate) {
       return booking.bookingDate
     }
-    const tomorrow = new Date(new Date().getTime() + 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0]
-    return tomorrow
+    const today = new Date().toISOString().split("T")[0]
+    return today
   })
 
   const [selectedTime, setSelectedTime] = useState<string | null>(booking.bookingTime || null)
@@ -64,8 +62,7 @@ export default function CustomerRescheduleBooking({ booking }: Props) {
     <div className="space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">Reschedule booking</h1>
       <p className="text-sm text-gray-600">
-        Choose a new date and time for your appointment. Reschedules must be made at least 24 hours
-        before your appointment time.
+        Choose a new date and time for your appointment.
       </p>
 
       {/* Calendar */}
@@ -75,9 +72,9 @@ export default function CustomerRescheduleBooking({ booking }: Props) {
           selected={selected}
           onSelect={handleDateSelect}
           disabled={(date) => {
-            const now = new Date()
-            const minSelectableDate = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-            return date < minSelectableDate
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            return date < today
           }}
           components={{
             Chevron: ({ orientation }) => {

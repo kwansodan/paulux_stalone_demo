@@ -101,15 +101,15 @@ export async function POST(
       )
     }
 
-    if (!isTime24HoursInAdvance(bookingDateObj, parsed.bookingTime)) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Reschedule must be at least 24 hours before the appointment",
-        },
-        { status: 409 }
-      )
-    }
+    // if (!isTime24HoursInAdvance(bookingDateObj, parsed.bookingTime)) {
+    //   return NextResponse.json(
+    //     {
+    //       success: false,
+    //       message: "Reschedule must be at least 24 hours before the appointment",
+    //     },
+    //     { status: 409 }
+    //   )
+    // }
 
     const available = await bookingRepository.isSlotAvailable(
       bookingDateObj,
