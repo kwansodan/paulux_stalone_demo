@@ -34,6 +34,9 @@ export async function sendSMS({
             use_case: "transactional"
         };
 
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
         const response = await fetch(`${baseUrl}/api/v2/sms/send`, {
             method: "POST",
             headers: {
@@ -41,7 +44,10 @@ export async function sendSMS({
                 "api-key": apiKey,
             },
             body: JSON.stringify(payload),
+            signal: controller.signal,
         });
+
+        clearTimeout(timeoutId);
 
         const data = await response.json();
 
