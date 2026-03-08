@@ -31,7 +31,7 @@ export default function BookingDateTimeStep({
 }: Props) {
   useEffect(() => {
     if (!selectedDate) {
-      const today = new Date(new Date().getTime() + 24 * 60 * 60 * 1000).toISOString().split("T")[0]
+      const today = new Date().toISOString().split("T")[0]
       onSelectDate(today)
     }
 
@@ -76,11 +76,9 @@ export default function BookingDateTimeStep({
           selected={selected}
           onSelect={handleDateSelect}
           disabled={(date) => {
-            const now = new Date()
-            const minSelectableDate = new Date(now.getTime() + 24 * 60 * 60 * 1000)
-
-            // Disable if date is before 24 hours from now
-            return date < minSelectableDate
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            return date < today
           }}
           components={{
             Chevron: ({ orientation }) => {

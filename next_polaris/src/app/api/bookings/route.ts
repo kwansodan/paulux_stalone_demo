@@ -156,15 +156,15 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if booking is at least 24 hours in advance
-    if (!isTime24HoursInAdvance(
-      new Date(validatedBody.bookingDate),
-      validatedBody.bookingTime
-    )) {
-      return NextResponse.json(
-        { success: false, error: "Booking must be made at least 24 hours in advance" },
-        { status: 409 }
-      )
-    }
+    // if (!isTime24HoursInAdvance(
+    //   new Date(validatedBody.bookingDate),
+    //   validatedBody.bookingTime
+    // )) {
+    //   return NextResponse.json(
+    //     { success: false, error: "Booking must be made at least 24 hours in advance" },
+    //     { status: 409 }
+    //   )
+    // }
 
 
     // check if booking already exists for chosen date or time
