@@ -37,6 +37,7 @@ export default function ServiceCard({ service }: { service: SerializedService })
             src={service.imageUrl}
             alt={service.name}
             fill
+            unoptimized
             className="object-cover"
           />
         </div>
