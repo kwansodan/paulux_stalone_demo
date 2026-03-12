@@ -17,20 +17,21 @@ export async function POST(request: NextRequest) {
         const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
         if (!bucketExists) {
             await minioClient.makeBucket(BUCKET_NAME);
-            // Set public read policy for the bucket
-            const policy = {
-                Version: "2012-10-17",
-                Statement: [
-                    {
-                        Effect: "Allow",
-                        Principal: { AWS: ["*"] },
-                        Action: ["s3:GetObject"],
-                        Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
-                    },
-                ],
-            };
-            await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
         }
+
+        // Always ensure public read policy is set for the bucket
+        const policy = {
+            Version: "2012-10-17",
+            Statement: [
+                {
+                    Effect: "Allow",
+                    Principal: { AWS: ["*"] },
+                    Action: ["s3:GetObject"],
+                    Resource: [`arn:aws:s3:::${BUCKET_NAME}/*`],
+                },
+            ],
+        };
+        await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
 
         await minioClient.putObject(BUCKET_NAME, fileName, buffer, file.size, {
             "Content-Type": file.type,
