@@ -7,8 +7,9 @@ const minioSecretKey = process.env.MINIO_SECRET_KEY || '';
 const minioUseSSL = process.env.MINIO_USE_SSL === 'true';
 
 // For server-to-server communication inside Docker, we use the internal endpoint
-// For generating URLs for the client, we might need a public endpoint
-const minioPublicEndpoint = process.env.NEXT_PUBLIC_MINIO_ENDPOINT || 'localhost';
+// For generating URLs for the client, we use the public VPS_IP
+const minioPublicEndpointRaw = process.env.VPS_IP || 'http://localhost';
+const minioPublicEndpoint = minioPublicEndpointRaw.replace('http://', '').replace('https://', '');
 const minioPublicPort = parseInt(process.env.NEXT_PUBLIC_MINIO_PORT || '9005');
 
 export const minioClient = new Minio.Client({
