@@ -25,7 +25,9 @@ export default function ImageUpload({
         try {
             setLoading(true)
 
-            // 1. Get presigned URL from backend
+            // Step 1: Get a presigned PUT URL from the server.
+            // The server generates this internally (no ETIMEDOUT) and rewrites
+            // the host to polarisbeauty.biz/files before returning it.
             const { data: presignData } = await axios.post("/api/upload/presign", {
                 filename: file.name,
                 fileType: file.type
@@ -35,15 +37,13 @@ export default function ImageUpload({
                 throw new Error("Failed to get presigned URL")
             }
 
-            // 2. Upload directly to MinIO using the presigned URL
-            // We use axios.put to transfer the raw file data
+            // Step 2: PUT the file directly to MinIO via Caddy proxy.
+            // Browser → https://polarisbeauty.biz/files/... → Caddy → polaris_minio:9000
             await axios.put(presignData.uploadUrl, file, {
-                headers: {
-                    "Content-Type": file.type,
-                },
+                headers: { "Content-Type": file.type },
             })
 
-            // 3. Update the form with the final public URL
+            // Step 3: Store the permanent public URL (no signature, bucket is public-read).
             onChange(presignData.publicUrl)
 
         } catch (error) {
