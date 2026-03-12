@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { minioClient, minioClientPublic, BUCKET_NAME, getFileUrl } from "@/lib/minio";
+import { minioClient, BUCKET_NAME, getFileUrl, toPublicUrl } from "@/lib/minio";
+import { randomUUID } from "crypto";
 
 export async function POST(request: NextRequest) {
     try {
@@ -12,11 +13,10 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // 1. Ensure bucket exists and has public read policy
+        // Ensure bucket exists with a public-read policy (idempotent)
         const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
         if (!bucketExists) {
             await minioClient.makeBucket(BUCKET_NAME);
-
             const policy = {
                 Version: "2012-10-17",
                 Statement: [
@@ -31,48 +31,26 @@ export async function POST(request: NextRequest) {
             await minioClient.setBucketPolicy(BUCKET_NAME, JSON.stringify(policy));
         }
 
-        // 2. Configure CORS on the bucket for direct browser uploads
-        // This allows your domain to perform PUT/OPTIONS requests
-        const corsConfig = {
-            CORSRules: [
-                {
-                    AllowedOrigins: ["https://polarisbeauty.biz"],
-                    AllowedMethods: ["PUT", "GET", "HEAD", "POST"],
-                    AllowedHeaders: ["*"],
-                    ExposeHeaders: ["ETag"],
-                    MaxAgeSeconds: 3000
-                }
-            ]
-        };
-        // setBucketCors is not directly available in standard minio node sdk via simple call 
-        // but we can use the internal client for this if needed. 
-        // For now, most MinIO instances allow CORS by default if configured via console,
-        // but let's ensure we generate the URL correctly first.
+        const objectName = `${randomUUID()}_${filename.replace(/\s+/g, "-")}`;
 
-        const objectName = `${Date.now()}-${filename.replace(/\s+/g, "-")}`;
-
-        // 3. Generate presigned PUT URL using the PUBLIC client
-        // This will generate a URL starting with https://polarisbeauty.biz/
-        let uploadUrl = await minioClientPublic.presignedPutObject(
+        // Generate presigned PUT URL using the INTERNAL client.
+        // The SDK connects to polaris_minio:9000 (internal Docker network) — no ETIMEDOUT.
+        // The AWS Sig V4 signature includes Host: polaris_minio:9000.
+        const internalUploadUrl = await minioClient.presignedPutObject(
             BUCKET_NAME,
             objectName,
-            5 * 60
+            5 * 60  // 5 minute expiry
         );
 
-        // Rewrite the presigned URL to always use the public HTTPS endpoint.
-        // The SDK may generate urls with the internal Docker hostname (e.g. http://minio:9000)
-        // or the public host without the /files/ prefix that Caddy expects.
-        // Strip whatever origin was produced and replace with the correct public base.
-        uploadUrl = uploadUrl.replace(/^https?:\/\/[^/]+\//, 'https://polarisbeauty.biz/files/');
+        // Rewrite the internal origin to the public Caddy-proxied domain.
+        // Caddy forwards /files/* to polaris_minio:9000 using Host: polaris_minio:9000,
+        // so the signature Host header still matches what MinIO verifies against. ✓
+        const uploadUrl = toPublicUrl(internalUploadUrl);
 
+        // Permanent public URL (no signature needed — bucket is public-read)
         const publicUrl = getFileUrl(objectName);
 
-        return NextResponse.json({
-            success: true,
-            uploadUrl,
-            publicUrl,
-            objectName,
-        });
+        return NextResponse.json({ success: true, uploadUrl, publicUrl, objectName });
     } catch (error: any) {
         console.error("Presign error:", error);
         return NextResponse.json(
