@@ -59,9 +59,11 @@ export async function POST(request: NextRequest) {
             5 * 60
         );
 
-        // Minor fix: The SDK might generate https://polarisbeauty.biz:443/... 
-        // but Caddy expects the path to be /files/...
-        uploadUrl = uploadUrl.replace('https://polarisbeauty.biz/', 'https://polarisbeauty.biz/files/');
+        // Rewrite the presigned URL to always use the public HTTPS endpoint.
+        // The SDK may generate urls with the internal Docker hostname (e.g. http://minio:9000)
+        // or the public host without the /files/ prefix that Caddy expects.
+        // Strip whatever origin was produced and replace with the correct public base.
+        uploadUrl = uploadUrl.replace(/^https?:\/\/[^/]+\//, 'https://polarisbeauty.biz/files/');
 
         const publicUrl = getFileUrl(objectName);
 
