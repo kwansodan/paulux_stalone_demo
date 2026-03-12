@@ -39,6 +39,7 @@ export default function ServiceCard({
         src={imageUrl}
         alt={service.name}
         fill
+        unoptimized
         className="object-cover transition-transform duration-500 group-hover:scale-110"
       />
 

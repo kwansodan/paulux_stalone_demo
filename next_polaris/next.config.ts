@@ -9,10 +9,7 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: 'polarisbeauty.biz',
-      },
-      {
-        protocol: 'http',
-        hostname: '51.255.200.48',
+        pathname: '/files/**',
       }
     ],
   }
