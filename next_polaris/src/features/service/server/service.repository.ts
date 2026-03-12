@@ -16,6 +16,7 @@ export class ServiceRepository {
     return services.map(service => ({
       ...service,
       price: service.price.toString(),
+      imageUrl: service.imageUrl,
       createdAt: service.createdAt.toISOString(),
       updatedAt: service.updatedAt.toISOString()
     }))
@@ -79,9 +80,10 @@ export class ServiceRepository {
           latestBookingTime: upsertDTO.latestBookingTime,
           minDepositPercent: upsertDTO.minDepositPercent,
           isActive: upsertDTO.isActive,
+          imageUrl: upsertDTO.imageUrl,
         }
       })
-    }else{
+    } else {
       upsertedService = await prisma.service.create({
         data: {
           name: upsertDTO.name,
@@ -93,6 +95,7 @@ export class ServiceRepository {
           latestBookingTime: upsertDTO.latestBookingTime,
           minDepositPercent: upsertDTO.minDepositPercent,
           isActive: upsertDTO.isActive,
+          imageUrl: upsertDTO.imageUrl,
         }
       })
     }
@@ -101,6 +104,7 @@ export class ServiceRepository {
     const serializedService = {
       ...upsertedService,
       price: upsertedService.price.toString(),
+      imageUrl: upsertedService.imageUrl,
       createdAt: upsertedService.createdAt.toISOString(),
       updatedAt: upsertedService.updatedAt.toISOString()
     }

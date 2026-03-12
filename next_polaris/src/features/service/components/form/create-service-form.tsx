@@ -11,6 +11,7 @@ import { Label } from "@/components/ui/label"
 import { ToggleSwitch } from "../toggle-switch"
 import { useCreateService } from "../../client/use-service"
 import { isAxiosError } from "@/lib/utils"
+import ImageUpload from "@/components/ui/image-upload"
 
 export default function CreateServiceForm({
   onCancel,
@@ -30,6 +31,7 @@ export default function CreateServiceForm({
       latestBookingTime: null,
       minDepositPercent: 0,
       isActive: true,
+      imageUrl: null,
     },
   })
 
@@ -44,6 +46,26 @@ export default function CreateServiceForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
         <div className="flex-1 space-y-4 overflow-y-auto px-1">
+
+          {/* Image */}
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label className="text-sm font-normal text-foreground">Service/product image</Label>
+                <ImageUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                {form.formState.errors.imageUrl && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.imageUrl.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
 
           {/* Name */}
           <FormField
