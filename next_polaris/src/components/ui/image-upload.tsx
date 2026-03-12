@@ -107,6 +107,7 @@ export default function ImageUpload({
                         </div>
                         <Image
                             fill
+                            unoptimized
                             className="object-cover"
                             alt="Uploaded image"
                             src={value}
