@@ -25,20 +25,21 @@ export default function ServiceCard({
   service: SerializedService
 }) {
 
-  const getServiceImage = (serviceName: string): string => {
-    const normalizedName = serviceName.toLowerCase().trim();
+  const getServiceImage = (service: SerializedService): string => {
+    if (service.imageUrl) return service.imageUrl;
+    const normalizedName = service.name.toLowerCase().trim();
     return SERVICE_IMAGES[normalizedName] || DEFAULT_SERVICE_IMAGE;
   };
 
-  const imageUrl = getServiceImage(service.name);
+  const imageUrl = getServiceImage(service);
 
   return (
-    <div className="relative w-full h-125 rounded-3xl overflow-hidden shadow-lg">
+    <div className="relative w-full h-125 rounded-3xl overflow-hidden shadow-lg group">
       <Image
         src={imageUrl}
         alt={service.name}
         fill
-        className="object-cover"
+        className="object-cover transition-transform duration-500 group-hover:scale-110"
       />
 
       <div className="absolute inset-0 bg-linear-to-t from-black/80 via-black/30 to-transparent" />
@@ -65,7 +66,7 @@ export default function ServiceCard({
           </span>
           <Link
             href={customerBookingPath(service.id)}
-            className="py-2.5 px-4 bg-fuchsia-600 flex gap-2 items-center justify-center hover:bg-fuchsia-700 rounded-full"
+            className="py-2.5 px-4 bg-fuchsia-600 flex gap-2 items-center justify-center hover:bg-fuchsia-700 rounded-full transition-colors"
           >
             <ArrowRight className="h-5 w-5 text-white" />
             <span>Book Now</span>

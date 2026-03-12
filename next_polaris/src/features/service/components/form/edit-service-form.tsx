@@ -15,6 +15,7 @@ import { ToggleSwitch } from "../toggle-switch"
 import { useEditService } from "../../client/use-service"
 import { isAxiosError } from "@/lib/utils"
 import { SerializedService } from "../../types"
+import ImageUpload from "@/components/ui/image-upload"
 
 export default function EditServiceForm({
   service,
@@ -37,6 +38,7 @@ export default function EditServiceForm({
       latestBookingTime: service.latestBookingTime,
       minDepositPercent: service.minDepositPercent,
       isActive: service.isActive,
+      imageUrl: service.imageUrl,
     },
   })
 
@@ -54,6 +56,26 @@ export default function EditServiceForm({
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full">
         <div className="flex-1 space-y-4 overflow-y-auto px-1">
+
+          {/* Image */}
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <div className="space-y-1">
+                <Label className="text-sm font-normal text-foreground">Service/product image</Label>
+                <ImageUpload
+                  value={field.value}
+                  onChange={field.onChange}
+                />
+                {form.formState.errors.imageUrl && (
+                  <p className="text-red-500 text-sm mt-1">
+                    {form.formState.errors.imageUrl.message}
+                  </p>
+                )}
+              </div>
+            )}
+          />
 
           {/* Name */}
           <FormField
@@ -244,7 +266,7 @@ export default function EditServiceForm({
           <Button variant="outline" type="button" onClick={onCancel}>
             Cancel
           </Button>
-          <Button type="submit" disabled={mutation.isPending} className="bg-fuchsia-700">
+          <Button type="submit" disabled={mutation.isPending} className="bg-fuchsia-700 hover:bg-fuchsia-600">
             {mutation.isPending ? "Updating..." : "Update"}
           </Button>
         </div>
