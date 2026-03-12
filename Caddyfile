@@ -1,9 +1,14 @@
 polarisbeauty.biz {
     reverse_proxy polaris_app:3000
 
-    # Proxy MinIO API for public access
+    # Proxy MinIO API for public access (GET, PUT, OPTIONS)
     handle_path /files/* {
-        reverse_proxy polaris_minio:9000
+        reverse_proxy polaris_minio:9000 {
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
     }
 
     tls polarisbeautylounge@gmail.com

@@ -24,18 +24,28 @@ export default function ImageUpload({
     const handleUpload = useCallback(async (file: File) => {
         try {
             setLoading(true)
-            const formData = new FormData()
-            formData.append("file", file)
 
-            const response = await axios.post("/api/upload", formData, {
+            // 1. Get presigned URL from backend
+            const { data: presignData } = await axios.post("/api/upload/presign", {
+                filename: file.name,
+                fileType: file.type
+            })
+
+            if (!presignData.success) {
+                throw new Error("Failed to get presigned URL")
+            }
+
+            // 2. Upload directly to MinIO using the presigned URL
+            // We use axios.put to transfer the raw file data
+            await axios.put(presignData.uploadUrl, file, {
                 headers: {
-                    "Content-Type": "multipart/form-data",
+                    "Content-Type": file.type,
                 },
             })
 
-            if (response.data.success) {
-                onChange(response.data.url)
-            }
+            // 3. Update the form with the final public URL
+            onChange(presignData.publicUrl)
+
         } catch (error) {
             console.error("Upload failed:", error)
         } finally {
