@@ -22,13 +22,14 @@ export const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'polaris-services';
 
 export const getFileUrl = (fileName: string) => {
     // If we're on the main domain in production, use the Caddy proxy path
+    // We check for the domain name instead of a hardcoded string to be more flexible
     if (vpsIp.includes('polarisbeauty.biz')) {
         return `https://polarisbeauty.biz/files/${BUCKET_NAME}/${fileName}`;
     }
 
-    // Fallback to direct IP with port (may trigger mixed content warnings on HTTPS sites)
+    // If VPS_IP is an IP address, we use the public port
     const protocol = minioUseSSL ? 'https' : 'http';
-    const minioPublicEndpoint = vpsIp.replace('http://', '').replace('https://', '');
+    const minioPublicEndpoint = vpsIp.replace('http://', '').replace('https://', '').split(':')[0];
     const minioPublicPort = parseInt(process.env.NEXT_PUBLIC_MINIO_PORT || '9005');
 
     return `${protocol}://${minioPublicEndpoint}:${minioPublicPort}/${BUCKET_NAME}/${fileName}`;
