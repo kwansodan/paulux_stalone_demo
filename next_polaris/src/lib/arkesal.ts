@@ -50,15 +50,20 @@ export async function sendSMS({
         clearTimeout(timeoutId);
 
         const data = await response.json();
+        console.log("Arkesel API Response:", data);
 
         if (!response.ok) {
-            console.error("Failed to send SMS:", data);
-            return { success: false, data };
+            console.error("Failed to send SMS. Status:", response.status, "Data:", data);
+            return { success: false, data, status: response.status };
         }
 
         return { success: true, data };
-    } catch (error) {
+    } catch (error: any) {
         console.error("SMS Sending Error:", error);
-        return { success: false, error };
+        return {
+            success: false,
+            error: error.message || "Unknown error",
+            stack: error.stack
+        };
     }
 }
