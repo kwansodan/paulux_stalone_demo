@@ -103,7 +103,7 @@ export default function LandingFooter() {
             <p className="text-white/70 flex gap-2 items-center">
               <MapPin size={16} className="text-white" />
               <Link href="https://www.google.com/maps/dir//Polaris+Beauty+Lounge,+12+Brenya+Ave,+Accra/@5.5803904,-0.147456,12z/data=!4m8!4m7!1m0!1m5!1m1!1s0xfdf99004f607ca1:0xc7be968beb8f55be!2m2!1d-0.2312859!2d5.610236?entry=ttu&g_ep=EgoyMDI2MDIxNi4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">
-                Click Here To View Location
+                Location
               </Link>
             </p>
             <p className="text-white/70 flex gap-2 items-center">
@@ -244,31 +244,29 @@ export default function LandingFooter() {
             <div>
               <h3 className="font-semibold mb-2">1. Booking Policy</h3>
               <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>All appointments must be booked at least 24 hours in advance.</li>
                 <li>A valid name, email, and phone number are required.</li>
-                <li>Payment is required before admin approval.</li>
+                <li>Payment is required to secure your appointment.</li>
               </ul>
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">2. Appointment Confirmation</h3>
               <p className="text-sm">
-                After payment, your booking will be marked as pending until approved by salon staff. You will receive a confirmation email once approved.
+                Your booking is confirmed immediately upon successful payment. You will receive a confirmation email once your payment has been processed.
               </p>
             </div>
 
             <div>
-              <h3 className="font-semibold mb-2">3. Cancellations</h3>
-              <ul className="list-disc pl-5 space-y-1 text-sm">
-                <li>Cancellations are allowed up to 24 hours before your appointment.</li>
-                <li>Late cancellations (within 24 hours) may not be eligible for refunds.</li>
-              </ul>
+              <h3 className="font-semibold mb-2">3. Cancellations & Postponements</h3>
+              <p className="text-sm">
+                All bookings are non-refundable. However, you may request to postpone your appointment to a later date. Postponement requests must be made in advance by contacting us directly.
+              </p>
             </div>
 
             <div>
               <h3 className="font-semibold mb-2">4. No-Show Policy</h3>
               <p className="text-sm">
-                Failure to attend your appointment without prior cancellation may result in forfeiture of payment.
+                Failure to attend your appointment without prior notice may result in forfeiture of payment. Please reach out to us to reschedule if you are unable to make it.
               </p>
             </div>
 
