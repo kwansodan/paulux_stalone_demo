@@ -1,4 +1,4 @@
-polarisbeauty.biz {
+polarisbeautylounge.com {
     reverse_proxy polaris_app:3000
 
     # Proxy MinIO for public access (GET, PUT, OPTIONS)
