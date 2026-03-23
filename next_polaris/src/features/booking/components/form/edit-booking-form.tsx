@@ -41,7 +41,7 @@ export default function EditBookingForm({
       clientName: booking.clientName,
       clientEmail: booking.clientEmail,
       clientPhone: booking.clientPhone,
-      serviceId: booking.serviceId,
+      serviceIds: booking.services.map(s => s.serviceId),
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
       createdById: user.id,
@@ -50,9 +50,10 @@ export default function EditBookingForm({
   })
 
   const date = form.watch("bookingDate")
-  const serviceId = form.watch("serviceId")
+  const serviceIds = form.watch("serviceIds") || []
+  const userId = form.watch("createdById") || user.id
 
-  const { data, isLoading, error } = useAvailableSlots(date, serviceId)
+  const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, userId)
   const slots = data?.slots ?? []
 
   const mutation = useEditBooking()
@@ -177,27 +178,42 @@ export default function EditBookingForm({
           {/* Service Selection */}
           <FormField
             control={form.control}
-            name="serviceId"
+            name="serviceIds"
             render={({ field }) => (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label className="text-sm font-normal text-foreground">
-                  Service <span className="text-red-500">*</span>
+                  Services <span className="text-red-500">*</span>
                 </Label>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="min-h-12 w-full bg-white shadow-none border-[#E2E8F0] rounded-lg">
-                    <SelectValue placeholder="Select a service" />
-                  </SelectTrigger>
-                  <SelectContent className="mt-12">
-                    {services.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.serviceId && (
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                  {services.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const current = field.value || [];
+                        const next = current.includes(s.id)
+                          ? current.filter((v) => v !== s.id)
+                          : [...current, s.id];
+                        field.onChange(next);
+                      }}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
+                        {field.value?.includes(s.id) && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 flex justify-between items-center text-sm">
+                        <span>{s.name}</span>
+                        <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.serviceIds && (
                   <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.serviceId.message}
+                    {form.formState.errors.serviceIds.message}
                   </p>
                 )}
               </div>

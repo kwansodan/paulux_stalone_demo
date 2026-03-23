@@ -33,12 +33,12 @@ export async function POST(
             );
         }
 
-        const servicePrice = Number(booking.service.price);
+        const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
 
         // Filter for PAID payments
         const paidPayments = booking.payments?.filter(p => p.status === PaymentStatus.PAID) || [];
         const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-        const remainingBalance = servicePrice - totalPaid;
+        const remainingBalance = totalPrice - totalPaid;
 
         if (remainingBalance <= 0) {
             return NextResponse.json(
@@ -54,7 +54,7 @@ export async function POST(
                 provider: PaymentProvider.MANUAL,
                 providerRef: `MANUAL_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
                 amount: remainingBalance,
-                currency: booking.service.currency,
+                currency: booking.services[0]?.service.currency || "GHS",
                 status: PaymentStatus.PAID,
                 rawPayload: { method: "CASH_IN_PERSON", markedByAdminId: auth.user.id },
             }
@@ -70,7 +70,7 @@ export async function POST(
                 data: {
                     status: 'CONFIRMED',
                 },
-                include: { service: true, payments: true }
+                include: { services: { include: { service: true } }, payments: true }
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED via Manual Payment`);
         }

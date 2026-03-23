@@ -17,7 +17,7 @@ export const paymentReceivedEvent = inngest.createFunction(
         const booking = await step.run("fetch-booking", async () => {
             return prisma.booking.findUniqueOrThrow({
                 where: { id: bookingId },
-                include: { service: true },
+                include: { services: { include: { service: true } } },
             });
         });
 
@@ -37,6 +37,8 @@ export const paymentReceivedEvent = inngest.createFunction(
             return { message: "No admins to notify" };
         }
 
+        const serviceNames = booking.services.map(s => s.service.name).join(", ");
+
         // Send an email to each admin
         const emailResults = await step.run("notify-admins", async () => {
             const results = await Promise.allSettled(
@@ -46,7 +48,7 @@ export const paymentReceivedEvent = inngest.createFunction(
                         admin.username,
                         booking.clientName,
                         booking.bookingReference,
-                        booking.service.name,
+                        serviceNames,
                         booking.bookingDate,
                         booking.bookingTime,
                         amountPaid,
@@ -75,7 +77,7 @@ export const paymentReceivedEvent = inngest.createFunction(
                 const timeFormatted = formatTime(booking.bookingTime);
                 const summaryLink = getBaseUrl() + customerBookingSummaryPath(booking.id);
 
-                const message = `Hi ${booking.clientName}, your booking for ${booking.service.name} on ${dateFormatted} at ${timeFormatted} is confirmed. Ref: ${booking.bookingReference}. Details: ${summaryLink}`;
+                const message = `Hi ${booking.clientName}, your booking for ${serviceNames} on ${dateFormatted} at ${timeFormatted} is confirmed. Ref: ${booking.bookingReference}. Details: ${summaryLink}`;
 
                 const result = await sendSMS({
                     recipients: [booking.clientPhone],

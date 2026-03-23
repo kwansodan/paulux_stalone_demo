@@ -8,7 +8,7 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: 'polarisbeauty.biz',
+        hostname: 'polarisbeautylounge.com',
         pathname: '/files/**',
       }
     ],

@@ -56,7 +56,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
           <p className="font-medium text-sm text-gray-900">{booking.clientPhone}</p>
         </div>
         <p className="text-sm text-gray-500">
-          {booking.service.name}
+          {booking.services.map(s => s.service.name).join(", ")}
         </p>
         <p className="text-xs text-fuchsia-400">
           {booking.createdById ? "Created by admin" : "Created by client"}

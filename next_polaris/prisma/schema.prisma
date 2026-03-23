@@ -93,7 +93,7 @@ model Service {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bookings Booking[]
+  bookings BookingService[]
 
   @@map("services")
 }
@@ -134,8 +134,9 @@ model Booking {
   clientEmail      String
   clientPhone      String
 
-  serviceId String  @db.Uuid
-  service   Service @relation(fields: [serviceId], references: [id])
+  // serviceId String  @db.Uuid
+  // service   Service @relation(fields: [serviceId], references: [id])
+  services BookingService[]
 
   minDepositPercent Int?
 
@@ -164,6 +165,19 @@ model Booking {
   @@index([status])
   @@index([paymentStatus])
   @@map("bookings")
+}
+
+model BookingService {
+  bookingId String @db.Uuid
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  serviceId String @db.Uuid
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  priceAtBooking    Decimal @db.Decimal(10, 2)
+  durationAtBooking Int
+
+  @@id([bookingId, serviceId])
+  @@map("booking_services")
 }
 
 model BusinessHour {

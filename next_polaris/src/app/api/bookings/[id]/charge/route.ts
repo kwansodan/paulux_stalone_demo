@@ -32,15 +32,15 @@ export async function POST(
             );
         }
 
-        const servicePrice = Number(booking.service.price);
-        let amountToCharge = servicePrice;
+        const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+        let amountToCharge = totalPrice;
         let transactionType = 'initial';
 
         // Filter for PAID payments
         const paidPayments = booking.payments?.filter(p => p.status === PaymentStatus.PAID) || [];
         const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
 
-        const remainingBalance = servicePrice - totalPaid;
+        const remainingBalance = totalPrice - totalPaid;
 
         if (remainingBalance <= 0) {
             return NextResponse.json(
@@ -50,10 +50,13 @@ export async function POST(
         }
 
         if (totalPaid === 0) {
-            // First payment: Check if there's a minimum deposit
-            const minDepositPercent = booking.minDepositPercent ?? booking.service.minDepositPercent ?? 0;
-            if (minDepositPercent > 0 && minDepositPercent < 100) {
-                amountToCharge = servicePrice * (minDepositPercent / 100);
+            // First payment: Calculate min deposit amount
+            const minDepositAmount = booking.minDepositPercent !== undefined
+                ? totalPrice * (booking.minDepositPercent / 100)
+                : booking.services.reduce((sum, s) => sum + (Number(s.priceAtBooking) * (s.service.minDepositPercent / 100)), 0);
+
+            if (minDepositAmount > 0 && minDepositAmount < totalPrice) {
+                amountToCharge = minDepositAmount;
             }
         } else {
             // Subsequent payment: Charge the remaining balance

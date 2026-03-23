@@ -48,9 +48,15 @@ export default function BookingsTable() {
       )
     },
     {
-      key: "service.name",
-      label: "Service",
-      render: (row: BookingWithServiceAndPayment) => row.service.name
+      key: "services",
+      label: "Service(s)",
+      render: (row: BookingWithServiceAndPayment) => (
+        <div className="flex flex-col gap-0.5">
+          {row.services.map(s => (
+            <span key={s.serviceId} className="text-sm">{s.service.name}</span>
+          ))}
+        </div>
+      )
     },
     { key: "bookingDate", label: "Date" },
     { key: "bookingTime", label: "Time" },
@@ -88,7 +94,10 @@ export default function BookingsTable() {
     {
       key: "amount",
       label: "Amount",
-      render: (row: BookingWithServiceAndPayment) => `GHS ${Number(row.service.price).toFixed(2)}`,
+      render: (row: BookingWithServiceAndPayment) => {
+        const total = row.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+        return `GHS ${total.toFixed(2)}`;
+      },
     },
     {
       key: "actions",

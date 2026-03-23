@@ -22,13 +22,13 @@ export const BUCKET_NAME = process.env.MINIO_BUCKET_NAME || 'polaris-services';
 
 // The public base path that Caddy proxies to MinIO.
 // Caddy strips /files/ and forwards the rest to polaris_minio:9000.
-const MINIO_PUBLIC_ENDPOINT = process.env.MINIO_PUBLIC_ENDPOINT || 'https://polarisbeauty.biz/files';
+const MINIO_PUBLIC_ENDPOINT = process.env.MINIO_PUBLIC_ENDPOINT || 'https://polarisbeautylounge.com/files';
 const MINIO_INTERNAL_ORIGIN = `http://${minioEndpoint}:${minioPort}`;
 
 /**
  * Rewrites an internally-generated MinIO URL to its public equivalent.
  * e.g. http://polaris_minio:9000/polaris-services/file.jpg
- *   → https://polarisbeauty.biz/files/polaris-services/file.jpg
+ *   → https://polarisbeautylounge.com/files/polaris-services/file.jpg
  *
  * The AWS Sig V4 Host header stays valid because Caddy forwards the request
  * to polaris_minio:9000 using that same host — matching the signed header.

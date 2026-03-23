@@ -9,6 +9,7 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 import { isTime24HoursInAdvance, isTimeWithinRange } from "@/utils/helpers";
 import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 
 
@@ -95,14 +96,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    //  validate that body contains a valid serviceId 
-    const existingService = await serviceRepository.findById(validatedBody.serviceId);
+    //  validate that body contains valid serviceIds 
+    const serviceIds = validatedBody.serviceIds || (validatedBody.serviceId ? [validatedBody.serviceId] : []);
 
-    if (!existingService) {
+    if (serviceIds.length === 0) {
       return NextResponse.json(
-        { success: false, error: 'Invalid serviceId provided' },
+        { success: false, error: 'At least one serviceId must be provided' },
+        { status: 400 })
+    }
+
+    const existingServices = await prisma.service.findMany({
+      where: { id: { in: serviceIds } }
+    });
+
+    if (existingServices.length !== serviceIds.length) {
+      return NextResponse.json(
+        { success: false, error: 'One or more invalid serviceIds provided' },
         { status: 409 })
     }
+
+    const totalDuration = existingServices.reduce((sum, s) => sum + s.durationMinutes, 0);
 
     // check if date is blocked
     const blocked = await blockedDateRepository.findByDate(
@@ -171,12 +184,13 @@ export async function POST(request: NextRequest) {
     const isAvailable = await bookingRepository.isSlotAvailable(
       new Date(validatedBody.bookingDate),
       validatedBody.bookingTime,
+      totalDuration,
       validatedBody.id
     )
 
     if (!isAvailable) {
       return NextResponse.json(
-        { success: false, error: 'Booking already exists for slot' },
+        { success: false, error: 'Booking already exists for slot (overlap detected)' },
         { status: 409 })
     }
 

@@ -39,7 +39,8 @@ export const bookingCancelledEvent = inngest.createFunction(
       smsResult = await step.run("send-cancellation-sms", async () => {
         const timeFormatted = formatTime(booking.bookingTime);
         const dateFormatted = new Date(booking.bookingDate).toLocaleDateString()
-        const message = `Hi ${booking.clientName}, your appointment for ${booking.service.name} on ${dateFormatted} at ${timeFormatted} has been cancelled. View details: ${bookingSummaryLink}`;
+        const serviceNames = booking.services.map(s => s.service.name).join(", ");
+        const message = `Hi ${booking.clientName}, your appointment for ${serviceNames} on ${dateFormatted} at ${timeFormatted} has been cancelled. View details: ${bookingSummaryLink}`;
 
         const result = await sendSMS({
           recipients: [booking.clientPhone],

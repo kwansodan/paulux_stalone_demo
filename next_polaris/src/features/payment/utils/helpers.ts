@@ -20,9 +20,9 @@ export function calculatePaymentStatus(booking: BookingWithServiceAndPayment): P
   }
 
   const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const servicePrice = Number(booking.service.price);
+  const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
 
-  if (totalPaid >= servicePrice) {
+  if (totalPaid >= totalPrice) {
     return PaymentStatus.PAID;
   }
 

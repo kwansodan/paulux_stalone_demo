@@ -28,7 +28,12 @@ export const BookingInputSchema = z.object({
     .max(20, "Phone must be at most 20 characters"),
   serviceId: z
     .string()
-    .uuid("Invalid service id"),
+    .uuid("Invalid service id")
+    .optional(),
+  serviceIds: z
+    .array(z.string().uuid("Invalid service id"))
+    .min(1, "At least one service is required")
+    .optional(),
   bookingDate: z
     .string()
     .regex(dateRegex, "Date must be YYYY-MM-DD"),

@@ -30,7 +30,7 @@ export default function PaymentManager({ services }: { services: SerializedServi
         </div>
       )
     },
-    { key: "service", label: "Service", render: (p: PaymentWithBookingAndService) => p.booking.service.name },
+    { key: "service", label: "Service", render: (p: PaymentWithBookingAndService) => p.booking.services.map(s => s.service.name).join(", ") },
     { key: "amount", label: "Deposit paid", render: (p: PaymentWithBookingAndService) => <p className="text-lime-700">{`GHS ${p.amount}`}</p> },
     {
       key: "due",
@@ -39,7 +39,8 @@ export default function PaymentManager({ services }: { services: SerializedServi
         const totalPaid = p.booking.payments
           .filter(pay => pay.status === "PAID")
           .reduce((sum, pay) => sum + Number(pay.amount), 0)
-        const due = Number(p.booking.service.price) - totalPaid
+        const totalPrice = p.booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
+        const due = totalPrice - totalPaid
         return (
           <p className={due === 0 ? "text-gray-600" : "text-[#D10505]"}>
             {due === 0 ? "Settled" : `GHS ${due.toFixed(2)}`}

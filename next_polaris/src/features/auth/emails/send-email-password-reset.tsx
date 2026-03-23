@@ -7,7 +7,7 @@ export const sendEmailPasswordReset = async (
   passwordResetLink: string
 ) => {
   return await resend.emails.send({
-    from: "no-reply@polarisbeauty.biz",
+    from: "no-reply@polarisbeautylounge.com",
     to: email,
     subject: "Password Reset from Polaris",
     react: <EmailPasswordReset url={passwordResetLink} />,

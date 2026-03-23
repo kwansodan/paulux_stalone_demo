@@ -25,7 +25,7 @@ export class PaymentService {
             include: {
                 booking: {
                     include: {
-                        service: true,
+                        services: { include: { service: true } },
                         payments: true,
                     },
                 },
@@ -66,7 +66,7 @@ export class PaymentService {
                     status: 'CONFIRMED',
                 },
                 include: {
-                    service: true,
+                    services: { include: { service: true } },
                     payments: true
                 },
             });
@@ -99,7 +99,7 @@ export class PaymentService {
 
         const invoice = await prisma.invoice.findUnique({
             where: { id: invoiceId },
-            include: { booking: { include: { service: true, payments: true } } }
+            include: { booking: { include: { services: { include: { service: true } }, payments: true } } }
         });
 
         if (!invoice) throw new Error("Invoice not found");
@@ -136,7 +136,7 @@ export class PaymentService {
                 data: {
                     status: 'CONFIRMED',
                 },
-                include: { service: true, payments: true }
+                include: { services: { include: { service: true } }, payments: true }
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
@@ -165,7 +165,7 @@ export class PaymentService {
     async refreshBookingPaymentStatus(bookingId: string) {
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
-            include: { service: true, payments: true }
+            include: { services: { include: { service: true } }, payments: true }
         });
 
         if (!booking) throw new Error("Booking not found");

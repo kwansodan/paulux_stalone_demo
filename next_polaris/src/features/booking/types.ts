@@ -13,13 +13,21 @@ export interface BookingQueryOptions {
 
 export type BookingWithService = Prisma.BookingGetPayload<{
   include: {
-    service: true,
+    services: {
+      include: {
+        service: true
+      }
+    },
     payments: true,
   }
 }>
 export type BookingWithServiceAndPayment = Prisma.BookingGetPayload<{
   include: {
-    service: true,
+    services: {
+      include: {
+        service: true
+      }
+    },
     payments: true,
   }
 }>

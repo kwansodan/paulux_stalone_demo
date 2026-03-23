@@ -35,7 +35,7 @@ export default function CreateBookingForm({
       clientName: '',
       clientEmail: '',
       clientPhone: '',
-      serviceId: '',
+      serviceIds: [],
       bookingDate: '',
       bookingTime: '',
       minDepositPercent: undefined,
@@ -45,12 +45,12 @@ export default function CreateBookingForm({
 
   const date = form.watch("bookingDate")
   const minDepositPercent = form.watch("minDepositPercent")
-  const serviceId = form.watch("serviceId")
-  const selectedService = useMemo(() => services?.find((service) => service.id === serviceId), [serviceId])
+  const serviceIds = form.watch("serviceIds") || []
+  const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
 
 
 
-  const { data, isLoading, error } = useAvailableSlots(date, serviceId, user.id)
+  const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, user.id)
   const slots = data?.slots ?? []
 
   console.log("SLOTS", slots)
@@ -148,27 +148,42 @@ export default function CreateBookingForm({
           {/* Service Selection */}
           <FormField
             control={form.control}
-            name="serviceId"
+            name="serviceIds"
             render={({ field }) => (
-              <div className="space-y-1">
+              <div className="space-y-2">
                 <Label className="text-sm font-normal text-foreground">
-                  Service <span className="text-red-500">*</span>
+                  Services <span className="text-red-500">*</span>
                 </Label>
-                <Select onValueChange={field.onChange} value={field.value}>
-                  <SelectTrigger className="min-h-12 w-full bg-white shadow-none border-[#E2E8F0] rounded-lg">
-                    <SelectValue placeholder="Select a service" />
-                  </SelectTrigger>
-                  <SelectContent className="mt-12">
-                    {services.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {form.formState.errors.serviceId && (
+                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                  {services.map((s) => (
+                    <div
+                      key={s.id}
+                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => {
+                        const current = field.value || [];
+                        const next = current.includes(s.id)
+                          ? current.filter((v) => v !== s.id)
+                          : [...current, s.id];
+                        field.onChange(next);
+                      }}
+                    >
+                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
+                        {field.value?.includes(s.id) && (
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <div className="flex-1 flex justify-between items-center text-sm">
+                        <span>{s.name}</span>
+                        <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {form.formState.errors.serviceIds && (
                   <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.serviceId.message}
+                    {form.formState.errors.serviceIds.message}
                   </p>
                 )}
               </div>
@@ -192,12 +207,22 @@ export default function CreateBookingForm({
               </div>
             )}
           />
-          {selectedService && (
-            <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600">
-              <div className="flex gap-2 items-center ">
-                <p className="font-semibold">Minimum deposit required: </p><span className="text-[20px] text-fuchsia-700 font-semibold">GHS {((Number(minDepositPercent) || selectedService.minDepositPercent) / 100) * Number(selectedService?.price)}</span>
+          {selectedServices && selectedServices.length > 0 && (
+            <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600 space-y-2">
+              <div className="flex justify-between items-center text-sm border-b border-fuchsia-200 pb-2">
+                <span className="font-medium">Total Price:</span>
+                <span className="font-bold text-lg">GHS {selectedServices.reduce((sum, s) => sum + Number(s.price), 0).toFixed(2)}</span>
               </div>
-              <p className="font-normal text-sm">{Number(minDepositPercent) || selectedService.minDepositPercent}% of {Number(selectedService?.price)} total service price</p>
+              <div className="flex gap-2 items-center">
+                <p className="font-semibold text-sm">Minimum deposit required: </p>
+                <span className="text-[18px] text-fuchsia-700 font-semibold">
+                  GHS {
+                    minDepositPercent !== undefined
+                      ? (Number(minDepositPercent) / 100) * selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+                      : selectedServices.reduce((sum, s) => sum + (Number(s.price) * (s.minDepositPercent / 100)), 0).toFixed(2)
+                  }
+                </span>
+              </div>
             </div>
           )}
 

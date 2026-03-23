@@ -6,6 +6,7 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 import { isPastSlot } from "@/features/booking/utils/helpers"
 import { isTime24HoursInAdvance } from "@/utils/helpers"
 import { authRepository } from "@/features/auth/server/auth.repository"
+import { prisma } from "@/lib/prisma"
 
 function addMinutes(time: string, mins: number) {
   const [h, m] = time.split(":").map(Number)
@@ -25,9 +26,12 @@ export async function GET(req: NextRequest) {
 
   const date = searchParams.get("date")
   const serviceId = searchParams.get("serviceId")
+  const serviceIdsParam = searchParams.get("serviceIds")
   const userId = searchParams.get("userId")
 
-  if (!date || !serviceId) {
+  const serviceIds = serviceIdsParam ? serviceIdsParam.split(",") : (serviceId ? [serviceId] : [])
+
+  if (!date || serviceIds.length === 0) {
     return NextResponse.json({ slots: [] })
   }
 
@@ -51,24 +55,28 @@ export async function GET(req: NextRequest) {
   if (!hours || !hours.isOpen) return NextResponse.json({ slots: [] })
 
   // 3) service duration
-  const service = await serviceRepository.findById(serviceId)
-  if (!service) return NextResponse.json({ slots: [] })
+  const services = await prisma.service.findMany({
+    where: { id: { in: serviceIds } }
+  })
+  if (services.length === 0) return NextResponse.json({ slots: [] })
 
-  const duration = service.durationMinutes
+  const duration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
 
-  // Check if the service has a latest booking time and adjust the end time accordingly
-  const latestBookingTime = service.latestBookingTime
-  if (latestBookingTime) {
-    const [latestHour, latestMinute] = latestBookingTime.split(":").map(Number)
-    const latestEndTime = new Date(dateObj)
-    latestEndTime.setHours(latestHour, latestMinute, 0, 0)
+  // Check if any of the services have restricted latest booking time
+  for (const service of services) {
+    const latestBookingTime = service.latestBookingTime
+    if (latestBookingTime) {
+      const [latestHour, latestMinute] = latestBookingTime.split(":").map(Number)
+      const latestEndTime = new Date(dateObj)
+      latestEndTime.setHours(latestHour, latestMinute, 0, 0)
 
-    const hoursEndTime = new Date(dateObj);
-    const [endHour, endMinute] = hours.endTime.split(":").map(Number);
-    hoursEndTime.setHours(endHour, endMinute, 0, 0);
+      const hoursEndTime = new Date(dateObj);
+      const [endHour, endMinute] = hours.endTime.split(":").map(Number);
+      hoursEndTime.setHours(endHour, endMinute, 0, 0);
 
-    if (latestEndTime < hoursEndTime) {
-      hours.endTime = latestEndTime.toISOString().slice(11, 16)
+      if (latestEndTime < hoursEndTime) {
+        hours.endTime = latestEndTime.toISOString().slice(11, 16)
+      }
     }
   }
 
@@ -88,7 +96,8 @@ export async function GET(req: NextRequest) {
       if (!isPast) {
         available = !isPast && await bookingRepository.isSlotAvailable(
           dateObj,
-          current
+          current,
+          duration
         )
       }
 

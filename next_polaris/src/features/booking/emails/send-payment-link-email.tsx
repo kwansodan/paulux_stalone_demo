@@ -11,7 +11,7 @@ export const sendPaymentLinkEmail = async (
     bookingTime: string
 ) => {
     return await resend.emails.send({
-        from: "no-reply@polarisbeauty.biz",
+        from: "no-reply@polarisbeautylounge.com",
         to: email,
         subject: `Payment Link for your ${serviceName} Booking`,
         react: <PaymentLinkEmail
