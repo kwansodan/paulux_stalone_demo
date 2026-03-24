@@ -40,13 +40,15 @@ export async function POST(
     }
 
     const body = await request.json()
+    const firstServiceId = existingBooking.services?.[0]?.serviceId
+
     const parsed = BookingInputSchema.pick({
       bookingDate: true,
       bookingTime: true,
       serviceId: true,
     }).parse({
       ...body,
-      serviceId: existingBooking.serviceId,
+      serviceId: firstServiceId,
     })
 
     const bookingDateObj = new Date(parsed.bookingDate)
@@ -70,7 +72,7 @@ export async function POST(
       )
     }
 
-    const service = await serviceRepository.findById(existingBooking.serviceId)
+    const service = await serviceRepository.findById(firstServiceId!)
     if (!service) {
       return NextResponse.json(
         { success: false, message: "Service no longer exists" },
@@ -111,9 +113,11 @@ export async function POST(
     //   )
     // }
 
+    const _totalDuration = existingBooking.services.reduce((acc, s) => acc + s.durationAtBooking, 0)
     const available = await bookingRepository.isSlotAvailable(
       bookingDateObj,
       parsed.bookingTime,
+      _totalDuration,
       bookingId
     )
 
