@@ -58,12 +58,12 @@ export async function sendSMS({
         }
 
         return { success: true, data };
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error("SMS Sending Error:", error);
         return {
             success: false,
-            error: error.message || "Unknown error",
-            stack: error.stack
+            error: error instanceof Error ? error.message : "Unknown error",
+            stack: error instanceof Error ? error.stack : undefined
         };
     }
 }

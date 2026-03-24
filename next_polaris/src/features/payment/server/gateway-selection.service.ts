@@ -3,7 +3,7 @@ import { paymentAllocationService } from "./payment-allocation.service"
 import { gatewayMetricsService } from "./gateway-metrics.service"
 
 export class GatewaySelectionService {
-    async selectGateway(bookingAmount: number, bookingDate: string): Promise<{ gateway: PaymentProvider, metrics: any }> {
+    async selectGateway(bookingAmount: number, bookingDate: string): Promise<{ gateway: PaymentProvider, metrics: unknown }> {
         const metrics = await paymentAllocationService.calculateDailyAllocation(bookingDate)
         const threshold = await gatewayMetricsService.getRoutingThreshold()
 

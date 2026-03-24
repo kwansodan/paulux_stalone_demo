@@ -1,10 +1,8 @@
 import { invoiceService } from "@/features/invoice/server/invoice.service"
-import { prisma } from "@/lib/prisma"
 import { auditLogService } from "./audit-log.service"
 import { gatewaySelectionService } from "./gateway-selection.service"
 import { initializeTransaction } from "@/lib/paystack"
-import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
-import { inngest } from "@/lib/inngest"
+import { InvoiceStatus, PaymentProvider, SupportedCurrency, Prisma } from "@generated/prisma/client"
 
 
 export interface InitializePaymentDTO {
@@ -23,7 +21,7 @@ export class PaymentProcessingService {
 
         // STEP 1 — Select gateway (automatic or forced)
         let gateway: PaymentProvider
-        let metrics: any = null
+        let metrics: unknown = null
 
         if (forcedGateway) {
             gateway = forcedGateway
@@ -68,9 +66,9 @@ export class PaymentProcessingService {
     /**
      * Handles retries and gateway failover
      */
-    private async initializeWithResilience(gateway: PaymentProvider, details: any) {
+    private async initializeWithResilience(gateway: PaymentProvider, details: Record<string, unknown>) {
         const retryDelays = [0, 2000, 5000]
-        let lastError: any = null
+        let lastError: unknown = null
 
         // RETRY LOOP
         for (let i = 0; i < retryDelays.length; i++) {
@@ -105,7 +103,7 @@ export class PaymentProcessingService {
                 invoiceId: details.invoiceId,
                 bookingId: details.bookingId,
                 newValue: { from: gateway, to: alternateGateway },
-                metadata: { error: lastError }
+                metadata: { error: lastError as Prisma.InputJsonValue }
             })
 
             // Update invoice to new gateway
@@ -136,11 +134,11 @@ export class PaymentProcessingService {
             invoiceNumber: string
         }
     ) {
-        const { invoiceId, bookingId, email, amount, bookingReference, callbackUrl, invoiceNumber } = details
+        const { invoiceId, bookingId, email, amount, callbackUrl, invoiceNumber } = details
 
         try {
             let paymentUrl = ""
-            let providerResponse: any = null
+            let providerResponse: unknown = null
 
             // Convert GHS → pesewas once
             const amountPesewas = Math.round(amount * 100)
@@ -170,7 +168,7 @@ export class PaymentProcessingService {
                 invoiceId,
                 bookingId,
                 newValue: { gateway, paymentUrl },
-                metadata: { providerResponse }
+                metadata: { providerResponse: providerResponse as Prisma.InputJsonValue }
             })
 
             return {
@@ -180,19 +178,20 @@ export class PaymentProcessingService {
                 invoiceNumber
             }
 
-        } catch (error: any) {
-            console.error(`Attempt failed for ${gateway}:`, error.message)
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : "Initialization failed";
+            console.error(`Attempt failed for ${gateway}:`, errorMessage)
 
             await auditLogService.logAction({
                 action: "PAYMENT_INITIALIZATION_ATTEMPT_FAILED",
-                invoiceId,
-                bookingId,
-                metadata: { gateway, error: error.message }
+                invoiceId: details.invoiceId as string,
+                bookingId: details.bookingId as string,
+                metadata: { gateway, error: errorMessage }
             })
 
             return {
                 success: false,
-                message: error.message
+                message: errorMessage
             }
         }
     }

@@ -60,4 +60,4 @@ jobs:
             set -e
             sleep 15
             curl -f https://polarisbeautylounge.com
-          EOF
+          EOF 

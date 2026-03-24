@@ -120,7 +120,7 @@ export async function initiateRefund(
 ): Promise<PaystackRefundResponse> {
     const secretKey = getSecretKey(provider);
     try {
-        const payload: any = {
+        const payload: Record<string, unknown> = {
             transaction: transactionReference,
         };
 
@@ -146,8 +146,12 @@ export async function initiateRefund(
         );
 
         return response.data;
-    } catch (error: any) {
-        console.error(`Error initiating Paystack refund (${provider}):`, error.response?.data || error.message);
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            console.error(`Error initiating Paystack refund (${provider}):`, error.response?.data || error.message);
+        } else {
+            console.error(`Error initiating Paystack refund (${provider}):`, error);
+        }
         throw error;
     }
 }
@@ -168,7 +172,7 @@ export interface PaystackVerifyResponse {
         channel: string;
         currency: string;
         ip_address: string;
-        metadata: any;
+        metadata: Record<string, unknown>;
         fees: number;
         customer: {
             id: number;
@@ -177,7 +181,7 @@ export interface PaystackVerifyResponse {
             email: string;
             customer_code: string;
             phone: string | null;
-            metadata: any;
+            metadata: Record<string, unknown>;
             risk_action: string;
         };
         authorization: {
@@ -219,8 +223,12 @@ export async function verifyTransaction(
         );
 
         return response.data;
-    } catch (error: any) {
-        console.error(`Error verifying Paystack transaction (${provider}):`, error.response?.data || error.message);
+    } catch (error: unknown) {
+        if (axios.isAxiosError(error)) {
+            console.error(`Error verifying Paystack transaction (${provider}):`, error.response?.data || error.message);
+        } else {
+            console.error(`Error verifying Paystack transaction (${provider}):`, error);
+        }
         throw error;
     }
 }
@@ -234,7 +242,7 @@ export async function verifyTransaction(
  */
 export function verifyPaystackSignature(
     signature: string,
-    body: any,
+    body: unknown,
     provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): boolean {
     const secretKey = getSecretKey(provider);

@@ -1,8 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { calculatePaymentStatus } from "../utils/helpers";
-import { auditLogService } from "./audit-log.service";
-import { PaymentProvider } from "@generated/prisma/client";
+import { PaymentProvider, Prisma } from "@generated/prisma/client";
 import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack";
 
 export class PaymentService {
@@ -11,7 +10,7 @@ export class PaymentService {
      * Updates payment status, confirms booking, and syncs to Google Calendar.
      * idempotent: Safe to call multiple times for the same reference.
      */
-    async processSuccessfulPayment(reference: string, data: any, provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK) {
+    async processSuccessfulPayment(reference: string, data: Prisma.InputJsonValue, provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK) {
         console.log(`Processing successful payment for reference: ${reference} via ${provider}`);
 
         // 1. Find the payment record
@@ -94,7 +93,7 @@ export class PaymentService {
         return { success: true, paymentId: payment.id, bookingId: booking.id };
     }
 
-    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: any, actualAmount?: number) {
+    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: Prisma.InputJsonValue, actualAmount?: number) {
         console.log(`Confirming invoice payment: ${invoiceId}`);
 
         const invoice = await prisma.invoice.findUnique({
@@ -217,7 +216,7 @@ export class PaymentService {
                 bookingId: payment.bookingId,
                 action: "REFUND_INITIATED",
                 newValue: { status: "REFUND_PENDING", reference: payment.providerRef },
-                metadata: { paymentId: payment.id, provider: payment.provider, paystackResponse: result as any }
+                metadata: { paymentId: payment.id, provider: payment.provider, paystackResponse: result as Prisma.InputJsonValue }
             }
         });
 

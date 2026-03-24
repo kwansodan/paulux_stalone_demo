@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { invoiceService } from "@/features/invoice/server/invoice.service"
 import { paymentProcessingService } from "./payment-processing.service"
 import { auditLogService } from "./audit-log.service"
-import { InvoiceStatus, PaymentProvider, SupportedCurrency } from "@generated/prisma/client"
+import { InvoiceStatus, PaymentProvider, SupportedCurrency, Prisma } from "@generated/prisma/client"
 import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack"
 
 export interface TopUpDTO {
@@ -85,7 +85,7 @@ export class SubsequentPaymentService {
 
         if (!payment) throw new Error("Payment record not found")
 
-        let refundResponse: any = null
+        let refundResponse: unknown = null
 
         /**
          * PAYSTACK REFUND (Handles both Primary and Secondary)
@@ -130,7 +130,7 @@ export class SubsequentPaymentService {
             invoiceId: refundInvoice.id,
             bookingId,
             newValue: { amount: refundInvoice.amount },
-            metadata: { refundResponse, reason }
+            metadata: { refundResponse: refundResponse as Prisma.InputJsonValue, reason }
         })
 
         return {

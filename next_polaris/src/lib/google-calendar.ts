@@ -24,10 +24,20 @@ const auth = new JWT({
 
 const calendar = google.calendar({ version: 'v3', auth });
 
+interface CalendarBooking {
+    bookingDate: string;
+    bookingTime: string;
+    clientName: string;
+    clientPhone: string;
+    clientEmail: string;
+    bookingReference: string;
+    services?: { durationAtBooking: number; service: { name: string } }[];
+}
+
 /**
  * Create a Google Calendar event from a booking
  */
-export async function createCalendarEvent(booking: any) {
+export async function createCalendarEvent(booking: CalendarBooking) {
     if (!GOOGLE_PRIVATE_KEY || !GOOGLE_CLIENT_EMAIL) {
         console.warn('Google Calendar credentials not found. Skipping event creation.');
         if (!GOOGLE_PRIVATE_KEY) console.warn('Missing GOOGLE_PRIVATE_KEY');
@@ -54,13 +64,15 @@ export async function createCalendarEvent(booking: any) {
 
     // Calculate end time usually based on service duration, but here we might default to 1 hour if not provided
     // We'll assume 1 hour availability/service duration for now or fetch service duration
-    const durationMinutes = booking.service?.durationMinutes || 60;
+    const durationMinutes = booking.services?.reduce((sum, s) => sum + s.durationAtBooking, 0) || 60;
     const endDate = new Date(startDate.getTime() + durationMinutes * 60 * 1000);
 
+    const serviceName = booking.services?.map(s => s.service.name).join(', ') || 'Service';
+
     const event = {
-        summary: `Booking: ${booking.clientName} - ${booking.service?.name || 'Service'}`,
+        summary: `Booking: ${booking.clientName} - ${serviceName}`,
         description: `
-      Service: ${booking.service?.name || 'N/A'}
+      Service: ${serviceName}
       Client: ${booking.clientName}
       Phone: ${booking.clientPhone}
       Email: ${booking.clientEmail}
