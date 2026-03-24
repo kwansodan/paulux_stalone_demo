@@ -35,14 +35,11 @@ export async function createCalendarEvent(booking: any) {
         return null;
     }
 
-    // Debug key format (safe logging)
+    // Debug key existence (safe logging)
     console.log('Google Key Debug:', {
         email: GOOGLE_CLIENT_EMAIL,
+        hasKey: !!GOOGLE_PRIVATE_KEY,
         keyLength: GOOGLE_PRIVATE_KEY?.length,
-        hasHeader: GOOGLE_PRIVATE_KEY?.includes('BEGIN PRIVATE KEY'),
-        hasFooter: GOOGLE_PRIVATE_KEY?.includes('END PRIVATE KEY'),
-        firstChars: GOOGLE_PRIVATE_KEY?.substring(0, 10),
-        lastChars: GOOGLE_PRIVATE_KEY?.substring(GOOGLE_PRIVATE_KEY.length - 10)
     });
 
     // Format date-time for Google API (RFC3339)
