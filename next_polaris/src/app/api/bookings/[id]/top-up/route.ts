@@ -26,8 +26,8 @@ export async function POST(
         // Calculate total amount paid
         const paidPayments = booking.payments.filter(p => p.status === PaymentStatus.PAID);
         const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-        const servicePrice = Number(booking.service.price);
-        const remainingAmount = servicePrice - totalPaid;
+        const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+        const remainingAmount = totalPrice - totalPaid;
 
         if (remainingAmount <= 0) {
             return NextResponse.json(

@@ -5,7 +5,7 @@ import path from 'path';
 // Load env vars
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || 'sk_test_your_paystack_secret_key';
+const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY || '';
 const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
 const LOCAL_URL = `${BASE_URL}/api/paystack/webhook`;
 

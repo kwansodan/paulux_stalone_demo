@@ -30,7 +30,7 @@ export function formatDate(
   };
 
   const finalOptions = options ? { ...defaultOptions, ...options } : defaultOptions;
-  
+
   return new Date(date).toLocaleDateString('en-US', finalOptions);
 }
 
@@ -39,24 +39,35 @@ export function formatDate(
 export function formatTime(time24: string) {
   // Parse the time string (e.g., "14:00")
   const [hours, minutes] = time24.split(':').map(Number);
-  
+
   // Determine AM or PM
   const period = hours >= 12 ? 'PM' : 'AM';
-  
+
   // Convert to 12-hour format
   const hours12 = hours % 12 || 12;
-  
+
   // Format with leading zero for minutes
   const formattedMinutes = String(minutes).padStart(2, '0');
-  
+
   return `${hours12}:${formattedMinutes} ${period}`;
 }
 
 
-export function isBookingOwner(booking: BookingWithService, user: User): boolean{
-  if(!booking || !booking.createdById) return false
+export function isBookingOwner(booking: BookingWithService, user: User): boolean {
+  if (!booking || !booking.createdById) return false
 
-  if(booking.createdById !== user.id) return false
+  if (booking.createdById !== user.id) return false
 
   return true
+}
+
+export function timeToMinutes(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return h * 60 + m;
+}
+
+export function minutesToTime(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }

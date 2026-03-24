@@ -26,10 +26,14 @@ export default async function BookingSummaryPage({
       ...p,
       amount: p.amount.toString()
     })),
-    service: {
-      ...booking?.service,
-      price: booking?.service.price.toString()
-    }
+    services: booking?.services.map((bs) => ({
+      ...bs,
+      priceAtBooking: bs.priceAtBooking.toString(),
+      service: {
+        ...bs.service,
+        price: bs.service.price.toString()
+      }
+    }))
   }
 
   // Check if this is a callback from Paystack

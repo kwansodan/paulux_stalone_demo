@@ -28,7 +28,7 @@ export default function CustomerRescheduleBooking({ booking }: Props) {
 
   const { data, isLoading, error } = useAvailableSlots(
     selectedDate ?? undefined,
-    booking.serviceId ?? undefined
+    booking.services?.map((s: any) => s.serviceId) ?? []
   )
   const slots = data?.slots ?? []
 

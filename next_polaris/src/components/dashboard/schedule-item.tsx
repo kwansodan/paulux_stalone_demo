@@ -15,7 +15,7 @@ export default function ScheduleItem({ booking }: Props) {
           <p className="font-medium text-gray-900">{booking.clientPhone}</p>
         </div>
         <p className="text-sm text-gray-500">
-          {booking.service.name} · {booking.bookingTime}
+          {booking.services.map(s => s.service.name).join(", ")} · {booking.bookingTime}
         </p>
       </div>
 

@@ -134,8 +134,10 @@ export default function BookingSummary({ booking }: Props) {
     const payment = booking.payments?.[0]
     if (!payment) return "Not paid"
 
+    const totalPrice = booking.services.reduce((sum: number, s: any) => sum + Number(s.priceAtBooking), 0)
+
     if (payment.status === "PAID") {
-      return payment.amount === booking.service?.price ? "Paid in full" : "Deposit paid"
+      return Number(payment.amount) >= totalPrice ? "Paid in full" : "Deposit paid"
     }
     if (payment.status === "REFUNDED") {
       return "Refunded"
@@ -154,10 +156,14 @@ export default function BookingSummary({ booking }: Props) {
         <div className="bg-pink-50  space-y-6 rounded-2xl px-3 py-6">
 
           {/* Header */}
-          <div className="border-b  py-3 flex items-start justify-between">
-            <div className="space-y-2">
-              <h1 className="text-2xl font-semibold">{booking.service?.name}</h1>
-              <div className="text-right flex gap-1 items-center justify-start">
+          <div className="border-b py-3 flex items-start justify-between">
+            <div className="space-y-2 flex-1 pr-4">
+              <div className="space-y-1">
+                {booking.services.map((s: any) => (
+                  <h1 key={s.id} className="text-xl font-semibold leading-tight">{s.service.name}</h1>
+                ))}
+              </div>
+              <div className="text-right flex gap-1 items-center justify-start mt-2">
                 <div className="text-sm font-medium">
                   {formatDate(booking.bookingDate || '', { weekday: 'short', month: 'short', year: 'numeric' })}
                 </div>
@@ -242,10 +248,10 @@ export default function BookingSummary({ booking }: Props) {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-gray-600">
                 <Clock className="h-4 w-4" />
-                <span className="text-sm">Duration</span>
+                <span className="text-sm">Total Duration</span>
               </div>
               <span className="text-sm font-medium">
-                {booking.service?.durationMinutes} mins
+                {booking.services.reduce((sum: number, s: any) => sum + s.durationAtBooking, 0)} mins
               </span>
             </div>
 

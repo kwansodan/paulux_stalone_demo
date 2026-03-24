@@ -42,7 +42,7 @@ export type PaymentWithBookingAndService = PaymentGetPayload<{
   include: {
     booking: {
       include: {
-        service: true,
+        services: { include: { service: true } },
         payments: true
       }
     }

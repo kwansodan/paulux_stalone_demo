@@ -20,8 +20,8 @@ export type BookingFormData = {
   minDepositPercent?: number
 
   // Step 2: Service
-  serviceId: string | null
-  service: SerializedService | null
+  serviceIds: string[]
+  selectedServices: SerializedService[]
 
   // Step 3: Date & Time
   date: string | null
@@ -30,8 +30,8 @@ export type BookingFormData = {
 }
 
 const initialFormData: BookingFormData = {
-  serviceId: null,
-  service: null,
+  serviceIds: [],
+  selectedServices: [],
   date: null,
   time: null,
   fullName: "",
@@ -56,10 +56,12 @@ export default function CustomerBookingForm({
       const preSelectedService = services.find(
         (service) => service.id === preSelectedServiceId
       )
-      return {
-        ...initialFormData,
-        serviceId: preSelectedServiceId,
-        service: preSelectedService || null,
+      if (preSelectedService) {
+        return {
+          ...initialFormData,
+          serviceIds: [preSelectedServiceId],
+          selectedServices: [preSelectedService],
+        }
       }
     }
     return initialFormData
@@ -95,7 +97,7 @@ export default function CustomerBookingForm({
           formData.phone.trim() !== ""
         )
       case 2:
-        return !!formData.serviceId
+        return formData.serviceIds.length > 0
       case 3:
         return !!formData.date && !!formData.time
       default:
@@ -126,11 +128,23 @@ export default function CustomerBookingForm({
           {currentStep === 2 && (
             <SelectServiceStep
               services={services}
-              selectedServiceId={formData.serviceId}
+              selectedServiceIds={formData.serviceIds}
               onSelectService={(service) => {
+                const isSelected = formData.serviceIds.includes(service.id);
+                let newServiceIds: string[];
+                let newSelectedServices: SerializedService[];
+
+                if (isSelected) {
+                  newServiceIds = formData.serviceIds.filter(id => id !== service.id);
+                  newSelectedServices = formData.selectedServices.filter(s => s.id !== service.id);
+                } else {
+                  newServiceIds = [...formData.serviceIds, service.id];
+                  newSelectedServices = [...formData.selectedServices, service];
+                }
+
                 updateFormData({
-                  serviceId: service.id,
-                  service: service,
+                  serviceIds: newServiceIds,
+                  selectedServices: newSelectedServices,
                 })
               }}
               onNext={nextStep}
@@ -143,7 +157,7 @@ export default function CustomerBookingForm({
             <BookingDateTimeStep
               selectedDate={formData.date}
               selectedTime={formData.time}
-              selectedServiceId={formData.serviceId}
+              selectedServiceIds={formData.serviceIds}
               onSelectDate={(date) => updateFormData({ date })}
               onSelectTime={(time) => updateFormData({ time })}
               onNext={nextStep}

@@ -1,14 +1,21 @@
 import { prisma } from "@/lib/prisma";
 import { Booking, BookingStatus, PaymentStatus, Prisma } from "@generated/prisma/client";
-import { Booking as BookingPayload } from "../utils/validation";
-import { generateBookingReference } from "@/utils/helpers";
+import { generateBookingReference, timeToMinutes, minutesToTime } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { serviceRepository } from "@/features/service/server/service.repository";
 
 
 export class BookingRepository {
 
-  async upsertBooking(payload: BookingPayload): Promise<Booking> {
+  async upsertBooking(payload: any): Promise<Booking> {
+    const serviceIds = payload.serviceIds || (payload.serviceId ? [payload.serviceId] : []);
+
+    // Fetch all services to calculate total price and duration
+    const services = await prisma.service.findMany({
+      where: { id: { in: serviceIds } }
+    });
+
     if (payload.id) {
       const existing = await prisma.booking.findUnique({
         where: { id: payload.id }
@@ -18,13 +25,13 @@ export class BookingRepository {
         throw new Error("Booking not found. Cannot update.")
       }
 
-      return prisma.booking.update({
+      // Update basic fields
+      await prisma.booking.update({
         where: { id: payload.id },
         data: {
           clientName: payload.clientName,
           clientEmail: payload.clientEmail,
           clientPhone: payload.clientPhone,
-          serviceId: payload.serviceId,
           bookingDate: payload.bookingDate,
           bookingTime: payload.bookingTime,
           status: payload.status,
@@ -32,6 +39,27 @@ export class BookingRepository {
           createdById: payload.createdById ?? null
         }
       })
+
+      // Update services (delete and recreate for simplicity in many-to-many)
+      if (serviceIds.length > 0) {
+        await prisma.bookingService.deleteMany({
+          where: { bookingId: payload.id }
+        });
+
+        await prisma.bookingService.createMany({
+          data: services.map(s => ({
+            bookingId: payload.id as string,
+            serviceId: s.id,
+            priceAtBooking: s.price,
+            durationAtBooking: s.durationMinutes
+          }))
+        });
+      }
+
+      return prisma.booking.findUniqueOrThrow({
+        where: { id: payload.id },
+        include: { services: { include: { service: true } } }
+      }) as unknown as Booking;
     }
 
     let booking = await prisma.booking.create({
@@ -40,15 +68,21 @@ export class BookingRepository {
         clientName: payload.clientName,
         clientEmail: payload.clientEmail,
         clientPhone: payload.clientPhone,
-        serviceId: payload.serviceId,
         bookingDate: payload.bookingDate,
         bookingTime: payload.bookingTime,
         status: BookingStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
-        createdById: payload?.createdById ?? null
+        createdById: payload?.createdById ?? null,
+        services: {
+          create: services.map(s => ({
+            serviceId: s.id,
+            priceAtBooking: s.price,
+            durationAtBooking: s.durationMinutes
+          }))
+        }
       },
       include: {
-        service: true
+        services: { include: { service: true } }
       }
     })
 
@@ -60,7 +94,7 @@ export class BookingRepository {
           booking = await prisma.booking.update({
             where: { id: booking.id },
             data: { googleEventId: eventId },
-            include: { service: true }
+            include: { services: { include: { service: true } } }
           });
         }
       } catch (error) {
@@ -78,27 +112,24 @@ export class BookingRepository {
     const bookings = await prisma.booking.findMany({
       where,
       include: {
-        service: true,
+        services: {
+          include: {
+            service: true
+          }
+        },
         payments: true,
       },
       orderBy: {
         createdAt: 'desc',
       },
-    });
+    }) as unknown as BookingWithServiceAndPayment[];
 
     if (!options) {
       return { bookings }
     }
 
     const queryResult: any = {
-      // serialized service.price in booking.service for easier handling on client side
-      bookings: bookings.map(b => ({
-        ...b,
-        service: {
-          ...b.service,
-          price: b.service.price.toString()
-        }
-      }))
+      bookings: bookings
     };
     if (options.includeCount) {
       queryResult['count'] = bookings.length
@@ -108,7 +139,8 @@ export class BookingRepository {
         b => b.status !== BookingStatus.CANCELLED
       )
       const revenue = activeBookings.reduce((sum, booking) => {
-        return sum + Number(booking.service.price);
+        const bookingTotal = booking.services.reduce((sSum, bs) => sSum + Number(bs.priceAtBooking), 0);
+        return sum + bookingTotal;
       }, 0);
 
       queryResult['revenue'] = revenue
@@ -122,7 +154,11 @@ export class BookingRepository {
     const result = await prisma.booking.findUnique({
       where: { id },
       include: {
-        service: true,
+        services: {
+          include: {
+            service: true
+          }
+        },
         payments: true,
       },
     })
@@ -131,28 +167,26 @@ export class BookingRepository {
       return null
     }
 
-    return result
-    // return {
-    //   ...result,
-    //   service: {
-    //     ...result.service,
-    //     price: result.service.price.toString()
-    //   }
-    // }
+    return result as unknown as BookingWithServiceAndPayment
   }
 
   async findByReference(reference: string) {
     return prisma.booking.findUnique({
       where: { bookingReference: reference },
       include: {
-        service: true,
+        services: {
+          include: {
+            service: true
+          }
+        },
       },
-    })
+    }) as unknown as BookingWithService
   }
 
   async isSlotAvailable(
     date: Date,
     time: string,
+    durationMinutes: number,
     excludeBookingId?: string
   ): Promise<boolean> {
     const dateString = date.toISOString().split('T')[0]
@@ -165,10 +199,14 @@ export class BookingRepository {
     })
 
     if (!businessHour) return false
-    const bookingCount = await prisma.booking.count({
+
+    const requestedStart = timeToMinutes(time);
+    const requestedEnd = requestedStart + durationMinutes;
+
+    // Fetch all existing bookings for this date to check for overlaps
+    const existingBookings = await prisma.booking.findMany({
       where: {
         bookingDate: dateString,
-        bookingTime: time,
         status: {
           in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
         },
@@ -176,9 +214,42 @@ export class BookingRepository {
           id: { not: excludeBookingId },
         }),
       },
-    })
+      include: {
+        services: true
+      }
+    });
 
-    return bookingCount < businessHour.maxConcurrentBookings
+    // We need to check if at any point within [requestedStart, requestedEnd],
+    // the number of active bookings exceeds maxConcurrentBookings.
+    // A simple way is to check every 15-minute increment or just checking at start/end of all existing bookings.
+    // For simplicity and accuracy with small number of bookings, we'll check the count at each existing booking's start time and the requested start time.
+
+    const checkPoints = new Set<number>();
+    checkPoints.add(requestedStart);
+    existingBookings.forEach(b => checkPoints.add(timeToMinutes(b.bookingTime)));
+
+    for (const cp of checkPoints) {
+      if (cp >= requestedStart && cp < requestedEnd) {
+        let concurrentAtCP = 0;
+
+        // Count how many existing bookings overlap this checkpoint
+        for (const b of existingBookings) {
+          const bStart = timeToMinutes(b.bookingTime);
+          const bDuration = b.services.reduce((sum, s) => sum + s.durationAtBooking, 0);
+          const bEnd = bStart + bDuration;
+
+          if (cp >= bStart && cp < bEnd) {
+            concurrentAtCP++;
+          }
+        }
+
+        if (concurrentAtCP >= businessHour.maxConcurrentBookings) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
 

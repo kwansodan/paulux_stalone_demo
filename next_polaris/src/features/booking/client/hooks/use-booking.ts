@@ -20,13 +20,14 @@ export function updateBookingStatus(id: string, payload: BookingStatusInput) {
 }
 
 
-export function useAvailableSlots(date?: string, serviceId?: string, userId?: string) {
+export function useAvailableSlots(date?: string, serviceIds?: string[], userId?: string) {
   return useQuery({
-    queryKey: ["slots", date, serviceId],
-    enabled: !!date && !!serviceId,
+    queryKey: ["slots", date, serviceIds?.join(',')],
+    enabled: !!date && !!serviceIds && serviceIds.length > 0,
     queryFn: async () => {
-      let path = `/bookings/availability?date=${date}&serviceId=${serviceId}`
-      if(userId) path = path + `&userId=${userId}`
+      const ids = serviceIds?.join(',')
+      let path = `/bookings/availability?date=${date}&serviceIds=${ids}`
+      if (userId) path = path + `&userId=${userId}`
       const res = await api.get(path)
       return res.data
     },
@@ -102,7 +103,7 @@ export function useCreateBooking() {
     mutationFn: createOrEditBooking,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.bookingDate, data.serviceId],
+        queryKey: ["slots"],
       })
 
       queryClient.invalidateQueries({
@@ -162,7 +163,7 @@ export function useEditBooking() {
     mutationFn: createOrEditBooking,
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.bookingDate, data.serviceId],
+        queryKey: ["slots"],
       })
 
       queryClient.invalidateQueries({
@@ -193,7 +194,7 @@ export function useMarkAsCompleted() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.data.bookingDate, data.data.data.serviceId],
+        queryKey: ["slots"],
       })
 
       queryClient.invalidateQueries({
@@ -220,7 +221,7 @@ export function useCancelBooking() {
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({
-        queryKey: ["slots", data.data.data.booking.bookingDate, data.data.data.serviceId],
+        queryKey: ["slots"],
       })
 
       queryClient.invalidateQueries({

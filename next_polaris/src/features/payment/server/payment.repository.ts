@@ -23,7 +23,7 @@ export class PaymentRepository {
       include: {
         booking: {
           include: {
-            service: true,
+            services: { include: { service: true } },
             payments: true,
           }
         }
@@ -133,7 +133,7 @@ export class PaymentRepository {
           in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
         }
       },
-      include: { service: true, payments: true }
+      include: { services: { include: { service: true } }, payments: true }
     })
 
 
@@ -166,19 +166,19 @@ export class PaymentRepository {
           in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.PENDING]
         }
       },
-      include: { service: true, payments: true }
+      include: { services: { include: { service: true } }, payments: true }
     })
 
     // Calculate totalBalanceDueToday (all unpaid from day 1 till today)
     let totalBalanceDueToday = 0
 
     for (const booking of allBookingsUpToToday) {
-      const servicePrice = Number(booking.service.price)
+      const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
       const totalPayments = booking.payments
         .filter(p => p.status !== PaymentStatus.REFUNDED)
         .reduce((sum, p) => sum + Number(p.amount), 0)
 
-      const unpaidBalance = servicePrice - totalPayments
+      const unpaidBalance = totalPrice - totalPayments
 
       if (unpaidBalance > 0) {
         totalBalanceDueToday += unpaidBalance
@@ -188,9 +188,9 @@ export class PaymentRepository {
     let todaysPendingCollections = 0
 
     for (const booking of todaysBookings) {
-      const servicePrice = Number(booking.service.price)
+      const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
       const totalPayments = booking.payments.reduce((sum, p) => sum + Number(p.amount), 0)
-      const unpaidBalance = servicePrice - totalPayments
+      const unpaidBalance = totalPrice - totalPayments
 
       if (unpaidBalance > 0) {
         todaysPendingCollections++

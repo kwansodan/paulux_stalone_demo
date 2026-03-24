@@ -46,10 +46,14 @@ export default async function CustomerRescheduleBookingPage({
       ...p,
       amount: p.amount.toString()
     })),
-    service: {
-      ...booking.service,
-      price: booking.service.price.toString()
-    }
+    services: booking.services.map((bs) => ({
+      ...bs,
+      priceAtBooking: bs.priceAtBooking.toString(),
+      service: {
+        ...bs.service,
+        price: bs.service.price.toString()
+      }
+    }))
   }
 
   return (

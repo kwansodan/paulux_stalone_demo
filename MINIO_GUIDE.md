@@ -25,7 +25,7 @@ Once your Docker containers are running:
 - **Persistent Storage** - Data stored in Docker volume `minio_data`
 
 ### Code Utilities
-- **[lib/minio.ts](file:///home/joojo/Desktop/polaris/lib/minio.ts)** - Ready-to-use MinIO client with helper functions
+- **[next_polaris/src/lib/minio.ts](file:///home/joojo/Desktop/polaris/next_polaris/src/lib/minio.ts)** - Ready-to-use MinIO client with helper functions
 
 ## 🔧 Configuration
 

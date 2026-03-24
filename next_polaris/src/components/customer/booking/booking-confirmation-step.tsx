@@ -18,21 +18,27 @@ type Props = {
 
 export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const router = useRouter()
-  const service = formData.service
+  const services = formData.selectedServices
   const [isProcessing, setIsProcessing] = useState(false)
+
+  const hasDepositRequirement = services.some(s => s.minDepositPercent < 100)
+
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
-    (formData.minDepositPercent || service?.minDepositPercent || 0) < 100 ? "deposit" : "full"
+    (formData.minDepositPercent !== undefined ? formData.minDepositPercent < 100 : hasDepositRequirement) ? "deposit" : "full"
   )
 
-  const price = service ? Number(service.price) : 0
-  const depositAmount = price * ((formData.minDepositPercent || service!.minDepositPercent || 0) / 100)
+  const totalPrice = services.reduce((sum, s) => sum + Number(s.price), 0)
+  const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
+  const depositAmount = formData.minDepositPercent !== undefined
+    ? totalPrice * (formData.minDepositPercent / 100)
+    : services.reduce((sum, s) => sum + (Number(s.price) * (s.minDepositPercent / 100)), 0)
 
   const createBookingMutation = useCreateBooking()
 
   const handleProceedToPayment = async () => {
     try {
       setIsProcessing(true)
-      const amount = paymentOption === "deposit" ? depositAmount : price
+      const amount = paymentOption === "deposit" ? depositAmount : totalPrice
 
       console.log("Proceeding to payment with:", {
         ...formData,
@@ -41,8 +47,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       })
 
       // Step 1: Create the booking
-      const payload: BookingInput = {
-        serviceId: formData.serviceId!,
+      const payload: any = {
+        serviceIds: formData.serviceIds,
         bookingTime: formData.time!,
         bookingDate: formData.date!,
         clientName: formData.fullName,
@@ -109,13 +115,20 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           <h3 className="text-[16px] font-semibold">Booking summary</h3>
 
           <div className="space-y-3">
-            {/* Service */}
-            <div className="flex items-center justify-between">
+            {/* Services */}
+            <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Scissors className="w-4 h-4" />
                 <span>Service choice</span>
               </div>
-              <span className="text-sm font-medium">{service?.name}</span>
+              <div className="pl-6 space-y-1">
+                {services.map((s) => (
+                  <div key={s.id} className="flex justify-between items-center">
+                    <span className="text-sm font-medium">{s.name}</span>
+                    <span className="text-xs text-gray-400">GHS {Number(s.price).toFixed(2)}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Appointment */}
@@ -133,13 +146,13 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
             </div>
 
             {/* Duration */}
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-t border-pink-100 pt-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Clock className="w-4 h-4" />
-                <span>Duration</span>
+                <span>Total Duration</span>
               </div>
               <span className="text-sm font-medium">
-                {service?.durationMinutes}mins
+                {totalDuration} mins
               </span>
             </div>
           </div>
@@ -154,12 +167,12 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
               <span className="text-sm font-medium">Total Service Cost</span>
             </div>
             <span className="text-xl font-bold text-fuchsia-600">
-              GHS {Number(service?.price || 0).toFixed(2)}
+              GHS {totalPrice.toFixed(2)}
             </span>
           </div>
 
           {/* Pay Deposit */}
-          {(service?.minDepositPercent || 0) < 100 && (
+          {(formData.minDepositPercent !== undefined ? formData.minDepositPercent < 100 : hasDepositRequirement) && (
             <button
               onClick={() => setPaymentOption("deposit")}
               className={`
@@ -187,7 +200,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
 
                 <div className="flex-1">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-medium">Pay {service?.minDepositPercent}% Deposit</span>
+                    <span className="text-sm font-medium">Pay Deposit</span>
                   </div>
                   <p className="text-xs text-gray-600 mb-2">
                     Secure your booking now, pay the remaining GHS{" "}
@@ -235,7 +248,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
                   Complete payment now and skip checkout at the salon
                 </p>
                 <span className="text-xl font-bold text-fuchsia-600">
-                  GHS {price.toFixed(2)}
+                  GHS {totalPrice.toFixed(2)}
                 </span>
               </div>
             </div>

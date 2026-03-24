@@ -11,7 +11,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react"
 type Props = {
   selectedDate: string | null
   selectedTime: string | null
-  selectedServiceId: string | null
+  selectedServiceIds: string[]
   onSelectDate: (date: string) => void
   onSelectTime: (time: string) => void
   onNext: () => void
@@ -22,7 +22,7 @@ type Props = {
 export default function BookingDateTimeStep({
   selectedDate,
   selectedTime,
-  selectedServiceId,
+  selectedServiceIds,
   onSelectDate,
   onSelectTime,
   onNext,
@@ -41,7 +41,7 @@ export default function BookingDateTimeStep({
     }
   }, [])
 
-  const { data, isLoading, error } = useAvailableSlots(selectedDate ?? undefined, selectedServiceId ?? undefined)
+  const { data, isLoading, error } = useAvailableSlots(selectedDate ?? undefined, selectedServiceIds.length > 0 ? selectedServiceIds : undefined)
   const slots = data?.slots ?? []
 
   const handleDateSelect = (date: Date | undefined) => {
