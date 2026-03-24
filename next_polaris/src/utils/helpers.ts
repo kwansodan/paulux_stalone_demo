@@ -56,6 +56,15 @@ export function isTime24HoursInAdvance(date: Date, time: string): boolean {
   return hoursUntilBooking >= 24
 }
 
+export function timeToMinutes(time: string): number {
+  if (!time) return 0;
+  const [hours, minutes] = time.split(':').map(Number);
+  return (hours || 0) * 60 + (minutes || 0);
+}
 
-
-
+export function minutesToTime(minutes: number): string {
+  if (!minutes || minutes < 0) return '00:00';
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+}
