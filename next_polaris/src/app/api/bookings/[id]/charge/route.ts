@@ -51,7 +51,7 @@ export async function POST(
 
         if (totalPaid === 0) {
             // First payment: Calculate min deposit amount
-            const minDepositAmount = booking.minDepositPercent !== undefined
+            const minDepositAmount = booking.minDepositPercent != null
                 ? totalPrice * (booking.minDepositPercent / 100)
                 : booking.services.reduce((sum, s) => sum + (Number(s.priceAtBooking) * (s.service.minDepositPercent / 100)), 0);
 
