@@ -164,14 +164,23 @@ async function seed() {
           clientEmail: b.clientEmail,
           clientPhone: b.clientPhone,
 
-          serviceId: serviceBooked.id,
+          services: {
+            create: [
+              {
+                serviceId: serviceBooked.id,
+                priceAtBooking: serviceBooked.price,
+                durationAtBooking: serviceBooked.durationMinutes
+              }
+            ]
+          },
 
           bookingDate: b.bookingDate,
           bookingTime: b.bookingTime,
 
           status: BookingStatus.PENDING,
           paymentStatus: PaymentStatus.PENDING,
-        }
+        },
+        include: { services: true }
       })
     }))).filter((item): item is NonNullable<typeof item> => item !== null)
 
@@ -182,7 +191,7 @@ async function seed() {
         bookingId: b.id,
         provider: PaymentProvider.MANUAL,
         providerRef: `MANUAL-00${i + 1}`,
-        amount: b.serviceId ? (dbServices.find(s => s.id === b.serviceId)?.price || 0) : 0,
+        amount: b.services?.[0]?.priceAtBooking || 0,
         currency: "GHS",
         status: PaymentStatus.PAID,
         rawPayload: { note: "Seed payment" },
