@@ -44,20 +44,18 @@ jobs:
 
       - name: Deploy with Docker Compose
         run: |
-          ssh ubuntu@${{ secrets.OVH_HOST }} << 'EOF'
+          ssh -T ubuntu@${{ secrets.OVH_HOST }} << 'ENDSSH'
           set -e
           cd ~/polaris
           docker compose up -d --build
           docker image prune -f
           docker compose ps
-          EOF
-
-
+          ENDSSH
 
       - name: Health Check
         run: |
-          ssh ubuntu@${{ secrets.OVH_HOST }} << 'EOF'
+          ssh -T ubuntu@${{ secrets.OVH_HOST }} << 'ENDSSH'
           set -e
           sleep 15
           curl -fsSL https://polarisbeautylounge.com > /dev/null
-          EOF 
+          ENDSSH
