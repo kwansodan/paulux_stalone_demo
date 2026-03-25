@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { verifyTransaction } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/features/payment/server/payment.service';
-import { PaymentProvider } from '@generated/prisma/client';
+import { PaymentProvider, Prisma } from '@generated/prisma/client';
 
 export async function GET(
     req: NextRequest,
@@ -62,7 +62,11 @@ export async function GET(
             include: {
                 booking: {
                     include: {
-                        service: true,
+                        services: {
+                            include: {
+                                service: true
+                            }
+                        },
                     },
                 },
             },
@@ -72,7 +76,7 @@ export async function GET(
         if (payment && data.status === 'success' && payment.status !== 'PAID') {
             try {
                 // Use the shared service to update DB and Sync Calendar
-                const result = await paymentService.processSuccessfulPayment(reference, data);
+                const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue);
                 if (!result.success) {
                     console.error(`Service failed to process payment: ${result.message}`);
                     // We continue to return success: true because the *verification* with Paystack was successful,

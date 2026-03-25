@@ -334,7 +334,7 @@ export default function CreateBookingForm({
         {mutation.isError && (
           <p className="text-red-500 text-sm text-center">
             {isAxiosError(mutation.error)
-              ? mutation.error.response?.data?.message || mutation.error.message
+              ? (mutation.error as any).response?.data?.message || (mutation.error as any).message
               : "Failed to create booking"}
           </p>
         )}

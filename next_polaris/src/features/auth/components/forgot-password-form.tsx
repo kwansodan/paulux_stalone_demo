@@ -105,7 +105,7 @@ export function PasswordForgotForm() {
                   {forgotPasswordMutation.isError && (
                     <p className="text-red-500 text-sm text-center">
                       {isAxiosError(forgotPasswordMutation.error)
-                        ? forgotPasswordMutation.error.response?.data?.message || forgotPasswordMutation.error.message
+                        ? (forgotPasswordMutation.error as any).response?.data?.message || (forgotPasswordMutation.error as any).message
                         : "Submission failed. Please check your credentials."}
                     </p>
                   )}

@@ -1,7 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { Booking, BookingStatus, PaymentStatus, Prisma } from "@generated/prisma/client";
 import { generateBookingReference, timeToMinutes, minutesToTime } from "@/utils/helpers";
-import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment } from "../types";
+import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment, BookingWithService } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { serviceRepository } from "@/features/service/server/service.repository";
 
@@ -261,7 +261,7 @@ export class BookingRepository {
         bookingTime,
       },
       include: {
-        service: true,
+        services: { include: { service: true } },
         payments: true,
       },
     })
@@ -273,7 +273,7 @@ export class BookingRepository {
       where: { id },
       data: { status },
       include: {
-        service: true,
+        services: { include: { service: true } },
       },
     })
 
@@ -284,7 +284,7 @@ export class BookingRepository {
           booking = await prisma.booking.update({
             where: { id: booking.id },
             data: { googleEventId: eventId },
-            include: { service: true }
+            include: { services: { include: { service: true } } }
           });
         }
       } catch (error) {

@@ -16,7 +16,7 @@ import { CheckCircle2, Eye, EyeOff } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 
 
-export function ResetPasswordForm({ tokenId } : { tokenId: string }) {
+export function ResetPasswordForm({ tokenId }: { tokenId: string }) {
   const [step, setStep] = useState(1)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -141,7 +141,7 @@ export function ResetPasswordForm({ tokenId } : { tokenId: string }) {
                   {resetPasswordMutation.isError && (
                     <p className="text-red-500 text-sm text-center">
                       {isAxiosError(resetPasswordMutation.error)
-                        ? resetPasswordMutation.error.response?.data?.message || resetPasswordMutation.error.message
+                        ? (resetPasswordMutation.error as any).response?.data?.message || (resetPasswordMutation.error as any).message
                         : "Password reset failed. Please try again."}
                     </p>
                   )}

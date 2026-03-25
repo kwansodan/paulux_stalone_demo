@@ -265,7 +265,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         <div className="bg-red-50 border border-red-200 rounded p-3">
           <p className="text-sm text-red-600">
             {isAxiosError(createBookingMutation.error)
-              ? createBookingMutation.error.response?.data?.message || createBookingMutation.error.message
+              ? (createBookingMutation.error as any).response?.data?.message || (createBookingMutation.error as any).message
               : "Failed to create booking. Please try again"}
           </p>
         </div>

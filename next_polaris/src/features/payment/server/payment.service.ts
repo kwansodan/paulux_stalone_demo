@@ -216,7 +216,7 @@ export class PaymentService {
                 bookingId: payment.bookingId,
                 action: "REFUND_INITIATED",
                 newValue: { status: "REFUND_PENDING", reference: payment.providerRef },
-                metadata: { paymentId: payment.id, provider: payment.provider, paystackResponse: result as Prisma.InputJsonValue }
+                metadata: { paymentId: payment.id, provider: payment.provider, paystackResponse: result as unknown as Prisma.InputJsonValue }
             }
         });
 
