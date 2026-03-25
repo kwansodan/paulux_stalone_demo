@@ -3,6 +3,12 @@ import { Prisma } from "@generated/prisma/client";
 import { ServiceUpsertInput } from "../utils/validation";
 import { SerializedService } from "../types";
 
+// Helper to patch legacy database URLs
+const patchLegacyUrl = (url: string | null) => {
+  if (!url) return url;
+  return url.replace('polarisbeauty.biz', 'polarisbeautylounge.com');
+}
+
 export class ServiceRepository {
 
   async getAllServices(where: Prisma.ServiceWhereInput): Promise<SerializedService[]> {
@@ -16,18 +22,24 @@ export class ServiceRepository {
     return services.map(service => ({
       ...service,
       price: service.price.toString(),
-      imageUrl: service.imageUrl,
+      imageUrl: patchLegacyUrl(service.imageUrl),
       createdAt: service.createdAt.toISOString(),
       updatedAt: service.updatedAt.toISOString()
     }))
   }
 
   async findById(id: string) {
-    return prisma.service.findUnique({
+    const service = await prisma.service.findUnique({
       where: {
         id
       }
-    })
+    });
+
+    if (service) {
+      service.imageUrl = patchLegacyUrl(service.imageUrl);
+    }
+
+    return service;
   }
 
   async deleteById(id: string) {
@@ -100,11 +112,10 @@ export class ServiceRepository {
       })
     }
 
-
     const serializedService = {
       ...upsertedService,
       price: upsertedService.price.toString(),
-      imageUrl: upsertedService.imageUrl,
+      imageUrl: patchLegacyUrl(upsertedService.imageUrl),
       createdAt: upsertedService.createdAt.toISOString(),
       updatedAt: upsertedService.updatedAt.toISOString()
     }
