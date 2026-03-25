@@ -11,12 +11,12 @@ export function cn(...inputs: ClassValue[]) {
 
 
 export const getActivePath = (path: string, paths: string[], ignorePaths?: string[]) => {
-    const closestPath = closest(path, paths.concat(ignorePaths || []));
-    const index = paths.indexOf(closestPath);
-    
-    return { active: closestPath, activeIndex: index };
+  const closestPath = closest(path, paths.concat(ignorePaths || []));
+  const index = paths.indexOf(closestPath);
+
+  return { active: closestPath, activeIndex: index };
 }
 
-export function isAxiosError(error: unknown): error is AxiosError<any> {
+export function isAxiosError(error: unknown): error is AxiosError<unknown> {
   return typeof error === "object" && error !== null && "response" in error
 }

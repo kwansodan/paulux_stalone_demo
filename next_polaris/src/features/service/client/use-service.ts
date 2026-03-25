@@ -38,9 +38,9 @@ export function useDeleteService() {
       queryClient.invalidateQueries({
         queryKey: ["services"],
       })
-      
+
       console.log("DATA AFTER DELETING", data)
-      toast.success(data.data.message|| "Service deleted successfully")
+      toast.success(data.data.message || "Service deleted successfully")
     },
     onError: (error) => {
       console.error("Failed to delete service", error)
@@ -54,7 +54,7 @@ export function useCreateService() {
 
   return useMutation({
     mutationFn: createOrEditService,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["services"],
       })
@@ -72,7 +72,7 @@ export function useEditService() {
 
   return useMutation({
     mutationFn: createOrEditService,
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["services"],
       })
@@ -109,7 +109,7 @@ export function useUpdateStatus() {
 
       return { previousServices }
     },
-    onSuccess: async (data) => {
+    onSuccess: async () => {
       toast.success("Service status updated successfully", { id: "service-status" })
     },
     onError: (error, variables, context) => {

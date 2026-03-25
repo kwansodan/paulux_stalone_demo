@@ -26,12 +26,22 @@ export async function GET(
 
     const booking = await bookingRepository.findById(bookingId);
 
+    if (!booking) {
+      return NextResponse.json({
+        success: false,
+        message: "Booking not found"
+      }, { status: 404 })
+    }
+
     const bookingForResponse = {
       ...booking,
-      service: {
-        ...booking!.service,
-        price: booking!.service.price.toString()
-      }
+      services: booking.services?.map(s => ({
+        ...s,
+        service: {
+          ...s.service,
+          price: s.service.price ? s.service.price.toString() : "0"
+        }
+      })) || []
     }
 
     return NextResponse.json({

@@ -1,12 +1,14 @@
 import { prisma } from "@/lib/prisma"
 
+import { Prisma } from "@generated/prisma/client"
+
 export interface AuditLogDTO {
     action: string
     invoiceId?: string
     bookingId?: string
-    oldValue?: any
-    newValue?: any
-    metadata?: any
+    oldValue?: Prisma.InputJsonValue
+    newValue?: Prisma.InputJsonValue
+    metadata?: Prisma.InputJsonValue
 }
 
 export class AuditLogService {

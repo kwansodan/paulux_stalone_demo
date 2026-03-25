@@ -1,11 +1,11 @@
 "use client"
 
 import { Card, CardContent } from "@/components/ui/card"
-import { CircleX, Clock, MoreHorizontal, PencilLine, Timer } from "lucide-react"
+import { CircleX, MoreHorizontal, PencilLine, Timer } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ToggleSwitch } from "./toggle-switch"
 import { SerializedService } from "../types"
-import { formatDuration, formatDurationShort } from "../utils/helpers"
+import { formatDurationShort } from "../utils/helpers"
 import { useDeleteService, useUpdateStatus } from "../client/use-service"
 import { useState } from "react"
 import Modal from "@/components/modal"

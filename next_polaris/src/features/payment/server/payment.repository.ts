@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma"
-import { PaymentProvider, PaymentStatus } from "@generated/prisma/client"
+import { PaymentProvider, PaymentStatus, Prisma } from "@generated/prisma/client"
 import { PaymentMetrics } from "../types"
 import { BookingStatus } from "@/features/booking/types"
 
@@ -11,13 +11,13 @@ type PaymentDTO = {
   amount: number
   currency: "GHS"
   status: PaymentStatus
-  rawPayload?: any
+  rawPayload?: unknown
   reason?: string | null
 }
 
 export class PaymentRepository {
 
-  getAll(where: any) {
+  getAll(where: Prisma.PaymentWhereInput) {
     return prisma.payment.findMany({
       where,
       include: {
@@ -47,7 +47,7 @@ export class PaymentRepository {
         where: { id: dto.id },
         data: {
           status: dto.status,
-          rawPayload: dto.rawPayload,
+          rawPayload: dto.rawPayload as Prisma.InputJsonValue | undefined,
           amount: dto.amount,
           currency: dto.currency,
         },
@@ -61,7 +61,7 @@ export class PaymentRepository {
           amount: dto.amount,
           currency: dto.currency,
           status: dto.status,
-          rawPayload: dto.rawPayload,
+          rawPayload: dto.rawPayload as Prisma.InputJsonValue | undefined,
           reason: dto.reason ?? undefined,
         },
       })
