@@ -73,19 +73,29 @@ export async function GET(
         });
 
         // Update payment status if it differs from Paystack
-        if (payment && data.status === 'success' && payment.status !== 'PAID') {
+        if (data.status === 'success') {
             try {
-                // Use the shared service to update DB and Sync Calendar
-                const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue);
-                if (!result.success) {
-                    console.error(`Service failed to process payment: ${result.message}`);
-                    // We continue to return success: true because the *verification* with Paystack was successful,
-                    // even if our internal update had a hiccup (though ideally it shouldn't).
-                    // However, we should probably reflect the *current* state in the response data.
+                if (payment && payment.status !== 'PAID') {
+                    const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue);
+                    if (!result.success) {
+                        console.error(`Service failed to process payment: ${result.message}`);
+                    }
+                } else if (!payment) {
+                    const invoice = await prisma.invoice.findUnique({
+                        where: { invoiceNumber: reference }
+                    });
+                    if (invoice && invoice.status !== 'PAID') {
+                        const actualAmount = data.amount ? data.amount / 100 : undefined;
+                        await paymentService.confirmInvoicePayment(
+                            invoice.id,
+                            reference,
+                            data as Prisma.InputJsonValue,
+                            actualAmount
+                        );
+                    }
                 }
             } catch (error) {
                 console.error('Error processing payment in verify endpoint:', error);
-                // Fallback? No, just log. The user might refresh and try again.
             }
         }
 

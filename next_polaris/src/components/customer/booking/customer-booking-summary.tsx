@@ -46,7 +46,7 @@ export default function BookingSummary({ booking }: Props) {
 
           if (response.ok && data.success) {
             toast.success("Payment verified successfully!");
-            // Refresh the page to show updated status
+            router.replace(`/customer/booking/summary/${booking.id}`);
             router.refresh();
           } else {
             // Only show error if it's a genuine failure, not just "still pending"
