@@ -63,7 +63,7 @@ export default function BlockedDateForm() {
         {mutation.isError && (
           <p className="text-red-500 text-sm">
             {isAxiosError(mutation.error)
-              ? mutation.error.response?.data?.message
+              ? (mutation.error as any).response?.data?.message
               : "Failed to block date"}
           </p>
         )}

@@ -25,13 +25,19 @@ async function debugPrisma() {
                 clientName: 'Debug Client',
                 clientEmail: 'debug@example.com',
                 clientPhone: '0000000000',
-                serviceId: service.id,
+                services: {
+                    create: [{
+                        serviceId: service.id,
+                        durationAtBooking: service.durationMinutes,
+                        priceAtBooking: service.price
+                    }]
+                },
                 bookingDate: '2025-01-01',
                 bookingTime: '00:00',
                 status: BookingStatus.PENDING,
                 paymentStatus: PaymentStatus.PENDING
             },
-            include: { service: true }
+            include: { services: { include: { service: true } } }
         });
         console.log('Booking created:', booking.id);
 

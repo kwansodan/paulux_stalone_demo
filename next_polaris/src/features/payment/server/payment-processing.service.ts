@@ -66,7 +66,7 @@ export class PaymentProcessingService {
     /**
      * Handles retries and gateway failover
      */
-    private async initializeWithResilience(gateway: PaymentProvider, details: Record<string, unknown>) {
+    private async initializeWithResilience(gateway: PaymentProvider, details: any) {
         const retryDelays = [0, 2000, 5000]
         let lastError: unknown = null
 
@@ -83,7 +83,7 @@ export class PaymentProcessingService {
             lastError = result.message
 
             // If it's a 400 Bad Request (like invalid amount or duplicate ref), don't retry same params
-            if (lastError && lastError.toLowerCase().includes('status code 400')) {
+            if (lastError && (lastError as string).toLowerCase().includes('status code 400')) {
                 console.warn(`Stopping retries for ${gateway} due to 400 Bad Request`);
                 break;
             }
@@ -157,7 +157,7 @@ export class PaymentProcessingService {
                     gateway
                 )
 
-                paymentUrl = providerResponse.data.authorization_url
+                paymentUrl = (providerResponse as any).data.authorization_url
             } else {
                 throw new Error(`Unsupported payment provider: ${gateway}`)
             }

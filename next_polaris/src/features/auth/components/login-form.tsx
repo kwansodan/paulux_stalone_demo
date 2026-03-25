@@ -107,7 +107,7 @@ export function LoginForm() {
         {loginMutation.isError && (
           <p className="text-red-500 text-sm text-center">
             {isAxiosError(loginMutation.error)
-              ? loginMutation.error.response?.data?.message || loginMutation.error.message
+              ? (loginMutation.error as any).response?.data?.message || (loginMutation.error as any).message
               : "Login failed. Please check your credentials."}
           </p>
         )}
