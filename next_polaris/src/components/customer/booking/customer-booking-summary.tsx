@@ -6,9 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
-import { useCancelBooking } from "@/features/booking/client/hooks/use-booking"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
-import Modal from "@/components/modal"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
@@ -19,8 +17,6 @@ type Props = {
 export default function BookingSummary({ booking }: Props) {
   const router = useRouter()
   const summaryRef = useRef<HTMLDivElement>(null)
-  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false)
-  const { mutate: cancelBooking, isPending } = useCancelBooking()
   // New state for verification
   const [isVerifying, setIsVerifying] = useState(false);
   const searchParams = useSearchParams();
@@ -100,22 +96,6 @@ export default function BookingSummary({ booking }: Props) {
     }
   }
 
-  const handleCancelBooking = () => {
-    if (!booking.id) return
-
-    setIsCancelModalOpen(true)
-
-  }
-
-  const handleCancelSubmit = () => {
-    cancelBooking(booking.id, {
-      onSuccess: () => {
-        toast.success("Booking cancelled successfully")
-        router.refresh()
-        setIsCancelModalOpen(false)
-      }
-    })
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -282,33 +262,6 @@ export default function BookingSummary({ booking }: Props) {
       {!fromPayment && (
         <div className="mt-6 space-y-4">
           <div className="rounded-3xl bg-pink-50 px-5 py-6 space-y-4">
-            <div>
-              <h2 className="text-lg font-semibold text-gray-900">Manage booking</h2>
-              <div className="mt-3 border-t border-fuchsia-100" />
-            </div>
-
-            {booking.status !== "CANCELLED" && (
-              <Button
-                className="w-full h-12 rounded-full bg-fuchsia-600 hover:bg-fuchsia-700 text-white text-sm font-medium flex items-center justify-center gap-2"
-                onClick={() => router.push(`/customer/booking/reschedule/${booking.id}`)}
-                disabled={isPending}
-              >
-                <Clock className="h-4 w-4" />
-                Reschedule booking
-              </Button>
-            )}
-
-            {booking.status !== "CANCELLED" && (
-              <Button
-                variant="outline"
-                onClick={handleCancelBooking}
-                disabled={isPending}
-                className="w-full h-12 rounded-full border-red-500 text-red-600 hover:bg-red-50 text-sm font-medium"
-              >
-                {isPending ? "Cancelling..." : "Cancel booking"}
-              </Button>
-            )}
-
             <p className="text-xs text-gray-600">
               <span className="font-medium">Cancellation policy:</span> Free cancellation up to 24
               hours before your appointment. Late cancellations may be subject to fees.
@@ -514,41 +467,6 @@ export default function BookingSummary({ booking }: Props) {
         </div>
       )}
 
-      <Modal
-        open={isCancelModalOpen}
-        onClose={() => setIsCancelModalOpen(false)}
-        title="Cancel Booking?"
-        subtitle={
-          hasRefundablePayment()
-            ? "Your payment will be refunded. This may take up to 10 business days."
-            : "Are you sure you want to cancel this booking?"
-        }
-        childrenClassName="max-h-[224px] "
-        showSeparator={false}
-      >
-        {hasRefundablePayment() && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
-            <p className="text-sm text-blue-800">
-              <strong>Refund Information:</strong>
-              <br />
-              A full refund will be automatically initiated to your original payment method. Please
-              allow up to 10 business days for the refund to appear in your account.
-            </p>
-          </div>
-        )}
-        <div className="flex justify-end gap-3 pt-4">
-          <Button
-            className="bg-[#D10505] hover:bg-[#D10505]/90"
-            type="button"
-            onClick={() => setIsCancelModalOpen(false)}
-          >
-            Close
-          </Button>
-          <Button variant="outline" onClick={() => handleCancelSubmit()} disabled={isPending}>
-            {isPending ? "Cancelling..." : "Cancel Booking"}
-          </Button>
-        </div>
-      </Modal>
     </>
   )
 }
