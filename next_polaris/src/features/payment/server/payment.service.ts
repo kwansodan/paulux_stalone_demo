@@ -3,6 +3,7 @@ import { createCalendarEvent } from "@/lib/google-calendar";
 import { calculatePaymentStatus } from "../utils/helpers";
 import { PaymentProvider, Prisma } from "@generated/prisma/client";
 import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack";
+import { inngest } from "@/lib/inngest";
 
 export class PaymentService {
     /**
@@ -90,6 +91,16 @@ export class PaymentService {
             }
         }
 
+        // 5. Emit payment received event for notifications
+        await inngest.send({
+            name: "app/payment.payment-received",
+            data: {
+                bookingId: booking.id,
+                amountPaid: Number(payment.amount),
+                provider: provider,
+            },
+        });
+
         return { success: true, paymentId: payment.id, bookingId: booking.id };
     }
 
@@ -154,6 +165,16 @@ export class PaymentService {
                 console.error('Failed to create calendar event:', error);
             }
         }
+
+        // 5. Emit payment received event for notifications
+        await inngest.send({
+            name: "app/payment.payment-received",
+            data: {
+                bookingId: booking.id,
+                amountPaid: Number(payment.amount),
+                provider: payment.provider,
+            },
+        });
 
         return { success: true, invoice: updatedInvoice, booking, payment };
     }

@@ -59,15 +59,6 @@ export async function POST(req: NextRequest) {
                     if (invoice) {
                         console.log(`Found invoice ${invoice.invoiceNumber}, processing via unified flow`);
                         await paymentService.confirmInvoicePayment(invoice.id, reference, data);
-                        // Notify all admins
-                        await inngest.send({
-                            name: "app/payment.payment-received",
-                            data: {
-                                bookingId: invoice.bookingId,
-                                amountPaid: amount / 100, // Paystack amounts are in kobo
-                                provider: PaymentProvider.PRIMARY_PAYSTACK,
-                            },
-                        });
                     } else {
                         // Fallback to legacy flow
                         const result = await paymentService.processSuccessfulPayment(reference, data);

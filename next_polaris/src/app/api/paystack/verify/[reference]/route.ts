@@ -76,7 +76,7 @@ export async function GET(
         if (data.status === 'success') {
             try {
                 if (payment && payment.status !== 'PAID') {
-                    const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue);
+                    const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue, provider);
                     if (!result.success) {
                         console.error(`Service failed to process payment: ${result.message}`);
                     }
