@@ -22,6 +22,7 @@ export default function BookingSummary({ booking }: Props) {
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
   const fromPayment = searchParams.get('from') === 'payment';
+  const verificationAttemptedRef = useRef<string | null>(null);
 
   // const price = booking.service ? Number(booking.service.price) : 0
   // const depositAmount = price * ((booking.minDepositPercent || booking.service!.minDepositPercent || 0) / 100)
@@ -31,8 +32,9 @@ export default function BookingSummary({ booking }: Props) {
   const bookingPaymentStatus = calculatePaymentStatus(booking)
   // Verify payment on mount if reference exists and status is pending
   useEffect(() => {
-    if (reference && bookingPaymentStatus === 'PENDING' && !isVerifying) {
+    if (reference && bookingPaymentStatus === 'PENDING' && !isVerifying && verificationAttemptedRef.current !== reference) {
       const verifyPayment = async () => {
+        verificationAttemptedRef.current = reference;
         setIsVerifying(true);
         try {
           // Call our verification endpoint
@@ -48,9 +50,13 @@ export default function BookingSummary({ booking }: Props) {
             // Only show error if it's a genuine failure, not just "still pending"
             // But verify endpoint usually returns success=false if not paid
             console.warn("Verification returned unsuccessful", data);
+            // Reset if it failed so we can retry? 
+            // Actually, if it failed, we might want to try again later if the user stays.
+            // But for now, let's just keep it to one attempt per page load/reference to avoid spam.
           }
         } catch (error) {
           console.error("Verification failed", error);
+          verificationAttemptedRef.current = null; // Allow retry on error
         } finally {
           setIsVerifying(false);
         }
@@ -262,10 +268,7 @@ export default function BookingSummary({ booking }: Props) {
       {!fromPayment && (
         <div className="mt-6 space-y-4">
           <div className="rounded-3xl bg-pink-50 px-5 py-6 space-y-4">
-            <p className="text-xs text-gray-600">
-              <span className="font-medium">Cancellation policy:</span> Free cancellation up to 24
-              hours before your appointment. Late cancellations may be subject to fees.
-            </p>
+
           </div>
 
           <div className="flex items-center justify-center gap-3 text-xs text-gray-500">
@@ -377,14 +380,6 @@ export default function BookingSummary({ booking }: Props) {
                 </div>
 
                 <div>
-                  <h3 className="font-semibold mb-2">3. Cancellations</h3>
-                  <ul className="list-disc pl-5 space-y-1 text-sm">
-                    <li>Cancellations are allowed up to 24 hours before your appointment.</li>
-                    <li>Late cancellations (within 24 hours) may not be eligible for refunds.</li>
-                  </ul>
-                </div>
-
-                <div>
                   <h3 className="font-semibold mb-2">4. No-Show Policy</h3>
                   <p className="text-sm">
                     Failure to attend your appointment without prior cancellation may result in forfeiture of payment.
@@ -433,7 +428,6 @@ export default function BookingSummary({ booking }: Props) {
                   <h3 className="font-semibold mb-2">Non-Refundable Situations</h3>
                   <p className="text-sm mb-2">Refunds will generally not be issued if:</p>
                   <ul className="list-disc pl-5 space-y-1 text-sm">
-                    <li>You cancel within 24 hours of your appointment.</li>
                     <li>You fail to attend your appointment (no-show).</li>
                   </ul>
                 </div>
