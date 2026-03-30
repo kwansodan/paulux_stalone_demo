@@ -6,6 +6,7 @@ import { PaymentProvider, PaymentStatus } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
+import { inngest } from "@/lib/inngest";
 
 export async function POST(
     request: NextRequest,
@@ -89,6 +90,16 @@ export async function POST(
                 console.error('Failed to create calendar event:', error);
             }
         }
+
+        // Send payment received event for notifications
+        await inngest.send({
+            name: "app/payment.payment-received",
+            data: {
+                bookingId: booking.id,
+                amountPaid: remainingBalance,
+                provider: PaymentProvider.MANUAL,
+            },
+        });
 
         return NextResponse.json({
             success: true,
