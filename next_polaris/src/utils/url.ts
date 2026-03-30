@@ -1,9 +1,9 @@
 export const getBaseUrl = () => {
-
     const environment = process.env.NODE_ENV;
 
-    const baseUrl = environment === "development" ? "http://localhost:3000" : `https://${process.env.NEXT_APP_URL}`
+    if (environment === "development") {
+        return "http://localhost:3000";
+    }
 
-
-    return baseUrl;
+    return process.env.NEXT_PUBLIC_APP_URL || process.env.BASE_URL || "";
 }
