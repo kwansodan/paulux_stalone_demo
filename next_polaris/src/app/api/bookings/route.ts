@@ -87,6 +87,12 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedBody = BookingSchema.parse(body)
 
+    // Authorization check for updates
+    if (validatedBody.id) {
+      const auth = await requireRoleApi(['ADMIN'])
+      if (!auth.ok) return auth.response
+    }
+
     if (validatedBody.createdById) {
       const existingUser = await authRepository.findUserById(validatedBody.createdById)
       if (!existingUser || existingUser.role !== UserRole.ADMIN) {
