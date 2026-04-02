@@ -1,6 +1,5 @@
 import { requireRole } from '@/app/_auth/require-role'
-import ServicesHeader from '@/features/service/components/service-header'
-import ServiceList from '@/features/service/components/service-list'
+import ServicesClientShell from '@/features/service/components/services-client-shell'
 import { serviceRepository } from '@/features/service/server/service.repository'
 import { UserRole } from '@generated/prisma/client'
 import React from 'react'
@@ -14,9 +13,7 @@ export default async function ServicesPage() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full">
 
-      <ServicesHeader />
-
-      <ServiceList services={services} />
+      <ServicesClientShell initialServices={services} />
 
     </div>
   )

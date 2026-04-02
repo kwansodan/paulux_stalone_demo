@@ -4,7 +4,7 @@ import { SerializedService } from '../types'
 import ServiceCard from './service-card'
 import { getServices } from '../client/use-service'
 
-const ServiceList = ({ services }: { services: SerializedService[] }) => {
+const ServiceList = ({ services, searchQuery }: { services: SerializedService[], searchQuery?: string }) => {
   const { data, error, isError, isLoading } = useQuery({
     queryKey: ["services"],
     queryFn: getServices,
@@ -30,18 +30,25 @@ const ServiceList = ({ services }: { services: SerializedService[] }) => {
     )
   }
 
-  if (data.length === 0) {
+  const filteredServices = data.filter(service =>
+    service.name.toLowerCase().includes(searchQuery?.toLowerCase() || '') ||
+    (service.description && service.description.toLowerCase().includes(searchQuery?.toLowerCase() || ''))
+  )
+
+  if (filteredServices.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <p className="text-gray-500 text-lg font-semibold">No services found</p>
-        <p className="text-gray-400 text-sm">Create your first service to get started</p>
+        <p className="text-gray-400 text-sm">
+          {searchQuery ? "Try a different search term" : "Create your first service to get started"}
+        </p>
       </div>
     )
   }
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      {data.map((s) => (
+      {filteredServices.map((s) => (
         <ServiceCard key={s.id} service={s} />
       ))}
     </div>

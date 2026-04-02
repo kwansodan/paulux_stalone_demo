@@ -54,6 +54,8 @@ export function formatTime(time24: string) {
 
 
 export function isBookingOwner(booking: BookingWithService, user: User): boolean {
+  if (user.role === 'ADMIN' || user.role === 'STAFF') return true
+
   if (!booking || !booking.createdById) return false
 
   if (booking.createdById !== user.id) return false
