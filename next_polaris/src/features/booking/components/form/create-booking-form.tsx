@@ -12,7 +12,7 @@ import { Form, FormField } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { getMinBookingDate } from "../../utils/helpers"
 
 
@@ -47,6 +47,10 @@ export default function CreateBookingForm({
   const minDepositPercent = form.watch("minDepositPercent")
   const serviceIds = form.watch("serviceIds") || []
   const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
+  const [searchTerm, setSearchTerm] = useState('')
+  const filteredServices = useMemo(() => {
+    return services.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+  }, [services, searchTerm])
 
 
 
@@ -154,32 +158,46 @@ export default function CreateBookingForm({
                 <Label className="text-sm font-normal text-foreground">
                   Services <span className="text-red-500">*</span>
                 </Label>
-                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
-                  {services.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        const current = field.value || [];
-                        const next = current.includes(s.id)
-                          ? current.filter((v) => v !== s.id)
-                          : [...current, s.id];
-                        field.onChange(next);
-                      }}
-                    >
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
-                        {field.value?.includes(s.id) && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
+                <div className="space-y-2">
+                  <Input
+                    placeholder="Search services..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="h-10 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+                  />
+                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                    {filteredServices.length > 0 ? (
+                      filteredServices.map((s) => (
+                        <div
+                          key={s.id}
+                          className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            const current = field.value || [];
+                            const next = current.includes(s.id)
+                              ? current.filter((v) => v !== s.id)
+                              : [...current, s.id];
+                            field.onChange(next);
+                          }}
+                        >
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
+                            {field.value?.includes(s.id) && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 flex justify-between items-center text-sm">
+                            <span>{s.name}</span>
+                            <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-gray-500">
+                        No services found
                       </div>
-                      <div className="flex-1 flex justify-between items-center text-sm">
-                        <span>{s.name}</span>
-                        <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ))}
+                    )}
+                  </div>
                 </div>
                 {form.formState.errors.serviceIds && (
                   <p className="text-red-500 text-sm mt-1">
