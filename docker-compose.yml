@@ -98,27 +98,11 @@ services:
     networks:
       - polaris_network
 
-  caddy:
-    image: caddy:2.8
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    networks:
-      - polaris_network
 
 volumes:
   postgres_data:
   app_cache:
   minio_data:
-  caddy_data:
-  caddy_config:
 
 networks:
   polaris_network:
