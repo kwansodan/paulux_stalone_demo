@@ -7,15 +7,15 @@ import { BookingStatus, PaymentProvider, PaymentStatus, UserRole } from "@genera
 
 const admins = [
   {
-    username: "Test Admin",
-    email: "abuishmaelyusif204@gmail.com",
+    username: "Polaris Admin",
+    email: "polarisbeautylounge@gmail.com",
     password: "AdminPass123!",
     role: UserRole.ADMIN,
   },
   {
-    username: "Text Admin 01",
-    email: "jojoyawson573@gmail.com",
-    password: "SecureAdmin456!",
+    username: "Frimpong",
+    email: "Frimpongbk97@gmail.com",
+    password: "AdminPass123!",
     role: UserRole.ADMIN,
   },
 ];
@@ -75,7 +75,7 @@ const bookings = [
 ]
 
 const businessHours = [
-  { dayOfWeek: 0, startTime: "", endTime: "", isOpen: false }, // Sunday
+  { dayOfWeek: 0, startTime: "09:00", endTime: "17:00", isOpen: false }, // Sunday
   { dayOfWeek: 1, startTime: "09:00", endTime: "17:00" }, // Monday
   { dayOfWeek: 2, startTime: "09:00", endTime: "17:00" }, // Tuesday
   { dayOfWeek: 3, startTime: "09:00", endTime: "17:00" }, // Wednesday
