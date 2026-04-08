@@ -5,7 +5,7 @@ import { generateSessionToken } from "@/utils/crypto"
 import { comparePassword } from "@/utils/helpers"
 import { type NextRequest, NextResponse } from "next/server"
 import { authRepository } from "@/features/auth/server/auth.repository"
-import { setSessionCookie } from "@/features/auth/utils/cookie"
+import { SESSION_COOKIE_NAME } from "@/constants"
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,18 +27,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
     }
 
-
     const validPassword = await comparePassword(validatedData.password, user.passwordHash);
-    // Demo password check
     if (!validPassword) {
       return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
     }
 
     const sessionToken = generateSessionToken();
     const session = await authRepository.createSession(sessionToken, user.id)
-    await setSessionCookie(sessionToken, session.expiresAt)
 
-    return NextResponse.json({ success: true, data: { user }, message: "Logged In Successfully." }, { status: 200 })
+    const response = NextResponse.json({ success: true, data: { user }, message: "Logged In Successfully." }, { status: 200 })
+
+    response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      expires: session.expiresAt,
+    })
+
+    return response
 
   } catch (error) {
     console.error("Login error:", error)
