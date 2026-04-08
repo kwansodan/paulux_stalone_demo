@@ -11,14 +11,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
     ports:
-      - "5433:5432"
+      - "5432:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - polaris_dev_network
+      - polaris_network
 
   # Next.js Application
   app:
@@ -66,12 +66,12 @@ services:
       - SECONDARY_PAYSTACK_SECRET_KEY=${SECONDARY_PAYSTACK_SECRET_KEY}
       - SECURE_COOKIES=${SECURE_COOKIES:-true}
     ports:
-      - "3001:3000"
+      - "3000:3000"
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - polaris_dev_network
+      - polaris_network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
@@ -83,11 +83,11 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9003}
-    command: server /data --console-address ":9003"
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+    command: server /data --console-address ":9001"
     ports:
-      - "9006:9000"
-      - "9003:9003"
+      - "9005:9000"
+      - "9001:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -96,13 +96,46 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - polaris_dev_network
+      - polaris_network
+
+  caddy:
+    image: caddy:2.8
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+    networks:
+      - polaris_network
+
+  # Portainer - Container Management UI
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    ports:
+      - "9443:9443"
+      - "8000:8000"
+    networks:
+      - polaris_network
 
 volumes:
   postgres_data:
   app_cache:
   minio_data:
+  caddy_data:
+  caddy_config:
+  portainer_data:
 
 networks:
-  polaris_dev_network:
+  polaris_network:
     driver: bridge
