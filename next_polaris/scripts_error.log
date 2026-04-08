@@ -1,0 +1,34 @@
+Error seeding admins: PrismaClientKnownRequestError: 
+Invalid `prisma.user.upsert()` invocation in
+/home/joojo/Desktop/polaris/next_polaris/scripts/add-admins.ts:25:31
+
+  22 try {
+  23     for (const admin of newAdmins) {
+  24         const passwordHash = await hashPassword(admin.password);
+→ 25         await prisma.user.upsert(
+Can't reach database server at db
+    at Vr.handleRequestError (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)
+    at Vr.handleAndLogRequestError (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)
+    at Vr.request (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async a (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:805:24)
+    at async seedAdmins (/home/joojo/Desktop/polaris/next_polaris/scripts/add-admins.ts:25:13) {
+  code: 'P1001',
+  meta: {
+    modelName: 'User',
+    driverAdapterError: DriverAdapterError: DatabaseNotReachable
+        at PrismaPgAdapter.onError (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/adapter-pg/dist/index.js:687:11)
+        at PrismaPgAdapter.performIO (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/adapter-pg/dist/index.js:682:12)
+        at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+        at async PrismaPgAdapter.queryRaw (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/adapter-pg/dist/index.js:602:30)
+        at async e.interpretNode (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:182:26)
+        at async e.interpretNode (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:209:41)
+        at async e.interpretNode (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:268:41)
+        at async e.run (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client-engine-runtime/src/interpreter/query-interpreter.ts:93:23)
+        at async e.execute (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/core/engines/client/LocalExecutor.ts:81:12)
+        at async Dt.request (/home/joojo/Desktop/polaris/next_polaris/node_modules/@prisma/client/src/runtime/core/engines/client/ClientEngine.ts:461:22) {
+      cause: [Object]
+    }
+  },
+  clientVersion: '7.3.0'
+}
