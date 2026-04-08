@@ -11,7 +11,7 @@ export async function setSessionCookie(sessionToken: string, expiresAt: Date) {
         attributes: {
             httpOnly: true,
             sameSite: "lax" as const,
-            secure: process.env.NODE_ENV === "production",
+            secure: process.env.SECURE_COOKIES !== "false",
             path: "/",
             expires: expiresAt,
         }
@@ -30,7 +30,7 @@ export const deleteSessionCookie = async () => {
         attributes: {
             httpOnly: true,
             sameSite: "lax" as const,
-            secure: process.env.NODE_ENV === "production",
+            secure: process.env.SECURE_COOKIES !== "false",
             path: "/",
             maxAge: 0,
         },
