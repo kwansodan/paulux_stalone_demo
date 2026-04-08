@@ -12,12 +12,20 @@ export const isAuthenticated = cache(async () => {
 
   const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value ?? null
 
+  console.log('[AUTH] Cookie check - sessionToken present:', !!sessionToken)
+  console.log('[AUTH] All cookies:', cookieStore.getAll().map(c => c.name))
+
   if (!sessionToken) {
+    console.log('[AUTH] No session token found, returning null user')
     return {
       user: null,
       session: null
     }
   }
 
-  return authRepository.validateSession(sessionToken)
+  console.log('[AUTH] Validating session token...')
+  const result = await authRepository.validateSession(sessionToken)
+  console.log('[AUTH] Validation result - user found:', !!result.user)
+
+  return result
 })
