@@ -113,28 +113,12 @@ services:
     networks:
       - polaris_network
 
-  # Portainer - Container Management UI
-  portainer:
-    image: portainer/portainer-ce:latest
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    ports:
-      - "9443:9443"
-      - "8000:8000"
-    networks:
-      - polaris_network
-
 volumes:
   postgres_data:
   app_cache:
   minio_data:
   caddy_data:
   caddy_config:
-  portainer_data:
 
 networks:
   polaris_network:
