@@ -21,7 +21,10 @@ export default function BusinessHourCard({
   const updateStatus = useUpdateStatus()
   const update = useEditBusinessHour()
 
+  const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/
+
   const commit = debounce((payload: { startTime: string; endTime: string }) => {
+    if (!timeRegex.test(payload.startTime) || !timeRegex.test(payload.endTime)) return
     update.mutate({
       dayOfWeek: hour.dayOfWeek,
       ...payload
