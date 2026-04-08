@@ -48,6 +48,9 @@ ENV NEXT_TELEMETRY_DISABLED 1
 # Fix for Turbopack TLS issues with Google Fonts
 ENV NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1
 
+# Increase memory limit for Next.js build
+ENV NODE_OPTIONS="--max-old-space-size=2048"
+
 # Generate Prisma client and build the application
 RUN npx prisma generate
 RUN npm run build
