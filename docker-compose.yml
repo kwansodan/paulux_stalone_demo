@@ -2,7 +2,6 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: polaris_db
     restart: unless-stopped
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -12,14 +11,14 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      - "5433:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 10s
       timeout: 5s
       retries: 5
     networks:
-      - polaris_network
+      - polaris_dev_network
 
   # Next.js Application
   app:
@@ -32,7 +31,6 @@ services:
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
         - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
         - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
-    container_name: polaris_app
     restart: unless-stopped
     environment:
       - DATABASE_URL=${DATABASE_URL}
@@ -63,13 +61,15 @@ services:
       - INNGEST_DEV=${INNGEST_DEV}
       - ARKESEL_API_KEY=${ARKESEL_API_KEY}
       - ARKESAL_BASE_URL=${ARKESAL_BASE_URL}
+      - PRIMARY_PAYSTACK_SECRET_KEY=${PRIMARY_PAYSTACK_SECRET_KEY}
+      - SECONDARY_PAYSTACK_SECRET_KEY=${SECONDARY_PAYSTACK_SECRET_KEY}
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - polaris_network
+      - polaris_dev_network
     volumes:
       - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
@@ -77,16 +77,15 @@ services:
   # MinIO Object Storage (S3-compatible)
   minio:
     image: minio/minio:latest
-    container_name: polaris_minio
     restart: unless-stopped
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
-    command: server /data --console-address ":9001"
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9003}
+    command: server /data --console-address ":9003"
     ports:
-      - "9005:9000"
-      - "9001:9001"
+      - "9006:9000"
+      - "9003:9003"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -95,49 +94,13 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - polaris_network
-
-  caddy:
-    image: caddy:2.8
-    container_name: polaris_caddy
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-      - caddy_data:/data
-      - caddy_config:/config
-    depends_on:
-      - app
-    networks:
-      - polaris_network
-
-  # Portainer - Container Management UI
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: polaris_portainer
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    ports:
-      - "9443:9443"
-      - "8000:8000"
-    networks:
-      - polaris_network
+      - polaris_dev_network
 
 volumes:
   postgres_data:
   app_cache:
   minio_data:
-  caddy_data:
-  caddy_config:
-  portainer_data:
-
 
 networks:
-  polaris_network:
+  polaris_dev_network:
     driver: bridge
