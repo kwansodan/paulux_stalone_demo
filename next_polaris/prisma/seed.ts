@@ -18,6 +18,18 @@ const admins = [
     password: "AdminPass123!",
     role: UserRole.ADMIN,
   },
+  {
+    username: "Support",
+    email: "support@polarisbeautylounge.com",
+    password: "AdminPass123!",
+    role: UserRole.ADMIN,
+  },
+  {
+    username: "Procurement",
+    email: "procurement@service4gh.com",
+    password: "AdminPass123!",
+    role: UserRole.ADMIN,
+  },
 ];
 
 const services = [
