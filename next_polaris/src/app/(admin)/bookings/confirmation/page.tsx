@@ -27,6 +27,8 @@ function ConfirmationContent() {
                 setStatus("success")
                 setMessage("Payment confirmed successfully.")
                 queryClient.invalidateQueries({ queryKey: ["bookings"] })
+                queryClient.invalidateQueries({ queryKey: ["reports-bookings"] })
+                queryClient.invalidateQueries({ queryKey: ["booking-metrics"] })
             })
             .catch((err) => {
                 // Webhook may have already handled it — treat as success

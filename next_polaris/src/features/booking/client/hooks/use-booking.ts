@@ -273,18 +273,11 @@ export function useMarkAsPaid() {
       toast.loading("Marking as paid...", { id: "mark-as-paid" })
     },
     onSuccess: (_data: any, variables: string) => {
-      queryClient.invalidateQueries({
-        queryKey: ["slots"],
-      })
-
-      queryClient.invalidateQueries({
-        queryKey: ["bookings"],
-      })
-
-      queryClient.invalidateQueries({
-        queryKey: ["booking", variables],
-      })
-
+      queryClient.invalidateQueries({ queryKey: ["slots"] })
+      queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["reports-bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["booking-metrics"] })
+      queryClient.invalidateQueries({ queryKey: ["booking", variables] })
       toast.success("Booking marked as paid successfully", { id: "mark-as-paid" })
     },
     onError: (error: any) => {
