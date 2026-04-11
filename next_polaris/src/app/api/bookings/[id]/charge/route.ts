@@ -49,7 +49,26 @@ export async function POST(
             );
         }
 
-        if (totalPaid === 0) {
+        // Admin can override the charge amount (must be > 0 and <= remaining balance)
+        const body = await request.json().catch(() => ({}));
+        const customAmount = body?.amount ? Number(body.amount) : null;
+
+        if (customAmount !== null) {
+            if (isNaN(customAmount) || customAmount <= 0) {
+                return NextResponse.json(
+                    { success: false, message: "Amount must be greater than 0" },
+                    { status: 400 }
+                );
+            }
+            if (customAmount > remainingBalance) {
+                return NextResponse.json(
+                    { success: false, message: `Amount cannot exceed remaining balance of GHS ${remainingBalance.toFixed(2)}` },
+                    { status: 400 }
+                );
+            }
+            amountToCharge = customAmount;
+            transactionType = totalPaid > 0 ? 'subsequent' : 'initial';
+        } else if (totalPaid === 0) {
             // First payment: Calculate min deposit amount
             const minDepositAmount = booking.minDepositPercent != null
                 ? totalPrice * (booking.minDepositPercent / 100)

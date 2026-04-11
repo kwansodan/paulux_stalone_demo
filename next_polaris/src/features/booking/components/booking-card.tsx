@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard } from "lucide-react"
 import {
   DropdownMenu,
@@ -12,6 +13,7 @@ import { formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
+import ChargeCustomerModal from "./form/charge-customer-modal"
 
 type BookingCardProps = {
   booking: BookingWithService
@@ -21,6 +23,7 @@ type BookingCardProps = {
 }
 
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
+  const [chargeModalOpen, setChargeModalOpen] = useState(false)
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
@@ -83,7 +86,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
           </DropdownMenuItem>)}
 
           {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && ['PENDING', 'PARTIAL', 'FAILED'].includes(bookingPaymentStatus) && (
-            <DropdownMenuItem onClick={() => chargeCustomer.mutate(booking.id)} className="flex gap-2 text-fuchsia-600">
+            <DropdownMenuItem onClick={() => setChargeModalOpen(true)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
             </DropdownMenuItem>
@@ -104,6 +107,13 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
         </DropdownMenuContent>
       </DropdownMenu>
 
+      <ChargeCustomerModal
+        booking={booking}
+        open={chargeModalOpen}
+        onClose={() => setChargeModalOpen(false)}
+        onConfirm={(amount) => chargeCustomer.mutate({ id: booking.id, amount })}
+        isPending={chargeCustomer.isPending}
+      />
     </div >
   )
 }

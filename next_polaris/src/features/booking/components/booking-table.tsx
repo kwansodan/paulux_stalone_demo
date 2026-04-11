@@ -8,6 +8,7 @@ import { useBookings, useChargeCustomer } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
 import { Loader2 } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
+import ChargeCustomerModal from "./form/charge-customer-modal"
 
 const initialFilters: BookingFilters = {
   from: undefined,
@@ -20,6 +21,7 @@ const initialFilters: BookingFilters = {
 
 export default function BookingsTable() {
   const [filters, setFilters] = useState<BookingFilters>(initialFilters)
+  const [chargeBooking, setChargeBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const chargeCustomer = useChargeCustomer()
   // remove 'all' values and empty strings before sending to API
   const apiFilters = useMemo(() => {
@@ -114,10 +116,8 @@ export default function BookingsTable() {
             size="sm"
             variant="outline"
             className="h-8 bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100"
-            disabled={chargeCustomer.isPending}
-            onClick={() => chargeCustomer.mutate(row.id)}
+            onClick={() => setChargeBooking(row)}
           >
-            {chargeCustomer.isPending && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
             Charge
           </Button>
         )
@@ -127,6 +127,16 @@ export default function BookingsTable() {
 
 
   return (
+    <>
+    {chargeBooking && (
+      <ChargeCustomerModal
+        booking={chargeBooking}
+        open={!!chargeBooking}
+        onClose={() => setChargeBooking(null)}
+        onConfirm={(amount) => chargeCustomer.mutate({ id: chargeBooking.id, amount })}
+        isPending={chargeCustomer.isPending}
+      />
+    )}
     <div className="space-y-4">
       <div className="max-h-50 overflow-y-auto w-full space-y-4 p-6 rounded-lg border border-gray-200">
         <div>
@@ -158,5 +168,6 @@ export default function BookingsTable() {
         />
       </div>
     </div>
+    </>
   )
 }

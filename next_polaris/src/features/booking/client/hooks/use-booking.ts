@@ -242,7 +242,8 @@ export function useChargeCustomer() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: (id: string) => api.post(`/bookings/${id}/charge`),
+    mutationFn: ({ id, amount }: { id: string; amount?: number }) =>
+      api.post(`/bookings/${id}/charge`, amount !== undefined ? { amount } : {}),
     onMutate: () => {
       toast.loading("Initializing payment...", { id: "charge-customer" })
     },
