@@ -2,6 +2,7 @@ import { serve } from "inngest/next";
 import { inngest } from "@/lib/inngest";
 import { passwordResetEvent } from "@/features/auth/events/event-password-reset";
 import { bookingCancelledEvent } from "@/features/auth/events/event-booking-cancel";
+import { bookingCreatedEvent } from "@/features/booking/events/event-booking-created";
 import { paymentReceivedEvent } from "@/features/payment/events/event-payment-received";
 // import { NextRequest, NextResponse } from "next/server";
 
@@ -16,6 +17,7 @@ export const { GET, POST, PUT } = serve({
     /* your functions will be passed here later! */
     passwordResetEvent,
     bookingCancelledEvent,
+    bookingCreatedEvent,
     paymentReceivedEvent,
   ],
   // signingKey: process.env.INNGEST_SIGNING_KEY

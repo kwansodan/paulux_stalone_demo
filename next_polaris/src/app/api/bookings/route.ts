@@ -10,6 +10,7 @@ import { isTime24HoursInAdvance, isTimeWithinRange } from "@/utils/helpers";
 import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { inngest } from "@/lib/inngest";
 
 
 
@@ -204,7 +205,13 @@ export async function POST(request: NextRequest) {
       ...validatedBody,
     })
 
-
+    // Fire notification event only for new bookings (not updates)
+    if (!validatedBody.id) {
+      await inngest.send({
+        name: "app/booking.booking-created",
+        data: { bookingId: createdBooking.id }
+      }).catch(err => console.error("Failed to send booking-created event:", err))
+    }
 
     return NextResponse.json({ success: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {

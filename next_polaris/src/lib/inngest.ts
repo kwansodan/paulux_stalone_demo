@@ -6,6 +6,12 @@ export type BookingCancelEventArgs = {
   }
 }
 
+export type BookingCreatedEventArgs = {
+  data: {
+    bookingId: string;
+  }
+}
+
 export type PasswordResetEventArgs = {
   data: {
     userId: string;
@@ -23,6 +29,7 @@ export type PaymentReceivedEventArgs = {
 type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
+  "app/booking.booking-created": BookingCreatedEventArgs;
   "app/payment.payment-received": PaymentReceivedEventArgs;
 };
 
