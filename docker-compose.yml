@@ -23,6 +23,7 @@ services:
   # Next.js Application
   app:
     image: polaris-main:latest-polaris-main
+    pull_policy: never
     build:
       context: ./next_polaris
       dockerfile: Dockerfile.prod
