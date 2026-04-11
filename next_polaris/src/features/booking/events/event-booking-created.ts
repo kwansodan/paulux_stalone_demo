@@ -27,7 +27,7 @@ export const bookingCreatedEvent = inngest.createFunction(
     let smsResult = null;
     if (booking.clientPhone) {
       smsResult = await step.run("send-booking-confirmation-sms", async () => {
-        const message = `Hi ${booking.clientName}, your appointment for ${serviceNames} on ${dateFormatted} at ${timeFormatted} has been booked. Ref: ${booking.bookingReference}. Details: ${bookingSummaryLink}`;
+        const message = `Hi ${booking.clientName}, your appointment for ${serviceNames} on ${dateFormatted} at ${timeFormatted} has been confirmed/updated. Ref: ${booking.bookingReference}. Details: ${bookingSummaryLink}`;
 
         const result = await sendSMS({
           recipients: [booking.clientPhone],
