@@ -75,7 +75,6 @@ services:
     networks:
       - polaris_network
     volumes:
-      - ./next_polaris/public:/app/public
       - app_cache:/app/.next/cache
 
   # MinIO Object Storage (S3-compatible)
