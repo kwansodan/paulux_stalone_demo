@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useMutation } from "@tanstack/react-query"
@@ -57,6 +58,14 @@ export default function EditBookingForm({
   const slots = data?.slots ?? []
 
   const mutation = useEditBooking()
+
+  const [serviceSearch, setServiceSearch] = useState("")
+  const filteredForDisplay = useMemo(() =>
+    services.filter((s) =>
+      s.name.toLowerCase().includes(serviceSearch.toLowerCase())
+    ),
+    [serviceSearch, services]
+  )
 
   const onSubmit = async (data: BookingInput) => {
     await mutation.mutateAsync({
@@ -184,8 +193,15 @@ export default function EditBookingForm({
                 <Label className="text-sm font-normal text-foreground">
                   Services <span className="text-red-500">*</span>
                 </Label>
+                <input
+                  type="text"
+                  placeholder="Search services..."
+                  value={serviceSearch}
+                  onChange={(e) => setServiceSearch(e.target.value)}
+                  className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+                />
                 <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
-                  {services.map((s) => (
+                  {filteredForDisplay.map((s) => (
                     <div
                       key={s.id}
                       className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
