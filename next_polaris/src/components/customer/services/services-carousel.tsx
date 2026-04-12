@@ -1,6 +1,6 @@
 "use client"
 
-import { useRef, useState, useEffect } from "react"
+import { useRef, useState, useEffect, useMemo } from "react"
 import ServiceCard from "./service-card"
 import { SerializedService } from "@/features/service/types"
 import SearchBar from "./SearchBar"
@@ -9,14 +9,13 @@ export default function ServicesCarousel({ services }: { services: SerializedSer
   const scrollRef = useRef<HTMLDivElement>(null)
   const [activeIndex, setActiveIndex] = useState(0)
   const [searchTerm, setSearchTerm] = useState("")
-  const [filteredServices, setFilteredServices] = useState(services)
 
-  const handleSearch = () => {
-    const filtered = services.filter((service) =>
+  const filteredServices = useMemo(() =>
+    services.filter((service) =>
       service.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    setFilteredServices(filtered)
-  }
+    ),
+    [searchTerm, services]
+  )
 
   useEffect(() => {
     const scrollContainer = scrollRef.current
@@ -38,7 +37,6 @@ export default function ServicesCarousel({ services }: { services: SerializedSer
       <SearchBar
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        handleSearch={handleSearch}
       />
 
       <div ref={scrollRef} className="overflow-x-auto scrollbar-hide">
