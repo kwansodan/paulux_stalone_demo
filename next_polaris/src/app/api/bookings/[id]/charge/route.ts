@@ -89,7 +89,8 @@ export async function POST(
             amount: amountToCharge,
             bookingReference: booking.bookingReference,
             transactionType,
-            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation`
+            callbackUrl: `${process.env.NEXT_PUBLIC_APP_URL}/bookings/confirmation`,
+            phone: booking.clientPhone ?? undefined,
         });
 
         if (paymentResult.success && paymentResult.paymentUrl) {

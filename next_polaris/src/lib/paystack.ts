@@ -74,7 +74,8 @@ export async function initializeTransaction(
     callbackUrl?: string,
     currency: string = 'GHS',
     channels: string[] = ['card', 'mobile_money'],
-    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
+    provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK,
+    phone?: string,
 ): Promise<PaystackInitializeResponse> {
     const secretKey = getSecretKey(provider);
     try {
@@ -87,6 +88,7 @@ export async function initializeTransaction(
                 callback_url: callbackUrl,
                 currency,
                 channels,
+                ...(phone ? { phone } : {}),
             },
             {
                 headers: {

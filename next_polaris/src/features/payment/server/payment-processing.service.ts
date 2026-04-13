@@ -13,11 +13,12 @@ export interface InitializePaymentDTO {
     callbackUrl?: string
     parentInvoiceId?: string
     transactionType?: string
+    phone?: string
 }
 
 export class PaymentProcessingService {
     async initializePayment(data: InitializePaymentDTO & { forcedGateway?: PaymentProvider }) {
-        const { bookingId, email, amount, bookingReference, callbackUrl, forcedGateway, parentInvoiceId, transactionType } = data
+        const { bookingId, email, amount, bookingReference, callbackUrl, forcedGateway, parentInvoiceId, transactionType, phone } = data
 
         // STEP 1 — Select gateway (automatic or forced)
         let gateway: PaymentProvider
@@ -59,7 +60,8 @@ export class PaymentProcessingService {
             bookingReference,
             callbackUrl,
             invoiceNumber: invoice.invoiceNumber,
-            isSubsequent: !!parentInvoiceId
+            isSubsequent: !!parentInvoiceId,
+            phone,
         })
     }
 
@@ -131,10 +133,11 @@ export class PaymentProcessingService {
             amount: number,
             bookingReference: string,
             callbackUrl?: string,
-            invoiceNumber: string
+            invoiceNumber: string,
+            phone?: string,
         }
     ) {
-        const { invoiceId, bookingId, email, amount, callbackUrl, invoiceNumber } = details
+        const { invoiceId, bookingId, email, amount, callbackUrl, invoiceNumber, phone } = details
 
         try {
             let paymentUrl = ""
@@ -154,7 +157,8 @@ export class PaymentProcessingService {
                     callbackUrl,
                     'GHS',
                     ['card', 'mobile_money'],
-                    gateway
+                    gateway,
+                    phone,
                 )
 
                 paymentUrl = (providerResponse as any).data.authorization_url

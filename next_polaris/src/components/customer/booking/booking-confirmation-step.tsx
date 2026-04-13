@@ -73,6 +73,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           bookingId: booking.id,
           transactionType: 'initial',
           callbackUrl,
+          phone: formData.phone,
         }),
       })
 

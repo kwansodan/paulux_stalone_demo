@@ -4,7 +4,7 @@ import { paymentProcessingService } from '@/features/payment/server/payment-proc
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { bookingId, email, amount, bookingReference, callbackUrl, transactionType } = body;
+        const { bookingId, email, amount, bookingReference, callbackUrl, transactionType, phone } = body;
 
         if (!bookingId || !email || !amount || !bookingReference) {
             return NextResponse.json(
@@ -21,7 +21,8 @@ export async function POST(req: NextRequest) {
             amount: Number(amount),
             bookingReference,
             callbackUrl,
-            transactionType: transactionType || 'initial'
+            transactionType: transactionType || 'initial',
+            phone,
         });
 
         if (!result.success) {
