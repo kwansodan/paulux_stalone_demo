@@ -14,9 +14,8 @@ export class ServiceRepository {
   async getAllServices(where: Prisma.ServiceWhereInput): Promise<SerializedService[]> {
     const services = await prisma.service.findMany({
       where,
-      orderBy: {
-        createdAt: 'desc',
-      }
+      include: { category: true },
+      orderBy: { createdAt: 'desc' },
     })
 
     return services.map(service => ({
@@ -24,15 +23,15 @@ export class ServiceRepository {
       price: service.price.toString(),
       imageUrl: patchLegacyUrl(service.imageUrl),
       createdAt: service.createdAt.toISOString(),
-      updatedAt: service.updatedAt.toISOString()
+      updatedAt: service.updatedAt.toISOString(),
+      category: service.category ?? null,
     }))
   }
 
   async findById(id: string) {
     const service = await prisma.service.findUnique({
-      where: {
-        id
-      }
+      where: { id },
+      include: { category: true },
     });
 
     if (service) {
@@ -79,9 +78,7 @@ export class ServiceRepository {
       }
 
       upsertedService = await prisma.service.update({
-        where: {
-          id: upsertDTO.id
-        },
+        where: { id: upsertDTO.id },
         data: {
           name: upsertDTO.name,
           description: upsertDTO.description,
@@ -93,7 +90,9 @@ export class ServiceRepository {
           minDepositPercent: upsertDTO.minDepositPercent,
           isActive: upsertDTO.isActive,
           imageUrl: upsertDTO.imageUrl,
-        }
+          categoryId: upsertDTO.categoryId ?? null,
+        },
+        include: { category: true },
       })
     } else {
       upsertedService = await prisma.service.create({
@@ -108,7 +107,9 @@ export class ServiceRepository {
           minDepositPercent: upsertDTO.minDepositPercent,
           isActive: upsertDTO.isActive,
           imageUrl: upsertDTO.imageUrl,
-        }
+          categoryId: upsertDTO.categoryId ?? null,
+        },
+        include: { category: true },
       })
     }
 
@@ -117,7 +118,8 @@ export class ServiceRepository {
       price: upsertedService.price.toString(),
       imageUrl: patchLegacyUrl(upsertedService.imageUrl),
       createdAt: upsertedService.createdAt.toISOString(),
-      updatedAt: upsertedService.updatedAt.toISOString()
+      updatedAt: upsertedService.updatedAt.toISOString(),
+      category: upsertedService.category ?? null,
     }
 
     return serializedService

@@ -6,12 +6,14 @@ import { ServiceFormInput, ServiceInputSchema } from "@/features/service/utils/v
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Form, FormField } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { ToggleSwitch } from "../toggle-switch"
 import { useCreateService } from "../../client/use-service"
 import { isAxiosError } from "@/lib/utils"
 import ImageUpload from "@/components/ui/image-upload"
+import { useGetServiceCategories } from "@/features/service-category/client/use-service-category"
 
 export default function CreateServiceForm({
   onCancel,
@@ -20,6 +22,8 @@ export default function CreateServiceForm({
   onCancel: () => void
   onSuccess: () => void
 }) {
+  const { data: categories = [] } = useGetServiceCategories()
+
   const form = useForm<ServiceFormInput>({
     resolver: zodResolver(ServiceInputSchema),
     defaultValues: {
@@ -32,6 +36,7 @@ export default function CreateServiceForm({
       minDepositPercent: 0,
       isActive: true,
       imageUrl: null,
+      categoryId: null,
     },
   })
 
@@ -148,6 +153,33 @@ export default function CreateServiceForm({
 
           <div className="flex flex-col gap-4">
             <p className="font-semibold text-[16px]">Booking Constraints</p>
+
+            {/* Category */}
+            <FormField
+              control={form.control}
+              name="categoryId"
+              render={({ field }) => (
+                <div className="space-y-1">
+                  <Label className="text-sm font-normal text-foreground">Service category</Label>
+                  <Select
+                    value={field.value ?? "none"}
+                    onValueChange={(v) => field.onChange(v === "none" ? null : v)}
+                  >
+                    <SelectTrigger className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg">
+                      <SelectValue placeholder="No category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No category</SelectItem>
+                      {categories.map((cat) => (
+                        <SelectItem key={cat.id} value={cat.id}>
+                          {cat.name} <span className="text-gray-400 text-xs ml-1">(cap: {cat.capacity})</span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+            />
 
             {/* Booking constraints */}
             <div className="grid grid-cols-2 gap-3">

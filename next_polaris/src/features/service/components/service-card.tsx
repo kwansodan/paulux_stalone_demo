@@ -73,6 +73,15 @@ export default function ServiceCard({ service }: { service: SerializedService })
           </DropdownMenu>
         </div>
 
+        {service.category && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[11px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
+              {service.category.name}
+            </span>
+            <span className="text-[11px] text-gray-400">cap: {service.category.capacity}</span>
+          </div>
+        )}
+
         <div className="flex justify-between items-center pt-2 border-t border-gray-100">
           {/* Meta */}
           <div className="flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">

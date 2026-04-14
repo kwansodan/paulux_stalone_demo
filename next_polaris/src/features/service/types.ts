@@ -1,8 +1,15 @@
-import { Service } from "@generated/prisma/client";
+import { Service, ServiceCategory } from "@generated/prisma/client";
 
 export type SerializedService = Omit<Service, 'price' | 'createdAt' | 'updatedAt'> & {
   price: string;
   imageUrl: string | null;
   createdAt: string;
   updatedAt: string;
+  category?: Pick<ServiceCategory, 'id' | 'name' | 'capacity'> | null;
+}
+
+export type SerializedServiceCategory = Omit<ServiceCategory, 'createdAt' | 'updatedAt'> & {
+  createdAt: string;
+  updatedAt: string;
+  _count?: { services: number };
 }

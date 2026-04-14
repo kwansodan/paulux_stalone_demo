@@ -36,6 +36,7 @@ export const ServiceInputSchema = z.object({
     .nullable(),
   isActive: z.boolean(),
   imageUrl: z.string().url().nullable().optional(),
+  categoryId: z.string().uuid().nullable().optional(),
 })
 
 export const ServiceUpsertSchema = ServiceInputSchema.extend({

@@ -76,6 +76,18 @@ model User {
   @@map("users")
 }
 
+model ServiceCategory {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique
+  capacity  Int       @default(1)
+  services  Service[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("service_categories")
+}
+
 model Service {
   id              String            @id @default(uuid()) @db.Uuid
   name            String
@@ -83,6 +95,9 @@ model Service {
   durationMinutes Int
   price           Decimal           @db.Decimal(10, 2)
   currency        SupportedCurrency @default(GHS)
+
+  categoryId String?          @db.Uuid
+  category   ServiceCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
 
   maxBookingsPerDay Int?
   latestBookingTime String? // "HH:mm"
@@ -95,6 +110,7 @@ model Service {
 
   bookings BookingService[]
 
+  @@index([categoryId])
   @@map("services")
 }
 

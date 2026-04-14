@@ -192,7 +192,8 @@ export async function POST(request: NextRequest) {
       new Date(validatedBody.bookingDate),
       validatedBody.bookingTime,
       totalDuration,
-      validatedBody.id
+      validatedBody.id,
+      serviceIds,
     )
 
     if (!isAvailable) {

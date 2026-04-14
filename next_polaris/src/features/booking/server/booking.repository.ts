@@ -187,12 +187,13 @@ export class BookingRepository {
     date: Date,
     time: string,
     durationMinutes: number,
-    excludeBookingId?: string
+    excludeBookingId?: string,
+    serviceIds?: string[],
   ): Promise<boolean> {
     const dateString = date.toISOString().split('T')[0]
     const dayOfWeek = date.getUTCDay()
 
-    // Get capacity for this day
+    // Get global capacity for this day
     const businessHour = await prisma.businessHour.findUnique({
       where: { dayOfWeek },
       select: { maxConcurrentBookings: true }
@@ -203,48 +204,74 @@ export class BookingRepository {
     const requestedStart = timeToMinutes(time);
     const requestedEnd = requestedStart + durationMinutes;
 
-    // Fetch all existing bookings for this date to check for overlaps
-    const existingBookings = await prisma.booking.findMany({
-      where: {
-        bookingDate: dateString,
-        status: {
-          in: [BookingStatus.PENDING, BookingStatus.CONFIRMED],
-        },
-        ...(excludeBookingId && {
-          id: { not: excludeBookingId },
-        }),
-      },
-      include: {
-        services: true
-      }
-    });
+    const baseWhere = {
+      bookingDate: dateString,
+      status: { in: [BookingStatus.PENDING, BookingStatus.CONFIRMED] as BookingStatus[] },
+      ...(excludeBookingId && { id: { not: excludeBookingId } }),
+    }
 
-    // We need to check if at any point within [requestedStart, requestedEnd],
-    // the number of active bookings exceeds maxConcurrentBookings.
-    // A simple way is to check every 15-minute increment or just checking at start/end of all existing bookings.
-    // For simplicity and accuracy with small number of bookings, we'll check the count at each existing booking's start time and the requested start time.
+    // Fetch all existing bookings for this date
+    const existingBookings = await prisma.booking.findMany({
+      where: baseWhere,
+      include: { services: true },
+    });
 
     const checkPoints = new Set<number>();
     checkPoints.add(requestedStart);
     existingBookings.forEach(b => checkPoints.add(timeToMinutes(b.bookingTime)));
 
+    // --- Global capacity check ---
     for (const cp of checkPoints) {
       if (cp >= requestedStart && cp < requestedEnd) {
         let concurrentAtCP = 0;
-
-        // Count how many existing bookings overlap this checkpoint
         for (const b of existingBookings) {
           const bStart = timeToMinutes(b.bookingTime);
-          const bDuration = b.services.reduce((sum, s) => sum + s.durationAtBooking, 0);
-          const bEnd = bStart + bDuration;
-
-          if (cp >= bStart && cp < bEnd) {
-            concurrentAtCP++;
-          }
+          const bEnd = bStart + b.services.reduce((sum, s) => sum + s.durationAtBooking, 0);
+          if (cp >= bStart && cp < bEnd) concurrentAtCP++;
         }
+        if (concurrentAtCP >= businessHour.maxConcurrentBookings) return false;
+      }
+    }
 
-        if (concurrentAtCP >= businessHour.maxConcurrentBookings) {
-          return false;
+    // --- Per-category capacity check ---
+    if (serviceIds && serviceIds.length > 0) {
+      const requestedServices = await prisma.service.findMany({
+        where: { id: { in: serviceIds } },
+        include: { category: true },
+      });
+
+      // Collect unique categories with a capacity set
+      const categoryMap = new Map<string, { id: string; capacity: number }>();
+      for (const svc of requestedServices) {
+        if (svc.category) {
+          categoryMap.set(svc.category.id, { id: svc.category.id, capacity: svc.category.capacity });
+        }
+      }
+
+      for (const [categoryId, category] of categoryMap) {
+        // Find all bookings on this date that contain at least one service in this category
+        const categoryBookings = await prisma.booking.findMany({
+          where: {
+            ...baseWhere,
+            services: { some: { service: { categoryId } } },
+          },
+          include: { services: true },
+        });
+
+        const catCheckPoints = new Set<number>();
+        catCheckPoints.add(requestedStart);
+        categoryBookings.forEach(b => catCheckPoints.add(timeToMinutes(b.bookingTime)));
+
+        for (const cp of catCheckPoints) {
+          if (cp >= requestedStart && cp < requestedEnd) {
+            let concurrentAtCP = 0;
+            for (const b of categoryBookings) {
+              const bStart = timeToMinutes(b.bookingTime);
+              const bEnd = bStart + b.services.reduce((sum, s) => sum + s.durationAtBooking, 0);
+              if (cp >= bStart && cp < bEnd) concurrentAtCP++;
+            }
+            if (concurrentAtCP >= category.capacity) return false;
+          }
         }
       }
     }

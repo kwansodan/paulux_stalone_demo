@@ -97,7 +97,9 @@ export async function GET(req: NextRequest) {
         available = !isPast && await bookingRepository.isSlotAvailable(
           dateObj,
           current,
-          duration
+          duration,
+          undefined,
+          serviceIds,
         )
       }
 
