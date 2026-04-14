@@ -67,8 +67,8 @@ services:
       - PRIMARY_PAYSTACK_SECRET_KEY=${PRIMARY_PAYSTACK_SECRET_KEY}
       - SECONDARY_PAYSTACK_SECRET_KEY=${SECONDARY_PAYSTACK_SECRET_KEY}
       - SECURE_COOKIES=${SECURE_COOKIES:-true}
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
       db:
         condition: service_healthy
