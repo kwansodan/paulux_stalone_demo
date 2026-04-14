@@ -73,6 +73,7 @@ export class BookingRepository {
         status: BookingStatus.PENDING,
         paymentStatus: PaymentStatus.PENDING,
         createdById: payload?.createdById ?? null,
+        termsAcceptedAt: payload.termsAcceptedAt ?? null,
         services: {
           create: services.map(s => ({
             serviceId: s.id,

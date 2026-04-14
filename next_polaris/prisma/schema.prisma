@@ -167,6 +167,8 @@ model Booking {
   googleEventId String?
   cancelReason  String?
 
+  termsAcceptedAt DateTime?
+
   createdAt DateTime @default(now())
 
   createdById String? @db.Uuid

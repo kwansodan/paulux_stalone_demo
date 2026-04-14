@@ -50,6 +50,7 @@ export const BookingInputSchema = z.object({
       "Must be 0–100"
     ),
   paymentStatus: PaymentStatusEnum.optional(),
+  termsAccepted: z.boolean().optional(),
 });
 
 // Schema for full booking (with defaults)

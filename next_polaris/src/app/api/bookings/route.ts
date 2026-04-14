@@ -204,6 +204,7 @@ export async function POST(request: NextRequest) {
 
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
+      termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
     })
 
     await inngest.send({

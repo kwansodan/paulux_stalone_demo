@@ -10,6 +10,7 @@ import { BookingInput } from "@/features/booking/utils/validation"
 import { isAxiosError } from "@/lib/utils"
 import { useRouter } from "next/navigation"
 import { customerBookingSummaryPath } from "@/app/paths"
+import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
 type Props = {
   formData: BookingFormData
@@ -22,6 +23,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const [isProcessing, setIsProcessing] = useState(false)
 
   const hasDepositRequirement = services.some(s => s.minDepositPercent < 100)
+
+  const [termsAccepted, setTermsAccepted] = useState(false)
 
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
     (formData.minDepositPercent !== undefined ? formData.minDepositPercent < 100 : hasDepositRequirement) ? "deposit" : "full"
@@ -54,6 +57,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         clientName: formData.fullName,
         clientEmail: formData.email,
         clientPhone: formData.phone,
+        termsAccepted,
       }
 
       const booking = await createBookingMutation.mutateAsync(payload)
@@ -272,6 +276,137 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         </div>
       )}
 
+      {/* Terms acceptance */}
+      <label className="flex items-start gap-3 cursor-pointer select-none">
+        <div className="relative mt-0.5 flex-shrink-0">
+          <input
+            type="checkbox"
+            checked={termsAccepted}
+            onChange={(e) => setTermsAccepted(e.target.checked)}
+            className="sr-only peer"
+          />
+          <div className="w-5 h-5 rounded border-2 border-gray-300 peer-checked:border-fuchsia-600 peer-checked:bg-fuchsia-600 transition-colors flex items-center justify-center">
+            {termsAccepted && (
+              <svg className="w-3 h-3 text-white" viewBox="0 0 12 12" fill="none">
+                <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+        </div>
+        <span className="text-xs text-gray-600 leading-relaxed">
+          I have read and agree to the{" "}
+          <PolicyBottomSheet triggerLabel="Terms of Service" title="Terms of Service">
+            <p className="mb-4 text-sm">By using our booking system, you agree to the following terms:</p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">1. Booking Policy</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li>All appointments must be booked at least 24 hours in advance.</li>
+                  <li>A valid name, email, and phone number are required.</li>
+                  <li>Payment is required before admin approval.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">2. Appointment Confirmation</h3>
+                <p className="text-sm">After payment, your booking will be marked as pending until approved by salon staff. You will receive a confirmation email once approved.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">3. No-Show Policy</h3>
+                <p className="text-sm">Failure to attend your appointment without prior cancellation may result in forfeiture of payment.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">4. Pricing</h3>
+                <p className="text-sm">All prices are displayed in Ghana Cedis (GHS) and are subject to change without prior notice. Price changes do not affect confirmed bookings.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">5. Service Refusal</h3>
+                <p className="text-sm">We reserve the right to refuse service in cases of inappropriate behavior, safety concerns, or violation of salon policies.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">6. Modifications</h3>
+                <p className="text-sm">We may update these terms at any time. Continued use of the booking system indicates acceptance of any updates.</p>
+              </div>
+            </div>
+          </PolicyBottomSheet>
+          {", "}
+          <PolicyBottomSheet triggerLabel="Privacy Policy" title="Privacy Policy">
+            <p className="mb-4 text-sm">At Polaris, we respect your privacy and are committed to protecting your personal information.</p>
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">1. Information We Collect</h3>
+                <p className="text-sm mb-2">When you book an appointment, we collect:</p>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li>Full name</li>
+                  <li>Email address</li>
+                  <li>Phone number</li>
+                  <li>Selected service and appointment details</li>
+                  <li>Payment confirmation reference (via Paystack)</li>
+                </ul>
+                <p className="text-sm mt-2">We do not store your card details. Payments are securely processed by Paystack.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">2. How We Use Your Information</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li>Process and manage your bookings</li>
+                  <li>Send booking confirmations and updates</li>
+                  <li>Communicate appointment reminders or changes</li>
+                  <li>Improve our services and customer experience</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">3. Payment Security</h3>
+                <p className="text-sm">All payments are securely processed by Paystack. We do not store debit/credit card details on our servers.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">4. Data Storage & Protection</h3>
+                <p className="text-sm">Your booking information is stored securely using encrypted database systems. Access is restricted to authorised staff only.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">5. Data Sharing</h3>
+                <p className="text-sm mb-2">We do not sell, rent, or trade your personal information. We may share limited information with payment processors (Paystack) and email delivery providers.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">6. Disclaimer</h3>
+                <p className="text-sm">Our works are recorded for quality checks, references and advertisements purposes. Kindly notify us if you do not want to be photographed. Private clients do not qualify for any discount offers.</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">7. Contact Us</h3>
+                <p className="text-sm">polarisbeautylounge@gmail.com<br /><strong>+233 24 070 2107 | +233 50 485 1482</strong></p>
+              </div>
+            </div>
+          </PolicyBottomSheet>
+          {" and "}
+          <PolicyBottomSheet triggerLabel="Refund Policy" title="Refund Policy">
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-semibold mb-2">Eligible Refunds</h3>
+                <p className="text-sm mb-2">Refunds may be considered if:</p>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li>The salon cancels your confirmed appointment.</li>
+                  <li>A booking is rejected after payment.</li>
+                  <li>A technical error results in duplicate charges.</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Non-Refundable Situations</h3>
+                <ul className="list-disc pl-5 space-y-1 text-sm">
+                  <li>Failure to attend your appointment (no-show).</li>
+                </ul>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Refund Process</h3>
+                <p className="text-sm">Refunds are processed manually and may take 5–10 business days. To request a refund, contact <strong>polarisbeautylounge@gmail.com</strong> with your booking reference (BK-XXXXXX).</p>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Payment Processing Fees</h3>
+                <p className="text-sm">Certain payment processing fees may be non-refundable.</p>
+              </div>
+            </div>
+          </PolicyBottomSheet>
+          .
+        </span>
+      </label>
+
       {/* Navigation buttons */}
       <div className="flex gap-3">
         <Button
@@ -283,8 +418,8 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         </Button>
         <Button
           onClick={handleProceedToPayment}
-          disabled={createBookingMutation.isPending || isProcessing}
-          className="flex-1 h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium"
+          disabled={!termsAccepted || createBookingMutation.isPending || isProcessing}
+          className="flex-1 h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {createBookingMutation.isPending || isProcessing ? "Processing..." : "Proceed to payment"}
         </Button>
