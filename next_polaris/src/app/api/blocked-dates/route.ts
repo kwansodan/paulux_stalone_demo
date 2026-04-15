@@ -2,6 +2,7 @@ import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { blockedDateRepository } from "@/features/blocked-date/server/blockedDate.repository";
 import { BlockedDateInputSchema } from "@/features/blocked-date/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export async function GET() {
   const auth = await requireRoleApi(['ADMIN'])
@@ -24,9 +25,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     if (error instanceof NextResponse) return error
-    if (error.name === "ValidationError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       )
     }

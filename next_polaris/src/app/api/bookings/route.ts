@@ -8,6 +8,7 @@ import { businessHourRepository } from "@/features/business-hour/server/business
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { isTime24HoursInAdvance, isTimeWithinRange } from "@/utils/helpers";
 import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
+import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { inngest } from "@/lib/inngest";
@@ -266,9 +267,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    if (error.name === "ValidationError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       )
     }

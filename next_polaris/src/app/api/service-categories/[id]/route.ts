@@ -30,9 +30,9 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: category });
   } catch (error: any) {
-    if (error?.name === "ZodError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { success: false, message: error.errors[0]?.message || "Validation failed" },
+        { success: false, message: error.issues[0]?.message || "Validation failed" },
         { status: 400 }
       );
     }

@@ -1,6 +1,7 @@
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { ServiceUpsertSchema } from "@/features/service/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 
 export async function GET(request: NextRequest) {
@@ -30,9 +31,9 @@ export async function POST(request: NextRequest) {
 
   } catch (error: any) {
     if (error instanceof NextResponse) return error
-    if (error.name === "ValidationError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       )
     }

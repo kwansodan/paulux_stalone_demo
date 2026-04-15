@@ -37,7 +37,7 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: "Image not found" }, { status: 404 })
     }
     if (error instanceof z.ZodError) {
-      return NextResponse.json({ success: false, message: "Invalid data", errors: error.errors }, { status: 400 })
+      return NextResponse.json({ success: false, message: "Invalid data", errors: error.issues }, { status: 400 })
     }
     return NextResponse.json({ success: false, message: error.message }, { status: 500 })
   }

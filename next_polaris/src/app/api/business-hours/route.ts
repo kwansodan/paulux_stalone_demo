@@ -1,6 +1,7 @@
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { BusinessHourInputSchema } from "@/features/business-hour/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
+import { z } from "zod";
 
 export async function GET() {
   const hours = await businessHourRepository.getAll();
@@ -25,9 +26,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, data: result });
   } catch (error: any) {
     if (error instanceof NextResponse) return error
-    if (error.name === "ValidationError") {
+    if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: "Validation failed", details: error.errors },
+        { error: "Validation failed", details: error.issues },
         { status: 400 }
       )
     }
