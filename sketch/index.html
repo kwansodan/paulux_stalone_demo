@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Polaris – Floating Buttons Sketch</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f8f8f8;
+      min-height: 100vh;
+    }
+
+    /* ── Simulated page chrome ── */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+    header .logo {
+      font-weight: 700;
+      font-size: 18px;
+      letter-spacing: -0.5px;
+    }
+    header nav a {
+      margin-left: 24px;
+      font-size: 14px;
+      color: #555;
+      text-decoration: none;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 60px auto;
+      padding: 0 32px;
+    }
+    .page-label {
+      display: inline-block;
+      background: #f3e8ff;
+      color: #7e22ce;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 16px;
+    }
+    h1 {
+      font-size: 32px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 12px;
+    }
+    p.sub {
+      color: #666;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 560px;
+    }
+
+    .card-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-top: 40px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid #eee;
+    }
+    .card .thumb {
+      width: 100%;
+      height: 100px;
+      background: linear-gradient(135deg, #f3e8ff, #fce7f3);
+      border-radius: 10px;
+      margin-bottom: 12px;
+    }
+    .card .name { font-weight: 600; font-size: 14px; color: #111; }
+    .card .meta { font-size: 12px; color: #999; margin-top: 4px; }
+
+    /* ── Floating buttons ── */
+    .floating-stack {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      z-index: 50;
+    }
+
+    .fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      border: none;
+      outline: none;
+      text-decoration: none;
+    }
+    .fab:hover {
+      transform: scale(1.1);
+      box-shadow: 0 6px 24px rgba(0,0,0,0.22);
+    }
+
+    /* Instagram gradient */
+    .fab-instagram {
+      background: radial-gradient(circle at 30% 107%,
+        #fdf497 0%, #fdf497 5%,
+        #fd5949 45%, #d6249f 60%,
+        #285AEB 90%);
+    }
+
+    /* WhatsApp green */
+    .fab-whatsapp {
+      background: #25D366;
+    }
+
+    /* Tooltip labels */
+    .fab-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .fab-wrap .tooltip {
+      position: absolute;
+      right: 68px;
+      background: #111;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 500;
+      padding: 5px 10px;
+      border-radius: 6px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s ease;
+    }
+    .fab-wrap .tooltip::after {
+      content: '';
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      border: 5px solid transparent;
+      border-left-color: #111;
+    }
+    .fab-wrap:hover .tooltip {
+      opacity: 1;
+    }
+
+    /* ── Annotation callout ── */
+    .callout {
+      position: fixed;
+      bottom: 110px;
+      right: 100px;
+      background: #fff;
+      border: 1.5px dashed #a855f7;
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 12px;
+      color: #555;
+      max-width: 180px;
+      line-height: 1.5;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .callout strong { color: #111; display: block; margin-bottom: 4px; }
+    .callout-line {
+      position: fixed;
+      bottom: 136px;
+      right: 96px;
+      width: 2px;
+      height: 32px;
+      background: #a855f7;
+      transform: rotate(-30deg);
+      transform-origin: bottom;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Simulated page header -->
+  <header>
+    <span class="logo">Polaris</span>
+    <nav>
+      <a href="#">Services</a>
+      <a href="#">Bookings</a>
+      <a href="#">Contact</a>
+    </nav>
+  </header>
+
+  <!-- Simulated page content -->
+  <main>
+    <span class="page-label">Customer page</span>
+    <h1>Our Services</h1>
+    <p class="sub">Browse our full range of beauty and wellness services. Book instantly — deposits secured online.</p>
+
+    <div class="card-row">
+      <div class="card">
+        <div class="thumb"></div>
+        <div class="name">Hair Styling</div>
+        <div class="meta">60 mins · ₵120.00</div>
+      </div>
+      <div class="card">
+        <div class="thumb" style="background: linear-gradient(135deg,#fce7f3,#dbeafe)"></div>
+        <div class="name">Nail Treatment</div>
+        <div class="meta">45 mins · ₵80.00</div>
+      </div>
+      <div class="card">
+        <div class="thumb" style="background: linear-gradient(135deg,#dcfce7,#f0fdf4)"></div>
+        <div class="name">Facial</div>
+        <div class="meta">90 mins · ₵200.00</div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Floating social buttons -->
+  <div class="floating-stack">
+
+    <!-- Instagram -->
+    <div class="fab-wrap">
+      <span class="tooltip">Message on Instagram</span>
+      <a class="fab fab-instagram" href="https://ig.me/m/polarisbeautylounge" target="_blank" rel="noopener noreferrer" title="Message on Instagram">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="white" stroke-width="2"/>
+          <circle cx="12" cy="12" r="4.5" stroke="white" stroke-width="2"/>
+          <circle cx="17.5" cy="6.5" r="1.2" fill="white"/>
+        </svg>
+      </a>
+    </div>
+
+    <!-- WhatsApp -->
+    <div class="fab-wrap">
+      <span class="tooltip">Chat on WhatsApp</span>
+      <a class="fab fab-whatsapp" href="https://wa.me/233504851482" target="_blank" rel="noopener noreferrer" title="Chat on WhatsApp">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+          <path d="M12 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.974-1.301A9.953 9.953 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm0 18a7.946 7.946 0 01-4.073-1.117l-.292-.174-3.046.798.813-2.972-.19-.305A7.96 7.96 0 014 12c0-4.411 3.589-8 8-8s8 3.589 8 8-3.589 8-8 8zm4.406-5.908c-.242-.121-1.432-.707-1.654-.787-.222-.08-.384-.121-.545.121-.16.242-.625.787-.766.949-.141.16-.282.18-.524.06-.242-.12-1.021-.376-1.944-1.198-.719-.64-1.204-1.43-1.345-1.672-.141-.242-.015-.373.106-.493.108-.108.242-.282.363-.423.12-.141.16-.242.242-.403.08-.161.04-.302-.02-.423-.06-.12-.545-1.314-.747-1.799-.196-.473-.396-.409-.545-.417l-.464-.008c-.161 0-.423.06-.645.302-.222.242-.847.828-.847 2.02 0 1.192.867 2.344.988 2.505.12.161 1.706 2.605 4.135 3.652.578.249 1.029.398 1.38.51.58.184 1.108.158 1.525.096.465-.069 1.432-.585 1.634-1.15.201-.564.201-1.047.14-1.148-.06-.1-.222-.161-.464-.282z"/>
+        </svg>
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Annotation -->
+  <div class="callout">
+    <strong>Floating stack</strong>
+    Instagram sits above WhatsApp. Tooltips appear on hover.
+  </div>
+
+</body>
+</html>
