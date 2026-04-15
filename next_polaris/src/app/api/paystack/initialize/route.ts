@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
             reference,
             callbackUrl,
             'GHS', // Currency
-            ['card', 'mobile_money'],
+            ['mobile_money'],
             selectedProvider
         );
 

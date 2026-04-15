@@ -64,7 +64,7 @@ export interface PaystackRefundResponse {
  * @param reference Unique transaction reference
  * @param callbackUrl URL to redirect to after payment
  * @param currency Currency code (default: GHS)
- * @param channels Payment channels to enable (e.g., ['card', 'mobile_money'])
+ * @param channels Payment channels to enable (e.g., ['mobile_money'])
  * @param provider The Paystack account to use
  */
 export async function initializeTransaction(
@@ -73,7 +73,7 @@ export async function initializeTransaction(
     reference: string,
     callbackUrl?: string,
     currency: string = 'GHS',
-    channels: string[] = ['card', 'mobile_money'],
+    channels: string[] = ['mobile_money'],
     provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK,
     phone?: string,
 ): Promise<PaystackInitializeResponse> {

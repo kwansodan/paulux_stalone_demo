@@ -156,7 +156,7 @@ export class PaymentProcessingService {
                     invoiceNumber, // Pass invoiceNumber instead of bookingReference
                     callbackUrl,
                     'GHS',
-                    ['card', 'mobile_money'],
+                    ['mobile_money'],
                     gateway,
                     phone,
                 )
