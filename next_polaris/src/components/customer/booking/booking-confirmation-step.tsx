@@ -20,21 +20,24 @@ type Props = {
 export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const router = useRouter()
   const services = formData.selectedServices
+  const pkg = formData.selectedPackage
   const [isProcessing, setIsProcessing] = useState(false)
-
-  const hasDepositRequirement = services.some(s => s.minDepositPercent < 100)
-
   const [termsAccepted, setTermsAccepted] = useState(false)
 
-  const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
-    (formData.minDepositPercent !== undefined ? formData.minDepositPercent < 100 : hasDepositRequirement) ? "deposit" : "full"
-  )
-
-  const totalPrice = services.reduce((sum, s) => sum + Number(s.price), 0)
+  // Package price overrides individual service sum
+  const totalPrice = pkg
+    ? Number(pkg.price)
+    : services.reduce((sum, s) => sum + Number(s.price), 0)
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
-  const depositAmount = formData.minDepositPercent !== undefined
-    ? totalPrice * (formData.minDepositPercent / 100)
-    : services.reduce((sum, s) => sum + (Number(s.price) * (s.minDepositPercent / 100)), 0)
+  const minDepositPct = pkg
+    ? pkg.minDepositPercent
+    : (formData.minDepositPercent ?? services.reduce((max, s) => Math.max(max, s.minDepositPercent), 0))
+  const hasDepositRequirement = minDepositPct < 100
+  const depositAmount = totalPrice * (minDepositPct / 100)
+
+  const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
+    hasDepositRequirement ? "deposit" : "full"
+  )
 
   const createBookingMutation = useCreateBooking()
 
@@ -58,6 +61,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         clientEmail: formData.email,
         clientPhone: formData.phone,
         termsAccepted,
+        ...(pkg && { packageId: pkg.id }),
       }
 
       const booking = await createBookingMutation.mutateAsync(payload)
@@ -120,19 +124,34 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           <h3 className="text-[16px] font-semibold">Booking summary</h3>
 
           <div className="space-y-3">
-            {/* Services */}
+            {/* Services / Package */}
             <div className="space-y-2">
               <div className="flex items-center gap-2 text-sm text-gray-600">
                 <Scissors className="w-4 h-4" />
-                <span>Service choice</span>
+                <span>{pkg ? "Package" : "Service choice"}</span>
               </div>
               <div className="pl-6 space-y-1">
-                {services.map((s) => (
-                  <div key={s.id} className="flex justify-between items-center">
-                    <span className="text-sm font-medium">{s.name}</span>
-                    <span className="text-xs text-gray-400">GHS {Number(s.price).toFixed(2)}</span>
-                  </div>
-                ))}
+                {pkg ? (
+                  <>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-fuchsia-700">{pkg.name}</span>
+                      <span className="text-xs font-medium text-fuchsia-600">GHS {Number(pkg.price).toFixed(2)}</span>
+                    </div>
+                    {services.map((s) => (
+                      <div key={s.id} className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500 pl-2">· {s.name}</span>
+                        <span className="text-xs text-gray-400">{s.durationMinutes} mins</span>
+                      </div>
+                    ))}
+                  </>
+                ) : (
+                  services.map((s) => (
+                    <div key={s.id} className="flex justify-between items-center">
+                      <span className="text-sm font-medium">{s.name}</span>
+                      <span className="text-xs text-gray-400">GHS {Number(s.price).toFixed(2)}</span>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
 

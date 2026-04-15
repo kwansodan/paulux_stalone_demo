@@ -103,8 +103,26 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    //  validate that body contains valid serviceIds 
-    const serviceIds = validatedBody.serviceIds || (validatedBody.serviceId ? [validatedBody.serviceId] : []);
+    // If packageId provided, expand to the package's service IDs
+    let resolvedServiceIds = validatedBody.serviceIds || (validatedBody.serviceId ? [validatedBody.serviceId] : [])
+    let packageId: string | undefined = validatedBody.packageId
+
+    if (packageId) {
+      const pkg = await prisma.servicePackage.findUnique({
+        where: { id: packageId },
+        include: { services: true },
+      })
+      if (!pkg) {
+        return NextResponse.json({ success: false, error: "Package not found" }, { status: 404 })
+      }
+      if (!pkg.isActive) {
+        return NextResponse.json({ success: false, error: "Package is no longer available" }, { status: 409 })
+      }
+      resolvedServiceIds = pkg.services.map((ps) => ps.serviceId)
+    }
+
+    //  validate that body contains valid serviceIds
+    const serviceIds = resolvedServiceIds
 
     if (serviceIds.length === 0) {
       return NextResponse.json(
@@ -204,6 +222,8 @@ export async function POST(request: NextRequest) {
 
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
+      serviceIds,
+      packageId: packageId ?? null,
       termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
     })
 

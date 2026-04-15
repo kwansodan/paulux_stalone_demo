@@ -108,10 +108,39 @@ model Service {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  bookings BookingService[]
+  bookings  BookingService[]
+  packages  PackageService[]
 
   @@index([categoryId])
   @@map("services")
+}
+
+model ServicePackage {
+  id                String            @id @default(uuid()) @db.Uuid
+  name              String
+  description       String?
+  imageUrl          String?
+  price             Decimal           @db.Decimal(10, 2)
+  currency          SupportedCurrency @default(GHS)
+  minDepositPercent Int               @default(0)
+  isActive          Boolean           @default(true)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  services PackageService[]
+  bookings Booking[]
+
+  @@map("packages")
+}
+
+model PackageService {
+  packageId String         @db.Uuid
+  package   ServicePackage @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  serviceId String         @db.Uuid
+  service   Service        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+
+  @@id([packageId, serviceId])
+  @@map("package_services")
 }
 
 enum PaymentProvider {
@@ -168,6 +197,9 @@ model Booking {
   cancelReason  String?
 
   termsAcceptedAt DateTime?
+
+  packageId String?         @db.Uuid
+  package   ServicePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 

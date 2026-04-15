@@ -51,6 +51,8 @@ export const BookingInputSchema = z.object({
     ),
   paymentStatus: PaymentStatusEnum.optional(),
   termsAccepted: z.boolean().optional(),
+  packageId: z.string().uuid().optional(),
+  packagePrice: z.number().min(0).optional(),
 });
 
 // Schema for full booking (with defaults)

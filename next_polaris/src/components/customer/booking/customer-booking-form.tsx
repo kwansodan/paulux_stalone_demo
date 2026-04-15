@@ -10,6 +10,7 @@ import SelectServiceStep from "./select-service-step"
 import BookingDateTimeStep from "./booking-datetime-step"
 import BookingConfirmationStep from "./booking-confirmation-step"
 import { BOOKING_STEPS } from "@/constants"
+import { SerializedPackage } from "@/features/package/types"
 
 export type BookingFormData = {
   // Step 1: Details
@@ -19,19 +20,20 @@ export type BookingFormData = {
 
   minDepositPercent?: number
 
-  // Step 2: Service
+  // Step 2: Service (individual) or Package
   serviceIds: string[]
   selectedServices: SerializedService[]
+  selectedPackage: SerializedPackage | null
 
   // Step 3: Date & Time
   date: string | null
   time: string | null
-
 }
 
 const initialFormData: BookingFormData = {
   serviceIds: [],
   selectedServices: [],
+  selectedPackage: null,
   date: null,
   time: null,
   fullName: "",
@@ -39,23 +41,34 @@ const initialFormData: BookingFormData = {
   phone: "",
 }
 
-
-
 export default function CustomerBookingForm({
   services,
-  preSelectedServiceId
+  packages,
+  preSelectedServiceId,
+  preSelectedPackageId,
 }: {
-  services: SerializedService[];
-  preSelectedServiceId: string | null;
+  services: SerializedService[]
+  packages: SerializedPackage[]
+  preSelectedServiceId: string | null
+  preSelectedPackageId: string | null
 }) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
 
   const [formData, setFormData] = useState<BookingFormData>(() => {
+    if (preSelectedPackageId) {
+      const pkg = packages.find((p) => p.id === preSelectedPackageId)
+      if (pkg) {
+        return {
+          ...initialFormData,
+          selectedPackage: pkg,
+          serviceIds: pkg.services.map((ps) => ps.serviceId),
+          selectedServices: pkg.services.map((ps) => ps.service),
+        }
+      }
+    }
     if (preSelectedServiceId) {
-      const preSelectedService = services.find(
-        (service) => service.id === preSelectedServiceId
-      )
+      const preSelectedService = services.find((s) => s.id === preSelectedServiceId)
       if (preSelectedService) {
         return {
           ...initialFormData,
@@ -128,21 +141,36 @@ export default function CustomerBookingForm({
           {currentStep === 2 && (
             <SelectServiceStep
               services={services}
+              packages={packages}
               selectedServiceIds={formData.serviceIds}
+              selectedPackage={formData.selectedPackage}
+              onSelectPackage={(pkg) => {
+                if (pkg === null) {
+                  updateFormData({ selectedPackage: null, serviceIds: [], selectedServices: [] })
+                } else {
+                  updateFormData({
+                    selectedPackage: pkg,
+                    serviceIds: pkg.services.map((ps) => ps.serviceId),
+                    selectedServices: pkg.services.map((ps) => ps.service),
+                  })
+                }
+              }}
               onSelectService={(service) => {
-                const isSelected = formData.serviceIds.includes(service.id);
-                let newServiceIds: string[];
-                let newSelectedServices: SerializedService[];
+                // Selecting an individual service clears any selected package
+                const isSelected = formData.serviceIds.includes(service.id)
+                let newServiceIds: string[]
+                let newSelectedServices: SerializedService[]
 
                 if (isSelected) {
-                  newServiceIds = formData.serviceIds.filter(id => id !== service.id);
-                  newSelectedServices = formData.selectedServices.filter(s => s.id !== service.id);
+                  newServiceIds = formData.serviceIds.filter((id) => id !== service.id)
+                  newSelectedServices = formData.selectedServices.filter((s) => s.id !== service.id)
                 } else {
-                  newServiceIds = [...formData.serviceIds, service.id];
-                  newSelectedServices = [...formData.selectedServices, service];
+                  newServiceIds = [...formData.serviceIds, service.id]
+                  newSelectedServices = [...formData.selectedServices, service]
                 }
 
                 updateFormData({
+                  selectedPackage: null,
                   serviceIds: newServiceIds,
                   selectedServices: newSelectedServices,
                 })
