@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { BookingInput, BookingInputSchema } from "@/features/booking/utils/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAvailableSlots, useCreateBooking } from "../../client/hooks/use-booking"
 import { SerializedService } from "@/features/service/types"
 import { Form, FormField } from "@/components/ui/form"
@@ -13,7 +12,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo, useState } from "react"
-import { getMinBookingDate } from "../../utils/helpers"
+import { CalendarClock, UserRound, Info } from "lucide-react"
 
 
 
@@ -28,6 +27,8 @@ export default function CreateBookingForm({
   onCancel: () => void;
   onSuccess: () => void;
 }) {
+  const [bookingType, setBookingType] = useState<"SCHEDULED" | "WALKIN">("SCHEDULED")
+  const isWalkIn = bookingType === "WALKIN"
 
   const form = useForm<BookingInput>({
     resolver: zodResolver(BookingInputSchema),
@@ -40,6 +41,7 @@ export default function CreateBookingForm({
       bookingTime: '',
       minDepositPercent: undefined,
       createdById: user.id,
+      bookingType: "SCHEDULED",
     }
   })
 
@@ -52,33 +54,82 @@ export default function CreateBookingForm({
     return services.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
   }, [services, searchTerm])
 
-
-
-  const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, user.id)
+  const { data, isLoading, error } = useAvailableSlots(
+    !isWalkIn ? date : undefined,
+    !isWalkIn && serviceIds.length > 0 ? serviceIds : undefined,
+    user.id
+  )
   const slots = data?.slots ?? []
-
-  console.log("SLOTS", slots)
-
-  // const mutation = useMutation({
-  //   mutationFn: createOrEditBooking,
-  //   onSuccess: (data) => {
-  //     console.log('Successfully created Booking', data)
-  //     toast("New Booking Created!")
-  //     // onSuccess()
-  //   }
-  // })
 
   const mutation = useCreateBooking();
 
   const onSubmit = async (data: BookingInput) => {
-    await mutation.mutateAsync(data)
+    await mutation.mutateAsync({ ...data, bookingType })
     onSuccess()
+  }
+
+  function handleTypeSwitch(type: "SCHEDULED" | "WALKIN") {
+    setBookingType(type)
+    // Clear date/time when switching to walk-in
+    if (type === "WALKIN") {
+      form.setValue("bookingDate", "")
+      form.setValue("bookingTime", "")
+      form.clearErrors(["bookingDate", "bookingTime"])
+    }
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col h-full ">
         <div className="flex-1 overflow-y-auto px-1 space-y-4">
+
+          {/* ── Booking Type Toggle ── */}
+          <div className="space-y-1.5">
+            <Label className="text-sm font-normal text-foreground">Booking Type</Label>
+            <div className="flex rounded-lg border border-[#E2E8F0] overflow-hidden bg-white h-11">
+              <button
+                type="button"
+                onClick={() => handleTypeSwitch("SCHEDULED")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-sm font-medium transition-colors",
+                  !isWalkIn
+                    ? "bg-fuchsia-600 text-white"
+                    : "text-gray-500 hover:bg-gray-50"
+                )}
+              >
+                <CalendarClock className="w-4 h-4" />
+                Scheduled
+              </button>
+              <button
+                type="button"
+                onClick={() => handleTypeSwitch("WALKIN")}
+                className={cn(
+                  "flex-1 flex items-center justify-center gap-1.5 text-sm font-medium transition-colors border-l border-[#E2E8F0]",
+                  isWalkIn
+                    ? "bg-amber-500 text-white"
+                    : "text-gray-500 hover:bg-gray-50"
+                )}
+              >
+                <UserRound className="w-4 h-4" />
+                Walk-in
+              </button>
+            </div>
+          </div>
+
+          {/* Walk-in info banner */}
+          {isWalkIn && (
+            <div className="bg-amber-50 p-3 rounded-lg border border-amber-200 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="text-sm font-medium text-amber-800">Walk-in booking</p>
+                <p className="text-xs text-amber-700 mt-0.5">
+                  Date and time will be set to now. The booking will be immediately confirmed.
+                  Name and email are optional for walk-in customers.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Customer Name */}
           <FormField
             control={form.control}
@@ -86,10 +137,11 @@ export default function CreateBookingForm({
             render={({ field }) => (
               <div className="space-y-1">
                 <Label className="text-sm font-normal text-foreground">
-                  Customer Name <span className="text-red-500">*</span>
+                  Customer Name {!isWalkIn && <span className="text-red-500">*</span>}
+                  {isWalkIn && <span className="text-gray-400 text-xs ml-1">(optional)</span>}
                 </Label>
                 <Input
-                  placeholder="Customer name"
+                  placeholder={isWalkIn ? "Walk-in Guest" : "Customer name"}
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
                 />
@@ -109,10 +161,11 @@ export default function CreateBookingForm({
             render={({ field }) => (
               <div className="space-y-1">
                 <Label className="text-sm font-normal text-foreground">
-                  Customer Email <span className="text-red-500">*</span>
+                  Customer Email {!isWalkIn && <span className="text-red-500">*</span>}
+                  {isWalkIn && <span className="text-gray-400 text-xs ml-1">(optional — needed for Paystack)</span>}
                 </Label>
                 <Input
-                  placeholder="Customer email"
+                  placeholder={isWalkIn ? "Leave blank to use walk-in email" : "Customer email"}
                   type="email"
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
@@ -208,8 +261,7 @@ export default function CreateBookingForm({
             )}
           />
 
-
-          {/* Payment */}
+          {/* Payment / Deposit */}
           <FormField
             control={form.control}
             name="minDepositPercent"
@@ -244,96 +296,95 @@ export default function CreateBookingForm({
             </div>
           )}
 
-          {/* Booking Date */}
-          <FormField
-            control={form.control}
-            name="bookingDate"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <Label className="text-sm font-normal text-foreground">
-                  Booking Date <span className="text-red-500">*</span>
-                </Label>
-                <Input
-                  type="date"
-                  min={new Date().toISOString().split("T")[0]}
-                  className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
-                  {...field}
-                />
-                {form.formState.errors.bookingDate && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.bookingDate.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-
-
-          {/* Booking Time Slots */}
-          <FormField
-            control={form.control}
-            name="bookingTime"
-            render={({ field }) => (
-              <div className="space-y-1">
-                <Label className="text-sm font-normal text-foreground">
-                  Booking Time <span className="text-red-500">*</span>
-                </Label>
-
-                {/* Loading State */}
-                {isLoading && (
-                  <div className="flex items-center justify-center py-4">
-                    <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-fuchsia-600"></div>
-                    <span className="ml-2 text-sm text-gray-500">Loading available times...</span>
+          {/* Date & Time — only shown for scheduled bookings */}
+          {!isWalkIn && (
+            <>
+              {/* Booking Date */}
+              <FormField
+                control={form.control}
+                name="bookingDate"
+                render={({ field }) => (
+                  <div className="space-y-1">
+                    <Label className="text-sm font-normal text-foreground">
+                      Booking Date <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      type="date"
+                      min={new Date().toISOString().split("T")[0]}
+                      className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+                      {...field}
+                    />
+                    {form.formState.errors.bookingDate && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {form.formState.errors.bookingDate.message}
+                      </p>
+                    )}
                   </div>
                 )}
+              />
 
-                {/* Error State */}
-                {error && !isLoading && (
-                  <div className="bg-red-50 border border-red-200 rounded p-3">
-                    <p className="text-sm text-red-600">
-                      Failed to load available times. Please try again.
-                    </p>
+              {/* Booking Time Slots */}
+              <FormField
+                control={form.control}
+                name="bookingTime"
+                render={({ field }) => (
+                  <div className="space-y-1">
+                    <Label className="text-sm font-normal text-foreground">
+                      Booking Time <span className="text-red-500">*</span>
+                    </Label>
+
+                    {isLoading && (
+                      <div className="flex items-center justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-fuchsia-600"></div>
+                        <span className="ml-2 text-sm text-gray-500">Loading available times...</span>
+                      </div>
+                    )}
+
+                    {error && !isLoading && (
+                      <div className="bg-red-50 border border-red-200 rounded p-3">
+                        <p className="text-sm text-red-600">
+                          Failed to load available times. Please try again.
+                        </p>
+                      </div>
+                    )}
+
+                    {!isLoading && !error && slots.length > 0 && (
+                      <div className="grid grid-cols-3 gap-2">
+                        {slots.map((slot: { available: boolean; time: string }) => (
+                          <Button
+                            type="button"
+                            key={slot.time}
+                            disabled={!slot.available}
+                            className={cn(
+                              "disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
+                              field.value === slot.time && 'bg-fuchsia-500 hover:bg-fuchsia-600',
+                              ((slot.available && !field.value) || (field.value !== slot.time)) && 'bg-fuchsia-200 hover:bg-fuchsia-300 text-black',
+                              !slot.available && 'bg-gray-500'
+                            )}
+                            onClick={() => field.onChange(slot.time)}
+                          >
+                            {slot.time}
+                          </Button>
+                        ))}
+                      </div>
+                    )}
+
+                    {!isLoading && !error && slots.length === 0 && (
+                      <p className="text-sm text-gray-400">
+                        No booking times available for booking date selected
+                      </p>
+                    )}
+
+                    {form.formState.errors.bookingTime && (
+                      <p className="text-red-500 text-sm mt-1">
+                        {form.formState.errors.bookingTime.message}
+                      </p>
+                    )}
                   </div>
                 )}
-
-                {/* Slots Grid */}
-                {!isLoading && !error && slots.length > 0 && (
-                  <div className="grid grid-cols-3 gap-2">
-                    {slots.map((slot: { available: boolean; time: string }) => (
-                      <Button
-                        type="button"
-                        key={slot.time}
-                        disabled={!slot.available}
-                        className={cn(
-                          "disabled:cursor-not-allowed disabled:pointer-events-none disabled:opacity-50",
-                          field.value === slot.time && 'bg-fuchsia-500 hover:bg-fuchsia-600',
-                          ((slot.available && !field.value) || (field.value !== slot.time)) && 'bg-fuchsia-200 hover:bg-fuchsia-300 text-black',
-                          !slot.available && 'bg-gray-500'
-                        )}
-                        onClick={() => field.onChange(slot.time)}
-                      >
-                        {slot.time}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-
-                {/* No Slots Available */}
-                {!isLoading && !error && slots.length === 0 && (
-                  <p className="text-sm text-gray-400">
-                    No booking times available for booking date selected
-                  </p>
-                )}
-
-                {/* Form Validation Error */}
-                {form.formState.errors.bookingTime && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.bookingTime.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
+              />
+            </>
+          )}
 
           <div className="bg-blue-50 p-4 rounded-lg border border-blue-200 mt-6 flex items-start gap-3">
             <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -342,7 +393,10 @@ export default function CreateBookingForm({
             <div>
               <p className="text-sm font-medium text-blue-800">In-Person Payment</p>
               <p className="text-xs text-blue-600 mt-1">
-                After creating the booking, use <strong>Charge Customer</strong> to open Paystack checkout on this device. The customer enters their card or MoMo details here.
+                {isWalkIn
+                  ? <>Use <strong>Cash</strong> to mark as paid immediately, or <strong>Charge Customer</strong> to open Paystack checkout on this device.</>
+                  : <>After creating the booking, use <strong>Charge Customer</strong> to open Paystack checkout on this device. The customer enters their MoMo details here.</>
+                }
               </p>
             </div>
           </div>
@@ -365,9 +419,11 @@ export default function CreateBookingForm({
           <Button
             type="submit"
             disabled={mutation.isPending}
-            className="bg-fuchsia-700 hover:bg-fuchsia-600"
+            className={cn(
+              isWalkIn ? "bg-amber-500 hover:bg-amber-600" : "bg-fuchsia-700 hover:bg-fuchsia-600"
+            )}
           >
-            {mutation.isPending ? 'Creating...' : 'Create booking'}
+            {mutation.isPending ? 'Creating...' : isWalkIn ? 'Create Walk-in' : 'Create booking'}
           </Button>
         </div>
       </form>

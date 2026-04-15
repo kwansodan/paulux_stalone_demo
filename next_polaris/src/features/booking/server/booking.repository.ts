@@ -77,6 +77,7 @@ export class BookingRepository {
         packageId: payload.packageId ?? null,
         promoCodeId: payload.promoCodeId ?? null,
         discountAmount: payload.discountAmount ?? null,
+        bookingType: payload.bookingType ?? "SCHEDULED",
         services: {
           create: services.map(s => ({
             serviceId: s.id,

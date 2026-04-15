@@ -3,13 +3,15 @@
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import axios from "axios"
-import { Plus, CircleX, PencilLine, GalleryHorizontal, ToggleLeft, ToggleRight, Loader2 } from "lucide-react"
+import { Plus, CircleX, PencilLine, GalleryHorizontal, ToggleLeft, ToggleRight, Loader2, Mail, Save } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
 import ImageUpload from "@/components/ui/image-upload"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
 import {
   StyleImage,
   useGetStyleImages,
@@ -111,8 +113,10 @@ function StyleImageUpload({
 // ── Main shell ────────────────────────────────────────────────────────────────
 export default function AppSettingsShell({
   initialImages,
+  initialWalkinEmail,
 }: {
   initialImages: StyleImage[]
+  initialWalkinEmail: string
 }) {
   const { data: images = initialImages } = useGetStyleImages()
   const createMutation = useCreateStyleImage()
@@ -129,6 +133,24 @@ export default function AppSettingsShell({
 
   // Edit form state
   const [editCaption, setEditCaption] = useState("")
+
+  // Walk-in email state
+  const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
+  const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
+  const [walkinEmailSaving, setWalkinEmailSaving] = useState(false)
+
+  async function handleSaveWalkinEmail() {
+    setWalkinEmailSaving(true)
+    try {
+      const res = await api.patch("/settings/walkin-email", { email: walkinEmailInput })
+      setWalkinEmail(res.data.data.email)
+      toast.success("Walk-in email updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update walk-in email")
+    } finally {
+      setWalkinEmailSaving(false)
+    }
+  }
 
   function openAdd() {
     setNewImage(null)
@@ -168,7 +190,49 @@ export default function AppSettingsShell({
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
+      {/* ── Walk-in Bookings section ── */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-xl font-semibold text-gray-900">Walk-in Bookings</h2>
+          <p className="text-sm text-gray-500 mt-0.5">
+            This email is used as a Paystack billing email for walk-in customers who don&apos;t provide their own email.
+          </p>
+        </div>
+        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 max-w-lg">
+          <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+            <Mail className="w-4 h-4 flex-shrink-0" />
+            <span>Receipts for walk-in Paystack payments are sent to this address.</span>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium text-gray-700">Walk-in Paystack Email</Label>
+            <div className="flex gap-2">
+              <Input
+                type="email"
+                className="h-11 bg-white border-[#E2E8F0] rounded-lg shadow-none flex-1"
+                value={walkinEmailInput}
+                onChange={(e) => setWalkinEmailInput(e.target.value)}
+                placeholder="walkin@example.com"
+              />
+              <Button
+                className="h-11 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
+                disabled={walkinEmailSaving || walkinEmailInput.trim() === walkinEmail}
+                onClick={handleSaveWalkinEmail}
+              >
+                {walkinEmailSaving ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <><Save className="w-4 h-4 mr-1.5" />Save</>
+                )}
+              </Button>
+            </div>
+          </div>
+          <p className="text-xs text-gray-400">Current: <span className="font-mono text-gray-600">{walkinEmail}</span></p>
+        </div>
+      </div>
+
+      <div className="border-t border-gray-100" />
+
       {/* ── Hero Slideshow section ── */}
       <div className="space-y-6">
         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">

@@ -4,9 +4,9 @@ import { useMemo, useState } from "react"
 import BookingsFilters from "./bookings-filters"
 import { BookingFilters, BookingWithServiceAndPayment } from "../types"
 import { DataTable } from "@/components/data-table"
-import { useBookings, useChargeCustomer } from "../client/hooks/use-booking"
+import { useBookings, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { Loader2, Banknote } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 
@@ -23,6 +23,7 @@ export default function BookingsTable() {
   const [filters, setFilters] = useState<BookingFilters>(initialFilters)
   const [chargeBooking, setChargeBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const chargeCustomer = useChargeCustomer()
+  const markAsPaid = useMarkAsPaid()
   // remove 'all' values and empty strings before sending to API
   const apiFilters = useMemo(() => {
     return Object.entries(filters).reduce((acc, [key, value]) => {
@@ -43,11 +44,21 @@ export default function BookingsTable() {
     {
       key: "bookedBy",
       label: "Booked by",
-      render: (row: BookingWithServiceAndPayment) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.createdById ? "bg-fuchsia-100 text-fuchsia-700" : "bg-blue-50 text-blue-700"}`}>
-          {row.createdById ? "Admin" : "Customer"}
-        </span>
-      )
+      render: (row: BookingWithServiceAndPayment) => {
+        const isWalkIn = row.bookingType === "WALKIN"
+        if (isWalkIn) {
+          return (
+            <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+              Walk-in
+            </span>
+          )
+        }
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${row.createdById ? "bg-fuchsia-100 text-fuchsia-700" : "bg-blue-50 text-blue-700"}`}>
+            {row.createdById ? "Admin" : "Customer"}
+          </span>
+        )
+      }
     },
     {
       key: "services",
@@ -107,19 +118,38 @@ export default function BookingsTable() {
       render: (row: BookingWithServiceAndPayment) => {
         const paymentStatus = calculatePaymentStatus(row)
         const isUnpaidOrPartial = ['PENDING', 'PARTIAL', 'FAILED'].includes(paymentStatus)
+        const isWalkIn = row.bookingType === "WALKIN"
 
         if (row.status === "CANCELLED" || row.status === "COMPLETED") return null
         if (!isUnpaidOrPartial) return null
 
         return (
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-8 bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100"
-            onClick={() => setChargeBooking(row)}
-          >
-            Charge
-          </Button>
+          <div className="flex items-center gap-1.5">
+            {/* Cash button — shown for all unpaid bookings (primary for walk-ins) */}
+            {isWalkIn && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
+                disabled={markAsPaid.isPending}
+                onClick={() => markAsPaid.mutate(row.id)}
+              >
+                <Banknote className="w-3.5 h-3.5 mr-1" />
+                Cash
+              </Button>
+            )}
+            {/* Charge button — shown when email present OR not a walk-in */}
+            {(!isWalkIn || row.clientEmail) && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200 hover:bg-fuchsia-100"
+                onClick={() => setChargeBooking(row)}
+              >
+                Charge
+              </Button>
+            )}
+          </div>
         )
       }
     }

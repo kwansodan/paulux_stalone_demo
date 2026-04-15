@@ -16,12 +16,16 @@ export const PaymentStatusEnum = z.enum([
 const timeRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
 export const BookingInputSchema = z.object({
+  bookingType: z.enum(["SCHEDULED", "WALKIN"]).default("SCHEDULED"),
   clientName: z
     .string()
-    .min(2, "Client name must be at least 2 characters"),
+    .min(2, "Client name must be at least 2 characters")
+    .optional(),
   clientEmail: z
     .string()
-    .email("Invalid email address"),
+    .email("Invalid email address")
+    .optional()
+    .or(z.literal("")),
   clientPhone: z
     .string()
     .min(7, "Phone must be at least 7 characters")
@@ -36,10 +40,12 @@ export const BookingInputSchema = z.object({
     .optional(),
   bookingDate: z
     .string()
-    .regex(dateRegex, "Date must be YYYY-MM-DD"),
+    .regex(dateRegex, "Date must be YYYY-MM-DD")
+    .optional(),
   bookingTime: z
     .string()
-    .regex(timeRegex, "Time must be HH:mm"),
+    .regex(timeRegex, "Time must be HH:mm")
+    .optional(),
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
   minDepositPercent: z

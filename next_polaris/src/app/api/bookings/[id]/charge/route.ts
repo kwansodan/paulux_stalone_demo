@@ -5,6 +5,7 @@ import { calculatePaymentStatus } from "@/features/payment/utils/helpers";
 import { BookingStatus, PaymentProvider, PaymentStatus, SupportedCurrency } from "@generated/prisma/client";
 import { Decimal, JsonValue } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function POST(
     request: NextRequest,
@@ -83,9 +84,16 @@ export async function POST(
             transactionType = 'subsequent';
         }
 
+        // For walk-in bookings without an email, fall back to the configured walk-in email
+        let chargeEmail = booking.clientEmail
+        if (!chargeEmail) {
+            const walkinSetting = await prisma.systemSetting.findUnique({ where: { key: "walkin_email" } })
+            chargeEmail = walkinSetting?.value || "walkin@polarisbeautylounge.com"
+        }
+
         const paymentResult = await paymentProcessingService.initializePayment({
             bookingId: booking.id,
-            email: booking.clientEmail,
+            email: chargeEmail,
             amount: amountToCharge,
             bookingReference: booking.bookingReference,
             transactionType,

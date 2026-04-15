@@ -154,6 +154,11 @@ enum DiscountType {
   FIXED
 }
 
+enum BookingType {
+  SCHEDULED
+  WALKIN
+}
+
 model PromoCode {
   id               String       @id @default(uuid()) @db.Uuid
   code             String       @unique
@@ -228,6 +233,8 @@ model Booking {
   promoCodeId    String?    @db.Uuid
   promoCode      PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
   discountAmount Decimal?   @db.Decimal(10, 2)
+
+  bookingType    BookingType @default(SCHEDULED)
 
   createdAt DateTime @default(now())
 

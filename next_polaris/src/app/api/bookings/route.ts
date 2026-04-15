@@ -89,6 +89,19 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedBody = BookingSchema.parse(body)
 
+    const isWalkIn = validatedBody.bookingType === "WALKIN"
+
+    // Walk-in bookings are admin-only
+    if (isWalkIn) {
+      const auth = await requireRoleApi(['ADMIN'])
+      if (!auth.ok) return auth.response
+      if (!validatedBody.createdById) {
+        return NextResponse.json(
+          { success: false, error: 'Walk-in bookings require a createdById (admin only)' },
+          { status: 400 })
+      }
+    }
+
     // Authorization check for updates
     if (validatedBody.id) {
       const auth = await requireRoleApi(['ADMIN'])
@@ -101,6 +114,37 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { success: false, error: 'Invalid createdById provided' },
           { status: 409 })
+      }
+    }
+
+    // For scheduled bookings, require date and time
+    if (!isWalkIn) {
+      if (!validatedBody.bookingDate) {
+        return NextResponse.json({ success: false, error: 'bookingDate is required' }, { status: 400 })
+      }
+      if (!validatedBody.bookingTime) {
+        return NextResponse.json({ success: false, error: 'bookingTime is required' }, { status: 400 })
+      }
+      if (!validatedBody.clientName || validatedBody.clientName.trim().length < 2) {
+        return NextResponse.json({ success: false, error: 'clientName is required' }, { status: 400 })
+      }
+      if (!validatedBody.clientEmail) {
+        return NextResponse.json({ success: false, error: 'clientEmail is required' }, { status: 400 })
+      }
+    }
+
+    // Auto-fill walk-in date/time (today + current time)
+    if (isWalkIn) {
+      const now = new Date()
+      validatedBody.bookingDate = now.toISOString().split('T')[0]
+      const hh = String(now.getHours()).padStart(2, '0')
+      const mm = String(now.getMinutes()).padStart(2, '0')
+      validatedBody.bookingTime = `${hh}:${mm}`
+      if (!validatedBody.clientName || validatedBody.clientName.trim() === '') {
+        validatedBody.clientName = 'Walk-in Guest'
+      }
+      if (!validatedBody.clientEmail || validatedBody.clientEmail.trim() === '') {
+        validatedBody.clientEmail = ''
       }
     }
 
@@ -143,82 +187,59 @@ export async function POST(request: NextRequest) {
 
     const totalDuration = existingServices.reduce((sum, s) => sum + s.durationMinutes, 0);
 
-    // check if date is blocked
-    const blocked = await blockedDateRepository.findByDate(
-      new Date(validatedBody.bookingDate).toString()
-    )
-
-    if (blocked) {
-      return NextResponse.json(
-        { success: false, error: "Selected date is blocked" },
-        { status: 409 }
+    if (!isWalkIn) {
+      // check if date is blocked
+      const blocked = await blockedDateRepository.findByDate(
+        new Date(validatedBody.bookingDate!).toString()
       )
-    }
 
+      if (blocked) {
+        return NextResponse.json(
+          { success: false, error: "Selected date is blocked" },
+          { status: 409 }
+        )
+      }
 
-    const bookingDateObj = new Date(validatedBody.bookingDate)
-    const dayOfWeek = bookingDateObj.getUTCDay() // 0-6
+      const bookingDateObj = new Date(validatedBody.bookingDate!)
+      const dayOfWeek = bookingDateObj.getUTCDay()
 
-    const businessHour = await businessHourRepository.findByDayOfWeek(dayOfWeek)
+      const businessHour = await businessHourRepository.findByDayOfWeek(dayOfWeek)
 
-    if (!businessHour || !businessHour.isOpen) {
-      return NextResponse.json(
-        { success: false, error: "Business is closed on this day" },
-        { status: 409 }
+      if (!businessHour || !businessHour.isOpen) {
+        return NextResponse.json(
+          { success: false, error: "Business is closed on this day" },
+          { status: 409 }
+        )
+      }
+
+      if (!isTimeWithinRange(validatedBody.bookingTime!, businessHour.startTime, businessHour.endTime)) {
+        return NextResponse.json(
+          { success: false, error: "Booking time is outside business hours" },
+          { status: 409 }
+        )
+      }
+
+      if (isPastSlot(new Date(validatedBody.bookingDate!), validatedBody.bookingTime!)) {
+        return NextResponse.json(
+          { success: false, error: "Selected time is already in the past" },
+          { status: 409 }
+        )
+      }
+
+      // check if booking already exists for chosen date or time
+      const isAvailable = await bookingRepository.isSlotAvailable(
+        new Date(validatedBody.bookingDate!),
+        validatedBody.bookingTime!,
+        totalDuration,
+        validatedBody.id,
+        serviceIds,
       )
-    }
 
-    if (
-      !isTimeWithinRange(
-        validatedBody.bookingTime,
-        businessHour.startTime,
-        businessHour.endTime
-      )
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: "Booking time is outside business hours"
-        },
-        { status: 409 }
-      )
-    }
-
-    if (isPastSlot(
-      new Date(validatedBody.bookingDate),
-      validatedBody.bookingTime
-    )) {
-      return NextResponse.json(
-        { success: false, error: "Selected time is already in the past" },
-        { status: 409 }
-      )
-    }
-
-    // Check if booking is at least 24 hours in advance
-    // if (!isTime24HoursInAdvance(
-    //   new Date(validatedBody.bookingDate),
-    //   validatedBody.bookingTime
-    // )) {
-    //   return NextResponse.json(
-    //     { success: false, error: "Booking must be made at least 24 hours in advance" },
-    //     { status: 409 }
-    //   )
-    // }
-
-
-    // check if booking already exists for chosen date or time
-    const isAvailable = await bookingRepository.isSlotAvailable(
-      new Date(validatedBody.bookingDate),
-      validatedBody.bookingTime,
-      totalDuration,
-      validatedBody.id,
-      serviceIds,
-    )
-
-    if (!isAvailable) {
-      return NextResponse.json(
-        { success: false, error: 'Booking already exists for slot (overlap detected)' },
-        { status: 409 })
+      if (!isAvailable) {
+        return NextResponse.json(
+          { success: false, error: 'Booking already exists for slot (overlap detected)' },
+          { status: 409 })
+      }
     }
 
     // Validate promo code server-side (re-check to prevent client tampering)
@@ -261,6 +282,9 @@ export async function POST(request: NextRequest) {
       termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
       promoCodeId: verifiedPromoCodeId,
       discountAmount: verifiedDiscountAmount,
+      bookingType: validatedBody.bookingType ?? "SCHEDULED",
+      // Walk-ins are immediately confirmed
+      ...(isWalkIn && { status: "CONFIRMED" }),
     })
 
     await inngest.send({
