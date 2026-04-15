@@ -3,21 +3,24 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 import LandingHero from "@/components/landing/landing-hero"
 import LandingCTA from "@/components/landing/landing-cta"
 import ServicesCarousel from "@/components/customer/services/services-carousel"
+import { prisma } from "@/lib/prisma"
 
 export const dynamic = 'force-dynamic'
 
-// const LandingCTA = dynamic(() => import('@/components/landing/landing-cta'), { ssr: false });
-
-
 export default async function HomePage() {
-  const services = await serviceRepository.getAllServices({
-    isActive: true,
-  })
+  const [services, styleImages] = await Promise.all([
+    serviceRepository.getAllServices({ isActive: true }),
+    prisma.styleImage.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { id: true, url: true, caption: true },
+    }),
+  ])
 
   return (
     <main className="flex flex-col bg-white">
 
-      <LandingHero />
+      <LandingHero slideImages={styleImages} />
 
       <section className="px-4 py-16 space-y-12">
         <div className="">

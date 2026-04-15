@@ -283,6 +283,19 @@ model PaymentAuditLog {
   @@map("payment_audit_logs")
 }
 
+model StyleImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  url        String
+  objectName String
+  caption    String?
+  sortOrder  Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("style_images")
+}
+
 model SystemSetting {
   id    String @id @default(uuid()) @db.Uuid
   key   String @unique

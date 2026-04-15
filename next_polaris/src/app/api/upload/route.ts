@@ -21,7 +21,9 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: "File exceeds 5MB limit" }, { status: 400 });
         }
 
-        const objectName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`;
+        const folder = request.nextUrl.searchParams.get("folder")
+        const baseName = `${Date.now()}-${file.name.replace(/\s+/g, "-")}`
+        const objectName = folder ? `${folder}/${baseName}` : baseName;
 
         // Ensure bucket exists with a public-read policy
         const bucketExists = await minioClient.bucketExists(BUCKET_NAME);
