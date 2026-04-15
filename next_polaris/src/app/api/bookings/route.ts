@@ -221,11 +221,46 @@ export async function POST(request: NextRequest) {
         { status: 409 })
     }
 
+    // Validate promo code server-side (re-check to prevent client tampering)
+    let verifiedPromoCodeId: string | null = null
+    let verifiedDiscountAmount: number | null = null
+
+    if (validatedBody.promoCodeId) {
+      const promo = await prisma.promoCode.findUnique({ where: { id: validatedBody.promoCodeId } })
+      const isValid =
+        promo &&
+        promo.isActive &&
+        (!promo.expiresAt || promo.expiresAt > new Date()) &&
+        (promo.maxUses === null || promo.usedCount < promo.maxUses)
+
+      if (isValid && promo) {
+        // Use client-supplied discountAmount but cap it at bookingTotal
+        const bookingTotal = existingServices.reduce((sum, s) => sum + Number(s.price), 0)
+        const discountValue = Number(promo.discountValue)
+        let computedDiscount =
+          promo.discountType === "PERCENTAGE"
+            ? Math.min(bookingTotal * (discountValue / 100), bookingTotal)
+            : Math.min(discountValue, bookingTotal)
+        computedDiscount = Math.round(computedDiscount * 100) / 100
+
+        verifiedPromoCodeId = promo.id
+        verifiedDiscountAmount = computedDiscount
+
+        // Increment usedCount atomically
+        await prisma.promoCode.update({
+          where: { id: promo.id },
+          data: { usedCount: { increment: 1 } },
+        })
+      }
+    }
+
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
       serviceIds,
       packageId: packageId ?? null,
       termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
+      promoCodeId: verifiedPromoCodeId,
+      discountAmount: verifiedDiscountAmount,
     })
 
     await inngest.send({

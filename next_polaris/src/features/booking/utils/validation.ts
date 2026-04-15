@@ -53,6 +53,8 @@ export const BookingInputSchema = z.object({
   termsAccepted: z.boolean().optional(),
   packageId: z.string().uuid().optional(),
   packagePrice: z.number().min(0).optional(),
+  promoCodeId: z.string().uuid().optional(),
+  discountAmount: z.number().min(0).optional(),
 });
 
 // Schema for full booking (with defaults)

@@ -149,6 +149,30 @@ enum PaymentProvider {
   MANUAL
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FIXED
+}
+
+model PromoCode {
+  id               String       @id @default(uuid()) @db.Uuid
+  code             String       @unique
+  description      String?
+  discountType     DiscountType
+  discountValue    Decimal      @db.Decimal(10, 2)
+  maxUses          Int?
+  usedCount        Int          @default(0)
+  expiresAt        DateTime?
+  isActive         Boolean      @default(true)
+  minBookingAmount Decimal?     @db.Decimal(10, 2)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  bookings Booking[]
+
+  @@map("promo_codes")
+}
+
 model Payment {
   id String @id @default(uuid()) @db.Uuid
 
@@ -200,6 +224,10 @@ model Booking {
 
   packageId String?         @db.Uuid
   package   ServicePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
+
+  promoCodeId    String?    @db.Uuid
+  promoCode      PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  discountAmount Decimal?   @db.Decimal(10, 2)
 
   createdAt DateTime @default(now())
 

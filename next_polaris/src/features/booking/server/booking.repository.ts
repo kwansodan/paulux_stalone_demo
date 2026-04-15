@@ -75,6 +75,8 @@ export class BookingRepository {
         createdById: payload?.createdById ?? null,
         termsAcceptedAt: payload.termsAcceptedAt ?? null,
         packageId: payload.packageId ?? null,
+        promoCodeId: payload.promoCodeId ?? null,
+        discountAmount: payload.discountAmount ?? null,
         services: {
           create: services.map(s => ({
             serviceId: s.id,

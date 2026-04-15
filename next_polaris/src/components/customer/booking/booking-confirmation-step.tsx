@@ -1,7 +1,8 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Scissors, Calendar, Clock, Loader2 } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Scissors, Calendar, Clock, Loader2, Tag, X, CheckCircle2 } from "lucide-react"
 import { useState } from "react"
 import { BookingFormData } from "./customer-booking-form"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
@@ -24,27 +25,77 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const [isProcessing, setIsProcessing] = useState(false)
   const [termsAccepted, setTermsAccepted] = useState(false)
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState("")
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [appliedPromo, setAppliedPromo] = useState<{
+    promoCodeId: string
+    code: string
+    discountAmount: number
+    discountType: string
+    discountValue: number
+  } | null>(null)
+
   // Package price overrides individual service sum
-  const totalPrice = pkg
+  const baseTotal = pkg
     ? Number(pkg.price)
     : services.reduce((sum, s) => sum + Number(s.price), 0)
+  const discountAmount = appliedPromo?.discountAmount ?? 0
+  const totalPrice = Math.max(0, baseTotal - discountAmount)
+
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
   const minDepositPct = pkg
     ? pkg.minDepositPercent
     : (formData.minDepositPercent ?? services.reduce((max, s) => Math.max(max, s.minDepositPercent), 0))
   const hasDepositRequirement = minDepositPct < 100
-  const depositAmount = totalPrice * (minDepositPct / 100)
+  const depositPayment = totalPrice * (minDepositPct / 100)
 
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
     hasDepositRequirement ? "deposit" : "full"
   )
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return
+    setPromoLoading(true)
+    setPromoError(null)
+    try {
+      const res = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim(), bookingTotal: baseTotal }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setAppliedPromo({
+          promoCodeId: data.promoCodeId,
+          code: promoInput.trim().toUpperCase(),
+          discountAmount: data.discountAmount,
+          discountType: data.discountType,
+          discountValue: data.discountValue,
+        })
+        setPromoInput("")
+      } else {
+        setPromoError(data.message || "Invalid promo code")
+      }
+    } catch {
+      setPromoError("Failed to validate promo code. Please try again.")
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null)
+    setPromoError(null)
+  }
 
   const createBookingMutation = useCreateBooking()
 
   const handleProceedToPayment = async () => {
     try {
       setIsProcessing(true)
-      const amount = paymentOption === "deposit" ? depositAmount : totalPrice
+      const amount = paymentOption === "deposit" ? depositPayment : totalPrice
 
       console.log("Proceeding to payment with:", {
         ...formData,
@@ -62,6 +113,10 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
         clientPhone: formData.phone,
         termsAccepted,
         ...(pkg && { packageId: pkg.id }),
+        ...(appliedPromo && {
+          promoCodeId: appliedPromo.promoCodeId,
+          discountAmount: appliedPromo.discountAmount,
+        }),
       }
 
       const booking = await createBookingMutation.mutateAsync(payload)
@@ -182,6 +237,55 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           </div>
         </div>
 
+        {/* Promo Code */}
+        <div className="space-y-2">
+          {!appliedPromo ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <Tag className="w-4 h-4 text-fuchsia-500" />
+                Promo Code
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter code"
+                  value={promoInput}
+                  onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                  className="rounded-xl border-gray-200 uppercase placeholder:normal-case"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleApplyPromo}
+                  disabled={promoLoading || !promoInput.trim()}
+                  className="rounded-xl border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-50 px-5 flex-shrink-0"
+                >
+                  {promoLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                </Button>
+              </div>
+              {promoError && (
+                <p className="text-xs text-red-500 flex items-center gap-1">{promoError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-700">{appliedPromo.code}</p>
+                  <p className="text-xs text-green-600">
+                    You save GHS {appliedPromo.discountAmount.toFixed(2)}
+                    {appliedPromo.discountType === "PERCENTAGE" && ` (${appliedPromo.discountValue}% off)`}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleRemovePromo} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Payment Options */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Choose payment option</h3>
@@ -190,6 +294,18 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium">Total Service Cost</span>
             </div>
+            {appliedPromo && (
+              <div className="space-y-0.5">
+                <div className="flex items-center justify-between text-sm text-gray-500">
+                  <span>Subtotal</span>
+                  <span>GHS {baseTotal.toFixed(2)}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm text-green-600">
+                  <span>Discount ({appliedPromo.code})</span>
+                  <span>- GHS {appliedPromo.discountAmount.toFixed(2)}</span>
+                </div>
+              </div>
+            )}
             <span className="text-xl font-bold text-fuchsia-600">
               GHS {totalPrice.toFixed(2)}
             </span>
@@ -228,10 +344,10 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
                   </div>
                   <p className="text-xs text-gray-600 mb-2">
                     Secure your booking now, pay the remaining GHS{" "}
-                    {depositAmount.toFixed(2)} at the salon
+                    {depositPayment.toFixed(2)} at the salon
                   </p>
                   <span className="text-xl font-bold text-fuchsia-600">
-                    GHS {depositAmount.toFixed(2)}
+                    GHS {depositPayment.toFixed(2)}
                   </span>
                 </div>
               </div>

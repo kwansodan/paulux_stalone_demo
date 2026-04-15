@@ -1,4 +1,4 @@
-import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, reportsPath, serviceCategoriesPath, servicesPath } from "@/app/paths";
+import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, promoCodesPath, reportsPath, serviceCategoriesPath, servicesPath } from "@/app/paths";
 import { NavItem } from "./types";
 import {
   Home,
@@ -9,6 +9,7 @@ import {
   ClipboardList,
   Layers,
   Settings,
+  Tag,
 } from 'lucide-react';
 
 
@@ -48,6 +49,11 @@ export const navItems: NavItem[] = [
     title: "Reports",
     icon: <ClipboardList />,
     href: reportsPath(),
+  },
+  {
+    title: "Promo Codes",
+    icon: <Tag />,
+    href: promoCodesPath(),
   },
   {
     separator: true,
