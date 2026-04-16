@@ -1,4 +1,5 @@
 import { PaymentStatus, Prisma } from "@generated/prisma/client";
+import { BookingFull } from "@/lib/prisma-includes";
 
 export interface BookingQueryResult {
   bookings: BookingWithService[];
@@ -11,40 +12,13 @@ export interface BookingQueryOptions {
   includeRevenue?: boolean;
 }
 
-export type BookingWithService = Prisma.BookingGetPayload<{
-  include: {
-    services: {
-      include: {
-        service: true
-      }
-    },
-    payments: true,
-    assignedTo: {
-      select: {
-        id: true,
-        username: true,
-        phone: true,
-      }
-    },
-  }
-}>
-export type BookingWithServiceAndPayment = Prisma.BookingGetPayload<{
-  include: {
-    services: {
-      include: {
-        service: true
-      }
-    },
-    payments: true,
-    assignedTo: {
-      select: {
-        id: true,
-        username: true,
-        phone: true,
-      }
-    },
-  }
-}>
+/**
+ * Both aliases resolve to BookingFull — the single canonical booking type
+ * derived from bookingInclude in src/lib/prisma-includes.ts.
+ * Kept as aliases so existing imports throughout the codebase continue to work.
+ */
+export type BookingWithService = BookingFull
+export type BookingWithServiceAndPayment = BookingFull
 
 export type IBookingMetrics = {
   totalBookings: number

@@ -2,6 +2,7 @@ import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { prisma } from "@/lib/prisma";
 import { UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
+import { bookingInclude } from "@/lib/prisma-includes";
 
 export async function PATCH(
     request: NextRequest,
@@ -41,11 +42,7 @@ export async function PATCH(
         const updated = await prisma.booking.update({
             where: { id: bookingId },
             data: { assignedToId: stylistId ?? null },
-            include: {
-                assignedTo: {
-                    select: { id: true, username: true, phone: true },
-                },
-            },
+            include: bookingInclude,
         });
 
         return NextResponse.json({

@@ -4,6 +4,7 @@ import { calculatePaymentStatus } from "../utils/helpers";
 import { PaymentProvider, Prisma } from "@generated/prisma/client";
 import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack";
 import { inngest } from "@/lib/inngest";
+import { bookingInclude } from "@/lib/prisma-includes";
 
 export class PaymentService {
     /**
@@ -24,10 +25,7 @@ export class PaymentService {
             },
             include: {
                 booking: {
-                    include: {
-                        services: { include: { service: true } },
-                        payments: true,
-                    },
+                    include: bookingInclude,
                 },
             },
         });
@@ -62,13 +60,8 @@ export class PaymentService {
         if (booking.status !== 'CONFIRMED') {
             booking = await prisma.booking.update({
                 where: { id: payment.bookingId },
-                data: {
-                    status: 'CONFIRMED',
-                },
-                include: {
-                    services: { include: { service: true } },
-                    payments: true
-                },
+                data: { status: 'CONFIRMED' },
+                include: bookingInclude,
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
@@ -109,7 +102,7 @@ export class PaymentService {
 
         const invoice = await prisma.invoice.findUnique({
             where: { id: invoiceId },
-            include: { booking: { include: { services: { include: { service: true } }, payments: true } } }
+            include: { booking: { include: bookingInclude } }
         });
 
         if (!invoice) throw new Error("Invoice not found");
@@ -143,10 +136,8 @@ export class PaymentService {
         if (booking.status !== 'CONFIRMED') {
             booking = await prisma.booking.update({
                 where: { id: invoice.bookingId },
-                data: {
-                    status: 'CONFIRMED',
-                },
-                include: { services: { include: { service: true } }, payments: true }
+                data: { status: 'CONFIRMED' },
+                include: bookingInclude,
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
@@ -185,7 +176,7 @@ export class PaymentService {
     async refreshBookingPaymentStatus(bookingId: string) {
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
-            include: { services: { include: { service: true } }, payments: true }
+            include: bookingInclude,
         });
 
         if (!booking) throw new Error("Booking not found");

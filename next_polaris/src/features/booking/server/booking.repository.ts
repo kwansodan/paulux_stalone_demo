@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { Booking, BookingStatus, PaymentStatus, Prisma } from "@generated/prisma/client";
-import { generateBookingReference, timeToMinutes, minutesToTime } from "@/utils/helpers";
+import { generateBookingReference, timeToMinutes } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment, BookingWithService } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
-import { serviceRepository } from "@/features/service/server/service.repository";
+import { bookingInclude } from "@/lib/prisma-includes";
 
 
 export class BookingRepository {
@@ -25,7 +25,7 @@ export class BookingRepository {
         throw new Error("Booking not found. Cannot update.")
       }
 
-      // Update basic fields
+      // Update basic fields (fire-and-forget — no return value consumed)
       await prisma.booking.update({
         where: { id: payload.id },
         data: {
@@ -56,9 +56,10 @@ export class BookingRepository {
         });
       }
 
+      // Return the full canonical shape
       return prisma.booking.findUniqueOrThrow({
         where: { id: payload.id },
-        include: { services: { include: { service: true } } }
+        include: bookingInclude,
       }) as unknown as Booking;
     }
 
@@ -86,9 +87,7 @@ export class BookingRepository {
           }))
         }
       },
-      include: {
-        services: { include: { service: true } }
-      }
+      include: bookingInclude,
     })
 
     if (payload.status === BookingStatus.CONFIRMED) {
@@ -99,7 +98,7 @@ export class BookingRepository {
           booking = await prisma.booking.update({
             where: { id: booking.id },
             data: { googleEventId: eventId },
-            include: { services: { include: { service: true } } }
+            include: bookingInclude,
           });
         }
       } catch (error) {
@@ -107,51 +106,30 @@ export class BookingRepository {
       }
     }
 
-    // Payment is now triggered manually by admin via "Charge Customer" (POS flow)
-
-    return booking;
+    return booking as unknown as Booking;
   }
 
 
   async getAllBookings(where?: Prisma.BookingWhereInput, options?: BookingQueryOptions): Promise<BookingQueryResult> {
     const bookings = await prisma.booking.findMany({
       where,
-      include: {
-        services: {
-          include: {
-            service: true
-          }
-        },
-        payments: true,
-        assignedTo: {
-          select: { id: true, username: true, phone: true },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+      include: bookingInclude,
+      orderBy: { createdAt: 'desc' },
     }) as unknown as BookingWithServiceAndPayment[];
 
     if (!options) {
       return { bookings }
     }
 
-    const queryResult: any = {
-      bookings: bookings
-    };
+    const queryResult: any = { bookings };
     if (options.includeCount) {
       queryResult['count'] = bookings.length
     }
     if (options.includeRevenue) {
-      const activeBookings = bookings.filter(
-        b => b.status !== BookingStatus.CANCELLED
-      )
-      const revenue = activeBookings.reduce((sum, booking) => {
-        const bookingTotal = booking.services.reduce((sSum, bs) => sSum + Number(bs.priceAtBooking), 0);
-        return sum + bookingTotal;
+      const activeBookings = bookings.filter(b => b.status !== BookingStatus.CANCELLED)
+      queryResult['revenue'] = activeBookings.reduce((sum, booking) => {
+        return sum + booking.services.reduce((sSum, bs) => sSum + Number(bs.priceAtBooking), 0);
       }, 0);
-
-      queryResult['revenue'] = revenue
     }
 
     return queryResult
@@ -161,22 +139,10 @@ export class BookingRepository {
   async findById(id: string) {
     const result = await prisma.booking.findUnique({
       where: { id },
-      include: {
-        services: {
-          include: {
-            service: true
-          }
-        },
-        payments: true,
-        assignedTo: {
-          select: { id: true, username: true, phone: true },
-        },
-      },
+      include: bookingInclude,
     })
 
-    if (!result) {
-      return null
-    }
+    if (!result) return null
 
     return result as unknown as BookingWithServiceAndPayment
   }
@@ -184,13 +150,7 @@ export class BookingRepository {
   async findByReference(reference: string) {
     return prisma.booking.findUnique({
       where: { bookingReference: reference },
-      include: {
-        services: {
-          include: {
-            service: true
-          }
-        },
-      },
+      include: bookingInclude,
     }) as unknown as BookingWithService
   }
 
@@ -204,7 +164,6 @@ export class BookingRepository {
     const dateString = date.toISOString().split('T')[0]
     const dayOfWeek = date.getUTCDay()
 
-    // Get global capacity for this day
     const businessHour = await prisma.businessHour.findUnique({
       where: { dayOfWeek },
       select: { maxConcurrentBookings: true }
@@ -221,7 +180,7 @@ export class BookingRepository {
       ...(excludeBookingId && { id: { not: excludeBookingId } }),
     }
 
-    // Fetch all existing bookings for this date
+    // Fetch all existing bookings for this date (minimal include — only for slot calc)
     const existingBookings = await prisma.booking.findMany({
       where: baseWhere,
       include: { services: true },
@@ -251,7 +210,6 @@ export class BookingRepository {
         include: { category: true },
       });
 
-      // Collect unique categories with a capacity set
       const categoryMap = new Map<string, { id: string; capacity: number }>();
       for (const svc of requestedServices) {
         if (svc.category) {
@@ -260,7 +218,6 @@ export class BookingRepository {
       }
 
       for (const [categoryId, category] of categoryMap) {
-        // Find all bookings on this date that contain at least one service in this category
         const categoryBookings = await prisma.booking.findMany({
           where: {
             ...baseWhere,
@@ -294,14 +251,8 @@ export class BookingRepository {
   async rescheduleBooking(id: string, bookingDate: string, bookingTime: string) {
     return prisma.booking.update({
       where: { id },
-      data: {
-        bookingDate,
-        bookingTime,
-      },
-      include: {
-        services: { include: { service: true } },
-        payments: true,
-      },
+      data: { bookingDate, bookingTime },
+      include: bookingInclude,
     })
   }
 
@@ -310,9 +261,7 @@ export class BookingRepository {
     let booking = await prisma.booking.update({
       where: { id },
       data: { status },
-      include: {
-        services: { include: { service: true } },
-      },
+      include: bookingInclude,
     })
 
     if (status === BookingStatus.CONFIRMED && !booking.googleEventId) {
@@ -322,7 +271,7 @@ export class BookingRepository {
           booking = await prisma.booking.update({
             where: { id: booking.id },
             data: { googleEventId: eventId },
-            include: { services: { include: { service: true } } }
+            include: bookingInclude,
           });
         }
       } catch (error) {
@@ -334,9 +283,7 @@ export class BookingRepository {
   }
 
   async countByStatus(status: BookingStatus) {
-    return prisma.booking.count({
-      where: { status }
-    })
+    return prisma.booking.count({ where: { status } })
   }
 
 
@@ -352,11 +299,7 @@ export class BookingRepository {
 
 
   async deleteById(id: string) {
-    return prisma.booking.delete({
-      where: {
-        id
-      }
-    })
+    return prisma.booking.delete({ where: { id } })
   }
 }
 

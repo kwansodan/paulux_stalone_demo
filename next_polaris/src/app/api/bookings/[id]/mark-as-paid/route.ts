@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { inngest } from "@/lib/inngest";
+import { bookingInclude } from "@/lib/prisma-includes";
 
 export async function POST(
     request: NextRequest,
@@ -68,10 +69,8 @@ export async function POST(
         if (booking.status !== 'CONFIRMED') {
             booking = await prisma.booking.update({
                 where: { id: booking.id },
-                data: {
-                    status: 'CONFIRMED',
-                },
-                include: { services: { include: { service: true } }, payments: true }
+                data: { status: 'CONFIRMED' },
+                include: bookingInclude,
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED via Manual Payment`);
         }
