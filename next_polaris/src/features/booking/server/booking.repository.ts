@@ -123,6 +123,9 @@ export class BookingRepository {
           }
         },
         payments: true,
+        assignedTo: {
+          select: { id: true, username: true, phone: true },
+        },
       },
       orderBy: {
         createdAt: 'desc',
@@ -165,6 +168,9 @@ export class BookingRepository {
           }
         },
         payments: true,
+        assignedTo: {
+          select: { id: true, username: true, phone: true },
+        },
       },
     })
 

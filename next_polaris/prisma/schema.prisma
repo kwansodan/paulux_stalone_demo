@@ -71,7 +71,8 @@ model User {
   updatedAt DateTime @updatedAt
 
   sessions Session[]
-  bookings Booking[]
+  bookings         Booking[]
+  assignedBookings Booking[] @relation("BookingAssignedTo")
 
   @@map("users")
 }
@@ -236,6 +237,9 @@ model Booking {
 
   bookingType    BookingType @default(SCHEDULED)
 
+  assignedToId String? @db.Uuid
+  assignedTo   User?   @relation("BookingAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
   createdAt DateTime @default(now())
 
   createdById String? @db.Uuid
@@ -246,6 +250,7 @@ model Booking {
   paymentAuditLogs  PaymentAuditLog[]  @relation("BookingPaymentAuditLogs")
 
   @@index([createdById])
+  @@index([assignedToId])
   @@index([bookingDate])
   @@index([status])
   @@index([paymentStatus])

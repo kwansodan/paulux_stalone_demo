@@ -1,4 +1,4 @@
-import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, promoCodesPath, reportsPath, serviceCategoriesPath, servicesPath } from "@/app/paths";
+import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, promoCodesPath, reportsPath, serviceCategoriesPath, servicesPath, staffPath } from "@/app/paths";
 import { NavItem } from "./types";
 import {
   Home,
@@ -10,6 +10,7 @@ import {
   Layers,
   Settings,
   Tag,
+  Users,
 } from 'lucide-react';
 
 
@@ -28,6 +29,11 @@ export const navItems: NavItem[] = [
     title: "Payments",
     icon: <CreditCard />,
     href: paymentsPath(),
+  },
+  {
+    title: "Staff",
+    icon: <Users />,
+    href: staffPath(),
   },
   {
     separator: true,

@@ -19,6 +19,13 @@ export type BookingWithService = Prisma.BookingGetPayload<{
       }
     },
     payments: true,
+    assignedTo: {
+      select: {
+        id: true,
+        username: true,
+        phone: true,
+      }
+    },
   }
 }>
 export type BookingWithServiceAndPayment = Prisma.BookingGetPayload<{
@@ -29,6 +36,13 @@ export type BookingWithServiceAndPayment = Prisma.BookingGetPayload<{
       }
     },
     payments: true,
+    assignedTo: {
+      select: {
+        id: true,
+        username: true,
+        phone: true,
+      }
+    },
   }
 }>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,6 +14,7 @@ import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
+import AssignStylistModal from "./form/assign-stylist-modal"
 
 type BookingCardProps = {
   booking: BookingWithService
@@ -24,10 +25,12 @@ type BookingCardProps = {
 
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
   const [chargeModalOpen, setChargeModalOpen] = useState(false)
+  const [assignModalOpen, setAssignModalOpen] = useState(false)
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
   const bookingPaymentStatus = calculatePaymentStatus(booking)
+
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
 
@@ -61,6 +64,15 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
         <p className="text-sm text-gray-500">
           {booking.services.map(s => s.service.name).join(", ")}
         </p>
+        {/* Stylist assignment display */}
+        <div className="flex items-center gap-1 mt-0.5">
+          <Scissors className="w-3 h-3 text-fuchsia-400" />
+          {booking.assignedTo ? (
+            <p className="text-xs text-fuchsia-600 font-medium">{booking.assignedTo.username}</p>
+          ) : (
+            <p className="text-xs text-gray-400 italic">Unassigned</p>
+          )}
+        </div>
         <p className="text-xs text-fuchsia-400">
           {booking.createdById ? "Created by admin" : "Created by client"}
         </p>
@@ -80,10 +92,23 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
               <span className="w-full">Edit</span>
             </DropdownMenuItem>
           )}
-          {!['CANCELLED', 'COMPLETED', 'PENDING'].includes(booking.status) && (<DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
-            <CircleCheck className="text-green-600" />
-            <span className="w-full">Mark as completed</span>
-          </DropdownMenuItem>)}
+
+          {/* Assign Stylist — available for any non-cancelled/completed booking */}
+          {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (
+            <DropdownMenuItem onClick={() => setAssignModalOpen(true)} className="flex gap-2 text-fuchsia-600">
+              <Scissors className="text-fuchsia-600" />
+              <span className="w-full">
+                {booking.assignedTo ? "Reassign stylist" : "Assign stylist"}
+              </span>
+            </DropdownMenuItem>
+          )}
+
+          {!['CANCELLED', 'COMPLETED', 'PENDING'].includes(booking.status) && (
+            <DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
+              <CircleCheck className="text-green-600" />
+              <span className="w-full">Mark as completed</span>
+            </DropdownMenuItem>
+          )}
 
           {booking.status !== 'CANCELLED' && booking.status !== 'COMPLETED' && ['PENDING', 'PARTIAL', 'FAILED'].includes(bookingPaymentStatus) && (
             <DropdownMenuItem onClick={() => setChargeModalOpen(true)} className="flex gap-2 text-fuchsia-600">
@@ -98,6 +123,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
               <span className="w-full">Mark as paid</span>
             </DropdownMenuItem>
           )}
+
           {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (
             <DropdownMenuItem onClick={() => onCancel(booking.id)} className="flex gap-2 text-red-600">
               <CircleX className="text-red-600" />
@@ -114,6 +140,12 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
         onConfirm={(amount) => chargeCustomer.mutate({ id: booking.id, amount })}
         isPending={chargeCustomer.isPending}
       />
-    </div >
+
+      <AssignStylistModal
+        booking={booking}
+        open={assignModalOpen}
+        onClose={() => setAssignModalOpen(false)}
+      />
+    </div>
   )
 }

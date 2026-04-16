@@ -6,9 +6,10 @@ import { BookingFilters, BookingWithServiceAndPayment } from "../types"
 import { DataTable } from "@/components/data-table"
 import { useBookings, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
-import { Loader2, Banknote } from "lucide-react"
+import { Banknote, Scissors } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
+import AssignStylistModal from "./form/assign-stylist-modal"
 
 const initialFilters: BookingFilters = {
   from: undefined,
@@ -22,9 +23,10 @@ const initialFilters: BookingFilters = {
 export default function BookingsTable() {
   const [filters, setFilters] = useState<BookingFilters>(initialFilters)
   const [chargeBooking, setChargeBooking] = useState<BookingWithServiceAndPayment | null>(null)
+  const [assignBooking, setAssignBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
-  // remove 'all' values and empty strings before sending to API
+
   const apiFilters = useMemo(() => {
     return Object.entries(filters).reduce((acc, [key, value]) => {
       if (value && value !== 'all' && value !== '') {
@@ -33,9 +35,6 @@ export default function BookingsTable() {
       return acc
     }, {} as Partial<BookingFilters>)
   }, [filters])
-
-  console.log("API Filters", apiFilters)
-  console.log("UI Filters", filters)
 
   const { data, isLoading } = useBookings(apiFilters)
   const columns = [
@@ -59,6 +58,20 @@ export default function BookingsTable() {
           </span>
         )
       }
+    },
+    {
+      key: "stylist",
+      label: "Stylist",
+      render: (row: BookingWithServiceAndPayment) => (
+        <div className="flex items-center gap-1.5">
+          <Scissors className="w-3.5 h-3.5 text-fuchsia-400 flex-shrink-0" />
+          {row.assignedTo ? (
+            <span className="text-sm text-gray-800">{row.assignedTo.username}</span>
+          ) : (
+            <span className="text-sm text-gray-400 italic">Unassigned</span>
+          )}
+        </div>
+      )
     },
     {
       key: "services",
@@ -119,14 +132,25 @@ export default function BookingsTable() {
         const paymentStatus = calculatePaymentStatus(row)
         const isUnpaidOrPartial = ['PENDING', 'PARTIAL', 'FAILED'].includes(paymentStatus)
         const isWalkIn = row.bookingType === "WALKIN"
-
-        if (row.status === "CANCELLED" || row.status === "COMPLETED") return null
-        if (!isUnpaidOrPartial) return null
+        const isActive = !['CANCELLED', 'COMPLETED'].includes(row.status)
 
         return (
           <div className="flex items-center gap-1.5">
-            {/* Cash button — shown for all unpaid bookings (primary for walk-ins) */}
-            {isWalkIn && (
+            {/* Assign stylist button — always shown for active bookings */}
+            {isActive && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100"
+                onClick={() => setAssignBooking(row)}
+              >
+                <Scissors className="w-3.5 h-3.5 mr-1" />
+                {row.assignedTo ? "Reassign" : "Assign"}
+              </Button>
+            )}
+
+            {/* Cash button — walk-ins only, when unpaid */}
+            {isActive && isUnpaidOrPartial && isWalkIn && (
               <Button
                 size="sm"
                 variant="outline"
@@ -138,8 +162,9 @@ export default function BookingsTable() {
                 Cash
               </Button>
             )}
-            {/* Charge button — shown when email present OR not a walk-in */}
-            {(!isWalkIn || row.clientEmail) && (
+
+            {/* Charge button */}
+            {isActive && isUnpaidOrPartial && (!isWalkIn || row.clientEmail) && (
               <Button
                 size="sm"
                 variant="outline"
@@ -155,49 +180,55 @@ export default function BookingsTable() {
     }
   ]
 
-
   return (
     <>
-    {chargeBooking && (
-      <ChargeCustomerModal
-        booking={chargeBooking}
-        open={!!chargeBooking}
-        onClose={() => setChargeBooking(null)}
-        onConfirm={(amount) => chargeCustomer.mutate({ id: chargeBooking.id, amount })}
-        isPending={chargeCustomer.isPending}
-      />
-    )}
-    <div className="space-y-4">
-      <div className="max-h-50 overflow-y-auto w-full space-y-4 p-6 rounded-lg border border-gray-200">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">Filters</h1>
-          <p className="text-sm text-gray-500">
-            Narrow down your report data
-          </p>
-        </div>
-        <BookingsFilters
-          filters={filters}
-          onChange={(f) => setFilters((prev) => ({ ...prev, ...f }))}
-          onReset={() => setFilters(initialFilters)}
+      {chargeBooking && (
+        <ChargeCustomerModal
+          booking={chargeBooking}
+          open={!!chargeBooking}
+          onClose={() => setChargeBooking(null)}
+          onConfirm={(amount) => chargeCustomer.mutate({ id: chargeBooking.id, amount })}
+          isPending={chargeCustomer.isPending}
         />
-      </div>
-
-      <div className="max-h-165 overflow-y-auto w-full space-y-4 p-6 rounded-lg border border-gray-200">
-        <div>
-          <h1 className="text-xl font-semibold text-gray-900">All Bookings</h1>
-          <p className="text-sm text-gray-500">
-            {data?.length || 0} {data?.length === 1 ? "record" : "records"} found
-          </p>
+      )}
+      {assignBooking && (
+        <AssignStylistModal
+          booking={assignBooking}
+          open={!!assignBooking}
+          onClose={() => setAssignBooking(null)}
+        />
+      )}
+      <div className="space-y-4">
+        <div className="max-h-50 overflow-y-auto w-full space-y-4 p-6 rounded-lg border border-gray-200">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Filters</h1>
+            <p className="text-sm text-gray-500">
+              Narrow down your report data
+            </p>
+          </div>
+          <BookingsFilters
+            filters={filters}
+            onChange={(f) => setFilters((prev) => ({ ...prev, ...f }))}
+            onReset={() => setFilters(initialFilters)}
+          />
         </div>
 
-        <DataTable
-          loading={isLoading}
-          data={data || []}
-          emptyText="No bookings found"
-          columns={columns}
-        />
+        <div className="max-h-165 overflow-y-auto w-full space-y-4 p-6 rounded-lg border border-gray-200">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">All Bookings</h1>
+            <p className="text-sm text-gray-500">
+              {data?.length || 0} {data?.length === 1 ? "record" : "records"} found
+            </p>
+          </div>
+
+          <DataTable
+            loading={isLoading}
+            data={data || []}
+            emptyText="No bookings found"
+            columns={columns}
+          />
+        </div>
       </div>
-    </div>
     </>
   )
 }
