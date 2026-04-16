@@ -51,6 +51,13 @@ export async function POST(
       serviceId: firstServiceId,
     })
 
+    if (!parsed.bookingDate || !parsed.bookingTime) {
+      return NextResponse.json(
+        { success: false, message: "bookingDate and bookingTime are required" },
+        { status: 400 }
+      )
+    }
+
     const bookingDateObj = new Date(parsed.bookingDate)
     const dayOfWeek = bookingDateObj.getUTCDay()
 
