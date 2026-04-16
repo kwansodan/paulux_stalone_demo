@@ -64,11 +64,11 @@ export default function PromoCodeForm({ promo, onCancel, onSuccess }: PromoCodeF
         await createMutation.mutateAsync(payload)
       }
       onSuccess()
-    } catch (err: any) {
+    } catch (err) {
       if (isAxiosError(err)) {
         setError(err.response?.data?.message || "Something went wrong")
       } else {
-        setError(err.message || "Something went wrong")
+        setError(err instanceof Error ? err.message : "Something went wrong")
       }
     }
   }
