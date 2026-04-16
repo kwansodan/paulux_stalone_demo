@@ -83,6 +83,6 @@ export const BookingStatusSchema = z.object({
 
 export type BookingStatusInput = z.infer<typeof BookingStatusSchema>;
 export type CancelBookingInput = z.infer<typeof CancelBookingSchema>;
-export type BookingInput = z.infer<typeof BookingInputSchema>;
+export type BookingInput = z.input<typeof BookingInputSchema>;
 export type Booking = z.infer<typeof BookingSchema>;
 
