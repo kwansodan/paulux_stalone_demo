@@ -1,0 +1,32 @@
+# ── Build artifacts ───────────────────────────────────────────────────────────
+.next
+out
+dist
+
+# ── Dependencies (installed fresh inside Docker) ──────────────────────────────
+node_modules
+
+# ── Local environment files ───────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+
+# ── Generated Prisma client (regenerated during build) ────────────────────────
+generated
+
+# ── Dev/editor clutter ────────────────────────────────────────────────────────
+.vscode
+.idea
+.DS_Store
+*.log
+npm-debug.log*
+
+# ── Git + CI ──────────────────────────────────────────────────────────────────
+.git
+.gitignore
+.github
+
+# ── Docs and misc ─────────────────────────────────────────────────────────────
+README.md
+*.md
+coverage

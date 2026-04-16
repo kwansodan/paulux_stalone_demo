@@ -1,108 +1,84 @@
-# Multi-stage build for Next.js application
-FROM node:20-alpine AS base
-
-# Install dependencies only when needed
-FROM base AS deps
-# Update CA certificates to fix TLS issues
-RUN apk update && apk add --no-cache ca-certificates libc6-compat
+# ─── Stage 1: deps ───────────────────────────────────────────────────────────
+# Full install (dev + prod) so Prisma generation and Next.js build can run.
+FROM node:20-alpine AS deps
+RUN apk add --no-cache ca-certificates libc6-compat
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
-# Copy prisma schema if it exists to generate client
+COPY package.json package-lock.json ./
 COPY prisma ./prisma/
 
-# Install dependencies including devDeps for build
+# npm ci installs exactly what package-lock.json specifies.
+# postinstall runs `prisma generate` automatically.
 RUN npm ci
 
-# Install production dependencies only in a separate stage
-FROM base AS prod-deps
+# ─── Stage 2: builder ────────────────────────────────────────────────────────
+# Compiles the Next.js application into a standalone output.
+FROM node:20-alpine AS builder
 WORKDIR /app
-COPY package.json package-lock.json* ./
-# Copy prisma directory for postinstall script
-COPY prisma ./prisma/
 
-# Install only production dependencies
-RUN npm ci --omit=dev
-
-# Rebuild the source code only when needed
-FROM base AS builder
-WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-# Increase memory limit for Next.js build
-ENV NODE_OPTIONS="--max-old-space-size=2048"
-
-# Build arguments for public environment variables
+# Build-time public env vars (baked into the client bundle at compile time).
 ARG NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 ARG NEXT_PUBLIC_APP_URL
+ARG NEXT_PUBLIC_MINIO_ENDPOINT
+ARG NEXT_PUBLIC_MINIO_PORT
 
 ENV NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=$NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
-ARG NEXT_PUBLIC_MINIO_ENDPOINT
-ARG NEXT_PUBLIC_MINIO_PORT
 ENV NEXT_PUBLIC_MINIO_ENDPOINT=$NEXT_PUBLIC_MINIO_ENDPOINT
 ENV NEXT_PUBLIC_MINIO_PORT=$NEXT_PUBLIC_MINIO_PORT
-ENV NEXT_TELEMETRY_DISABLED 1
-# Fix for Turbopack TLS issues with Google Fonts
-ENV NEXT_TURBOPACK_EXPERIMENTAL_USE_SYSTEM_TLS_CERTS=1
-
-# Increase memory limit for Next.js build
+ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="--max-old-space-size=2048"
 
-# Generate Prisma client and build the application
-RUN npx prisma generate
-RUN npm run build
+# Generate Prisma client then compile.
+# `output: 'standalone'` in next.config.ts produces .next/standalone/ which
+# contains a tree-shaken node_modules — the ONLY node_modules the runtime needs.
+RUN npx prisma generate && npm run build
 
-# Production image, copy all the files and run next
-FROM base AS runner
+# ─── Stage 3: runner ─────────────────────────────────────────────────────────
+# Minimal production image. Nothing from the build stages except the compiled
+# output and the Prisma schema needed for db push at container startup.
+FROM node:20-alpine AS runner
+RUN apk add --no-cache ca-certificates
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+RUN addgroup --system --gid 1001 nodejs && \
+    adduser --system --uid 1001 nextjs
 
-# Copy necessary files from builder standalone output
-COPY --from=builder /app/public ./public
+# ── Next.js standalone output ─────────────────────────────────────────────────
+# .next/standalone/ already contains a minimal, tree-shaken node_modules built
+# by Next.js. No separate node_modules install is needed for the server itself.
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 
-# Create cache directory and set permissions
+# ── Prisma files for db push at startup ───────────────────────────────────────
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
+COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+
+# ── Prisma CLI + tsx ──────────────────────────────────────────────────────────
+# Install as globals so they don't touch the standalone node_modules at all.
+# prisma: needed for `npx prisma db push` in the entrypoint.
+# tsx:    needed for optional seed scripts (`npm run prisma-seed`).
+# Single RUN = single Docker layer.
+RUN npm install -g prisma tsx
+
+# ── Permissions ───────────────────────────────────────────────────────────────
 RUN mkdir -p .next/cache && chown -R nextjs:nodejs .next/cache
 
-# Overwrite/Augment node_modules with full production dependencies to ensure seed scripts work
-COPY --from=prod-deps --chown=nextjs:nodejs /app/node_modules ./node_modules
-
-# Copy Prisma files for migrations
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/generated ./generated
-COPY --from=builder /app/package.json ./package.json
-
-# Copy source files and config for seeding
-COPY --from=builder /app/tsconfig.json ./tsconfig.json
-COPY --from=builder /app/src ./src
-
-# Install Prisma CLI for migrations (includes all WASM dependencies)
-RUN npm install prisma@7.3.0 --save-dev --no-save
-
-# Install tsx globally for running seed script
-RUN npm install -g tsx
-
-# Copy entrypoint script
 COPY --chmod=755 docker-entrypoint.sh ./
-
-# Change ownership of Prisma files and others to nextjs user
-RUN chown -R nextjs:nodejs ./prisma ./generated ./src ./tsconfig.json ./node_modules 2>/dev/null || true
 
 USER nextjs
 
 EXPOSE 3000
 
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
+ENV PORT=3000
+ENV HOSTNAME="0.0.0.0"
 
 CMD ["./docker-entrypoint.sh"]
