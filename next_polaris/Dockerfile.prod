@@ -60,7 +60,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 # ── Prisma files for db push at startup ───────────────────────────────────────
 COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/generated ./generated
-COPY --from=builder --chown=nextjs:nodejs /app/prisma.config.ts ./prisma.config.ts
+# prisma.config.ts is intentionally NOT copied: it imports 'prisma/config' which
+# is unresolvable in /app without a local node_modules. It's unnecessary here
+# because the entrypoint passes --schema explicitly.
 
 # ── Prisma CLI + tsx ──────────────────────────────────────────────────────────
 # Install as globals so they don't touch the standalone node_modules at all.
