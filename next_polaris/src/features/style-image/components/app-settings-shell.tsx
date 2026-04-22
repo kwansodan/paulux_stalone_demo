@@ -3,13 +3,16 @@
 import { useState, useCallback } from "react"
 import Image from "next/image"
 import axios from "axios"
-import { Plus, CircleX, PencilLine, GalleryHorizontal, ToggleLeft, ToggleRight, Loader2, Mail, Save } from "lucide-react"
+import {
+  Plus, CircleX, PencilLine, GalleryHorizontal,
+  ToggleLeft, ToggleRight, Loader2, Mail, Save,
+  Settings2, Layers,
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
-import ImageUpload from "@/components/ui/image-upload"
 import { api } from "@/lib/api"
 import { toast } from "sonner"
 import {
@@ -19,8 +22,12 @@ import {
   useUpdateStyleImage,
   useDeleteStyleImage,
 } from "../client/use-style-images"
+import ServiceCategoriesShell from "@/features/service-category/components/service-categories-shell"
+import { SerializedServiceCategory } from "@/features/service/types"
 
-// ── Upload helper that adds folder=style_images ───────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Upload helper
+// ─────────────────────────────────────────────────────────────────────────────
 async function uploadStyleImage(file: File): Promise<{ publicUrl: string; objectName: string }> {
   const formData = new FormData()
   formData.append("file", file)
@@ -33,7 +40,9 @@ async function uploadStyleImage(file: File): Promise<{ publicUrl: string; object
   return { publicUrl: data.publicUrl, objectName: data.objectName }
 }
 
-// ── Custom ImageUpload wrapper that captures objectName ───────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+// Style image upload widget
+// ─────────────────────────────────────────────────────────────────────────────
 function StyleImageUpload({
   value,
   onChange,
@@ -110,14 +119,77 @@ function StyleImageUpload({
   )
 }
 
-// ── Main shell ────────────────────────────────────────────────────────────────
-export default function AppSettingsShell({
-  initialImages,
-  initialWalkinEmail,
-}: {
-  initialImages: StyleImage[]
-  initialWalkinEmail: string
-}) {
+// ─────────────────────────────────────────────────────────────────────────────
+// Section: General
+// ─────────────────────────────────────────────────────────────────────────────
+function GeneralSection({ initialWalkinEmail }: { initialWalkinEmail: string }) {
+  const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
+  const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
+  const [saving, setSaving] = useState(false)
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const res = await api.patch("/settings/walkin-email", { email: walkinEmailInput })
+      setWalkinEmail(res.data.data.email)
+      toast.success("Walk-in email updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update walk-in email")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="space-y-1">
+      <h2 className="text-lg font-semibold text-gray-900">General</h2>
+      <p className="text-sm text-gray-500 pb-4">System-wide configuration settings.</p>
+
+      <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
+        {/* Walk-in email row */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 px-6 py-5">
+          <div className="space-y-0.5 flex-1 min-w-0">
+            <div className="flex items-center gap-2">
+              <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+              <p className="text-sm font-medium text-gray-900">Walk-in Paystack Email</p>
+            </div>
+            <p className="text-xs text-gray-500 pl-6">
+              Fallback billing email for walk-in customers who don&apos;t provide their own. Paystack receipts are sent here.
+            </p>
+            <p className="text-xs text-gray-400 pl-6 pt-1">
+              Current: <span className="font-mono text-gray-600">{walkinEmail}</span>
+            </p>
+          </div>
+          <div className="flex gap-2 sm:flex-shrink-0 sm:w-80">
+            <Input
+              type="email"
+              className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none flex-1"
+              value={walkinEmailInput}
+              onChange={(e) => setWalkinEmailInput(e.target.value)}
+              placeholder="walkin@example.com"
+            />
+            <Button
+              className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-3 flex-shrink-0"
+              disabled={saving || walkinEmailInput.trim() === walkinEmail}
+              onClick={handleSave}
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <><Save className="w-4 h-4 mr-1.5" />Save</>
+              )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Section: Hero Gallery
+// ─────────────────────────────────────────────────────────────────────────────
+function HeroGallerySection({ initialImages }: { initialImages: StyleImage[] }) {
   const { data: images = initialImages } = useGetStyleImages()
   const createMutation = useCreateStyleImage()
   const updateMutation = useUpdateStyleImage()
@@ -126,50 +198,16 @@ export default function AppSettingsShell({
   const [addOpen, setAddOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<StyleImage | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<StyleImage | null>(null)
-
-  // Add form state
   const [newImage, setNewImage] = useState<{ url: string; objectName: string } | null>(null)
   const [newCaption, setNewCaption] = useState("")
-
-  // Edit form state
   const [editCaption, setEditCaption] = useState("")
 
-  // Walk-in email state
-  const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
-  const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
-  const [walkinEmailSaving, setWalkinEmailSaving] = useState(false)
-
-  async function handleSaveWalkinEmail() {
-    setWalkinEmailSaving(true)
-    try {
-      const res = await api.patch("/settings/walkin-email", { email: walkinEmailInput })
-      setWalkinEmail(res.data.data.email)
-      toast.success("Walk-in email updated")
-    } catch (e: any) {
-      toast.error(e?.response?.data?.message || "Failed to update walk-in email")
-    } finally {
-      setWalkinEmailSaving(false)
-    }
-  }
-
-  function openAdd() {
-    setNewImage(null)
-    setNewCaption("")
-    setAddOpen(true)
-  }
-
-  function openEdit(img: StyleImage) {
-    setEditTarget(img)
-    setEditCaption(img.caption ?? "")
-  }
+  function openAdd() { setNewImage(null); setNewCaption(""); setAddOpen(true) }
+  function openEdit(img: StyleImage) { setEditTarget(img); setEditCaption(img.caption ?? "") }
 
   async function handleAdd() {
     if (!newImage) return
-    await createMutation.mutateAsync({
-      url: newImage.url,
-      objectName: newImage.objectName,
-      caption: newCaption || undefined,
-    })
+    await createMutation.mutateAsync({ url: newImage.url, objectName: newImage.objectName, caption: newCaption || undefined })
     setAddOpen(false)
   }
 
@@ -190,226 +228,240 @@ export default function AppSettingsShell({
   }
 
   return (
-    <div className="space-y-10">
-      {/* ── Walk-in Bookings section ── */}
-      <div className="space-y-4">
+    <div className="space-y-1">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 pb-4">
         <div>
-          <h2 className="text-xl font-semibold text-gray-900">Walk-in Bookings</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Hero Gallery</h2>
           <p className="text-sm text-gray-500 mt-0.5">
-            This email is used as a Paystack billing email for walk-in customers who don&apos;t provide their own email.
+            Images cycle as the background of the landing page hero. Toggle images on or off without deleting them.
           </p>
         </div>
-        <div className="bg-white border border-gray-200 rounded-2xl p-6 space-y-4 max-w-lg">
-          <div className="flex items-center gap-2 text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-            <Mail className="w-4 h-4 flex-shrink-0" />
-            <span>Receipts for walk-in Paystack payments are sent to this address.</span>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-sm font-medium text-gray-700">Walk-in Paystack Email</Label>
-            <div className="flex gap-2">
-              <Input
-                type="email"
-                className="h-11 bg-white border-[#E2E8F0] rounded-lg shadow-none flex-1"
-                value={walkinEmailInput}
-                onChange={(e) => setWalkinEmailInput(e.target.value)}
-                placeholder="walkin@example.com"
-              />
-              <Button
-                className="h-11 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
-                disabled={walkinEmailSaving || walkinEmailInput.trim() === walkinEmail}
-                onClick={handleSaveWalkinEmail}
-              >
-                {walkinEmailSaving ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <><Save className="w-4 h-4 mr-1.5" />Save</>
-                )}
-              </Button>
-            </div>
-          </div>
-          <p className="text-xs text-gray-400">Current: <span className="font-mono text-gray-600">{walkinEmail}</span></p>
-        </div>
+        <Button
+          className="bg-fuchsia-600 hover:bg-fuchsia-700 whitespace-nowrap flex-shrink-0"
+          onClick={openAdd}
+        >
+          <Plus className="w-4 h-4 mr-1" />
+          Add Image
+        </Button>
       </div>
 
-      <div className="border-t border-gray-100" />
-
-      {/* ── Hero Slideshow section ── */}
-      <div className="space-y-6">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-          <div>
-            <h2 className="text-xl font-semibold text-gray-900">Hero Slideshow</h2>
-            <p className="text-sm text-gray-500 mt-0.5">
-              Images cycle as the background of the landing page hero. Toggle images on or off without deleting them.
-            </p>
-          </div>
-          <Button
-            className="bg-fuchsia-600 hover:bg-fuchsia-700 w-full sm:w-auto px-6 whitespace-nowrap"
-            onClick={openAdd}
-          >
-            <Plus className="w-4 h-4 mr-1" />
-            Add Image
-          </Button>
+      {images.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-16 text-center border-2 border-dashed border-gray-200 rounded-3xl">
+          <GalleryHorizontal className="w-10 h-10 text-gray-300 mb-3" />
+          <p className="text-gray-500 font-semibold">No images yet</p>
+          <p className="text-gray-400 text-sm mt-1">Upload images to display in the landing page hero slideshow.</p>
         </div>
-
-        {/* Empty state */}
-        {images.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-3xl">
-            <GalleryHorizontal className="w-12 h-12 text-gray-300 mb-4" />
-            <p className="text-gray-500 font-semibold text-lg">No images yet</p>
-            <p className="text-gray-400 text-sm mt-1">
-              Upload style images to display in the hero slideshow on the landing page.
-            </p>
-          </div>
-        )}
-
-        {/* Image grid */}
-        {images.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-            {images.map((img) => (
-              <Card
-                key={img.id}
-                className={`rounded-3xl border shadow-none hover:shadow-md transition-shadow duration-200 overflow-hidden ${
-                  !img.isActive ? "opacity-60" : ""
-                }`}
-              >
-                {/* Thumbnail */}
-                <div className="relative w-full h-44">
-                  <Image src={img.url} alt={img.caption ?? "Style image"} fill className="object-cover" unoptimized />
-                  {!img.isActive && (
-                    <div className="absolute inset-0 bg-white/40 flex items-center justify-center">
-                      <span className="text-xs font-semibold bg-gray-800/70 text-white px-2 py-0.5 rounded-full">
-                        Hidden
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                <CardContent className="p-4 space-y-3">
-                  <p className="text-sm text-gray-600 truncate">
-                    {img.caption || <span className="text-gray-400 italic">No caption</span>}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                    {/* Toggle active */}
-                    <button
-                      onClick={() => handleToggleActive(img)}
-                      disabled={updateMutation.isPending}
-                      className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-fuchsia-600 transition-colors"
-                    >
-                      {img.isActive ? (
-                        <ToggleRight className="w-5 h-5 text-fuchsia-600" />
-                      ) : (
-                        <ToggleLeft className="w-5 h-5 text-gray-400" />
-                      )}
-                      {img.isActive ? "Active" : "Hidden"}
-                    </button>
-
-                    {/* Edit / Delete */}
-                    <div className="flex items-center gap-1">
-                      <button
-                        onClick={() => openEdit(img)}
-                        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
-                      >
-                        <PencilLine className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => setDeleteTarget(img)}
-                        className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors text-red-500"
-                      >
-                        <CircleX className="w-4 h-4" />
-                      </button>
-                    </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
+          {images.map((img) => (
+            <Card
+              key={img.id}
+              className={`rounded-3xl border shadow-none hover:shadow-md transition-shadow duration-200 overflow-hidden ${!img.isActive ? "opacity-60" : ""}`}
+            >
+              <div className="relative w-full h-44">
+                <Image src={img.url} alt={img.caption ?? "Style image"} fill className="object-cover" unoptimized />
+                {!img.isActive && (
+                  <div className="absolute inset-0 bg-white/40 flex items-center justify-center">
+                    <span className="text-xs font-semibold bg-gray-800/70 text-white px-2 py-0.5 rounded-full">Hidden</span>
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
+                )}
+              </div>
+              <CardContent className="p-4 space-y-3">
+                <p className="text-sm text-gray-600 truncate">
+                  {img.caption || <span className="text-gray-400 italic">No caption</span>}
+                </p>
+                <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                  <button
+                    onClick={() => handleToggleActive(img)}
+                    disabled={updateMutation.isPending}
+                    className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-fuchsia-600 transition-colors"
+                  >
+                    {img.isActive
+                      ? <ToggleRight className="w-5 h-5 text-fuchsia-600" />
+                      : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+                    {img.isActive ? "Active" : "Hidden"}
+                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => openEdit(img)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 transition-colors text-gray-500"
+                    >
+                      <PencilLine className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setDeleteTarget(img)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50 transition-colors text-red-500"
+                    >
+                      <CircleX className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
 
-      {/* ── Add modal ── */}
-      <Modal
-        open={addOpen}
-        onClose={() => setAddOpen(false)}
-        title="Add Style Image"
-        childrenClassName="max-h-[520px]"
-        showSeparator
-      >
+      <Modal open={addOpen} onClose={() => setAddOpen(false)} title="Add Style Image" childrenClassName="max-h-[520px]" showSeparator>
         <div className="space-y-4 pt-2">
           <StyleImageUpload value={newImage} onChange={setNewImage} />
           <div className="space-y-1">
             <Label className="text-sm font-normal">Caption (optional)</Label>
-            <Input
-              placeholder="e.g. Summer glow look"
-              className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none"
-              value={newCaption}
-              onChange={(e) => setNewCaption(e.target.value)}
-            />
+            <Input placeholder="e.g. Summer glow look" className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none" value={newCaption} onChange={(e) => setNewCaption(e.target.value)} />
           </div>
           <div className="flex justify-end gap-3 pt-2">
             <Button variant="outline" onClick={() => setAddOpen(false)}>Cancel</Button>
-            <Button
-              className="bg-fuchsia-700 hover:bg-fuchsia-600"
-              disabled={!newImage || createMutation.isPending}
-              onClick={handleAdd}
-            >
+            <Button className="bg-fuchsia-700 hover:bg-fuchsia-600" disabled={!newImage || createMutation.isPending} onClick={handleAdd}>
               {createMutation.isPending ? "Saving..." : "Add Image"}
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* ── Edit modal ── */}
-      <Modal
-        open={!!editTarget}
-        onClose={() => setEditTarget(null)}
-        title="Edit Caption"
-        childrenClassName="max-h-64"
-        showSeparator
-      >
+      <Modal open={!!editTarget} onClose={() => setEditTarget(null)} title="Edit Caption" childrenClassName="max-h-64" showSeparator>
         <div className="space-y-4 pt-2">
           <div className="space-y-1">
             <Label className="text-sm font-normal">Caption</Label>
-            <Input
-              placeholder="e.g. Summer glow look"
-              className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none"
-              value={editCaption}
-              onChange={(e) => setEditCaption(e.target.value)}
-            />
+            <Input placeholder="e.g. Summer glow look" className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none" value={editCaption} onChange={(e) => setEditCaption(e.target.value)} />
           </div>
           <div className="flex justify-end gap-3">
             <Button variant="outline" onClick={() => setEditTarget(null)}>Cancel</Button>
-            <Button
-              className="bg-fuchsia-700 hover:bg-fuchsia-600"
-              disabled={updateMutation.isPending}
-              onClick={handleEditSave}
-            >
+            <Button className="bg-fuchsia-700 hover:bg-fuchsia-600" disabled={updateMutation.isPending} onClick={handleEditSave}>
               {updateMutation.isPending ? "Saving..." : "Save"}
             </Button>
           </div>
         </div>
       </Modal>
 
-      {/* ── Delete confirm modal ── */}
-      <Modal
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        title="Delete Image?"
-        subtitle="This will permanently remove the image from the slideshow and from storage. This action cannot be undone."
-        childrenClassName="max-h-56 w-[500px]"
-        showSeparator={false}
-      >
+      <Modal open={!!deleteTarget} onClose={() => setDeleteTarget(null)} title="Delete Image?" subtitle="This will permanently remove the image from the slideshow and from storage. This action cannot be undone." childrenClassName="max-h-56 w-[500px]" showSeparator={false}>
         <div className="flex justify-end gap-3 pt-4">
           <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
-          <Button
-            className="bg-[#D10505] hover:bg-[#D10505]/90"
-            disabled={deleteMutation.isPending}
-            onClick={handleDelete}
-          >
+          <Button className="bg-[#D10505] hover:bg-[#D10505]/90" disabled={deleteMutation.isPending} onClick={handleDelete}>
             {deleteMutation.isPending ? "Deleting..." : "Delete"}
           </Button>
         </div>
       </Modal>
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Nav items definition
+// ─────────────────────────────────────────────────────────────────────────────
+type SectionId = "general" | "gallery" | "categories"
+
+const navItems: { id: SectionId; label: string; icon: React.ReactNode; description: string }[] = [
+  {
+    id: "general",
+    label: "General",
+    icon: <Settings2 className="w-4 h-4" />,
+    description: "System settings",
+  },
+  {
+    id: "gallery",
+    label: "Hero Gallery",
+    icon: <GalleryHorizontal className="w-4 h-4" />,
+    description: "Slideshow images",
+  },
+  {
+    id: "categories",
+    label: "Service Categories",
+    icon: <Layers className="w-4 h-4" />,
+    description: "Groups & capacity",
+  },
+]
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Main shell
+// ─────────────────────────────────────────────────────────────────────────────
+export default function AppSettingsShell({
+  initialImages,
+  initialWalkinEmail,
+  initialCategories,
+}: {
+  initialImages: StyleImage[]
+  initialWalkinEmail: string
+  initialCategories: SerializedServiceCategory[]
+}) {
+  const [activeSection, setActiveSection] = useState<SectionId>("general")
+
+  const active = navItems.find((n) => n.id === activeSection)!
+
+  return (
+    <div className="space-y-6">
+      {/* Page heading */}
+      <div>
+        <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">App Settings</h1>
+        <p className="text-sm text-gray-500 mt-1">Manage system configuration, content and appearance.</p>
+      </div>
+
+      <div className="flex flex-col lg:flex-row gap-6 items-start">
+        {/* ── Left rail — desktop ── */}
+        <nav className="hidden lg:flex flex-col w-52 flex-shrink-0 bg-white rounded-2xl border border-gray-200 p-2 gap-0.5">
+          <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 px-3 pt-2 pb-1">
+            Settings
+          </p>
+          {navItems.map((item) => {
+            const isActive = item.id === activeSection
+            return (
+              <button
+                key={item.id}
+                onClick={() => setActiveSection(item.id)}
+                className={`flex items-center gap-3 w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  isActive
+                    ? "bg-fuchsia-50 text-fuchsia-700 border-l-2 border-fuchsia-600 pl-[10px]"
+                    : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                }`}
+              >
+                <span className={isActive ? "text-fuchsia-600" : "text-gray-400"}>
+                  {item.icon}
+                </span>
+                <span>{item.label}</span>
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* ── Horizontal tabs — mobile / tablet ── */}
+        <div className="lg:hidden w-full flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto scrollbar-hide">
+          {navItems.map((item) => (
+            <button
+              key={item.id}
+              onClick={() => setActiveSection(item.id)}
+              className={`flex-shrink-0 flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                item.id === activeSection
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
+              }`}
+            >
+              {item.icon}
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Right content panel ── */}
+        <div className="flex-1 min-w-0">
+          {/* Section breadcrumb pill */}
+          <div className="flex items-center gap-2 mb-5">
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-fuchsia-700 bg-fuchsia-50 border border-fuchsia-100 px-2.5 py-1 rounded-full">
+              <span className="text-fuchsia-500">{active.icon}</span>
+              {active.label}
+            </span>
+            <span className="text-xs text-gray-400">{active.description}</span>
+          </div>
+
+          {activeSection === "general" && (
+            <GeneralSection initialWalkinEmail={initialWalkinEmail} />
+          )}
+          {activeSection === "gallery" && (
+            <HeroGallerySection initialImages={initialImages} />
+          )}
+          {activeSection === "categories" && (
+            <ServiceCategoriesShell initialCategories={initialCategories} />
+          )}
+        </div>
+      </div>
     </div>
   )
 }

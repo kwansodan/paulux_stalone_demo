@@ -1,4 +1,4 @@
-import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, productsPath, promoCodesPath, reportsPath, serviceCategoriesPath, servicesPath, staffPath } from "@/app/paths";
+import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, productsPath, promoCodesPath, reportsPath, servicesPath, staffPath } from "@/app/paths";
 import { NavItem } from "./types";
 import {
   Home,
@@ -7,7 +7,6 @@ import {
   Scissors,
   Timer,
   ClipboardList,
-  Layers,
   Settings,
   Tag,
   Users,
@@ -41,11 +40,6 @@ export const navItems: NavItem[] = [
     title: "Services",
     icon: <Scissors />,
     href: servicesPath(),
-  },
-  {
-    title: "Categories",
-    icon: <Layers />,
-    href: serviceCategoriesPath(),
   },
   {
     title: "Products",
