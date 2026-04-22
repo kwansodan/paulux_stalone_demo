@@ -6,7 +6,7 @@ import axios from "axios"
 import {
   Plus, CircleX, PencilLine, GalleryHorizontal,
   ToggleLeft, ToggleRight, Loader2, Mail, Save,
-  Settings2, Layers,
+  Settings2, Layers, Timer, Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
@@ -24,6 +24,11 @@ import {
 } from "../client/use-style-images"
 import ServiceCategoriesShell from "@/features/service-category/components/service-categories-shell"
 import { SerializedServiceCategory } from "@/features/service/types"
+import BusinessHoursSection from "@/features/business-hour/componenents/business-hours-section"
+import BlockedDatesSection from "@/features/blocked-date/components/blocked-dates-section"
+import StaffShell from "@/features/staff/components/staff-shell"
+import { BusinessHour, BlockedDate } from "@generated/prisma/client"
+import { StaffMember } from "@/features/staff/types"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Upload helper
@@ -348,7 +353,7 @@ function HeroGallerySection({ initialImages }: { initialImages: StyleImage[] }) 
 // ─────────────────────────────────────────────────────────────────────────────
 // Nav items definition
 // ─────────────────────────────────────────────────────────────────────────────
-type SectionId = "general" | "gallery" | "categories"
+type SectionId = "general" | "gallery" | "categories" | "availability" | "staff"
 
 const navItems: { id: SectionId; label: string; icon: React.ReactNode; description: string }[] = [
   {
@@ -369,6 +374,18 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; descripti
     icon: <Layers className="w-4 h-4" />,
     description: "Groups & capacity",
   },
+  {
+    id: "availability",
+    label: "Availability",
+    icon: <Timer className="w-4 h-4" />,
+    description: "Hours & blocked dates",
+  },
+  {
+    id: "staff",
+    label: "Staff",
+    icon: <Users className="w-4 h-4" />,
+    description: "Stylists & team members",
+  },
 ]
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -378,10 +395,16 @@ export default function AppSettingsShell({
   initialImages,
   initialWalkinEmail,
   initialCategories,
+  initialBusinessHours,
+  initialBlockedDates,
+  initialStaff,
 }: {
   initialImages: StyleImage[]
   initialWalkinEmail: string
   initialCategories: SerializedServiceCategory[]
+  initialBusinessHours: BusinessHour[]
+  initialBlockedDates: BlockedDate[]
+  initialStaff: StaffMember[]
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("general")
 
@@ -459,6 +482,27 @@ export default function AppSettingsShell({
           )}
           {activeSection === "categories" && (
             <ServiceCategoriesShell initialCategories={initialCategories} />
+          )}
+          {activeSection === "availability" && (
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-gray-900">Availability</h2>
+              <p className="text-sm text-gray-500 pb-4">Set your business hours and block off dates when the salon is closed.</p>
+              <div className="flex flex-col lg:flex-row gap-6">
+                <div className="w-full lg:w-1/2">
+                  <BusinessHoursSection businessHours={initialBusinessHours} />
+                </div>
+                <div className="w-full lg:w-1/2">
+                  <BlockedDatesSection blockedDates={initialBlockedDates} />
+                </div>
+              </div>
+            </div>
+          )}
+          {activeSection === "staff" && (
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-gray-900">Staff</h2>
+              <p className="text-sm text-gray-500 pb-4">Manage your stylists and assign them to bookings.</p>
+              <StaffShell initialStaff={initialStaff} />
+            </div>
           )}
         </div>
       </div>

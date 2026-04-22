@@ -1,15 +1,13 @@
-import { appSettingsPath, availabilityPath, bookingsPath, dashboardPath, paymentsPath, productsPath, promoCodesPath, reportsPath, servicesPath, staffPath } from "@/app/paths";
+import { appSettingsPath, bookingsPath, dashboardPath, paymentsPath, productsPath, promoCodesPath, reportsPath, servicesPath } from "@/app/paths";
 import { NavItem } from "./types";
 import {
   Home,
   Calendar,
   CreditCard,
   Scissors,
-  Timer,
   ClipboardList,
   Settings,
   Tag,
-  Users,
   ShoppingBag,
 } from 'lucide-react';
 
@@ -31,11 +29,6 @@ export const navItems: NavItem[] = [
     href: paymentsPath(),
   },
   {
-    title: "Staff",
-    icon: <Users />,
-    href: staffPath(),
-  },
-  {
     separator: true,
     title: "Services",
     icon: <Scissors />,
@@ -45,11 +38,6 @@ export const navItems: NavItem[] = [
     title: "Products",
     icon: <ShoppingBag />,
     href: productsPath(),
-  },
-  {
-    title: "Availability",
-    icon: <Timer />,
-    href: availabilityPath(),
   },
   {
     title: "Reports",
