@@ -60,13 +60,13 @@ export default function ServicesGrid({
 
       {/* ── Category tabs ── */}
       {categories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
           <button
             onClick={() => setActiveCategory(null)}
             className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               activeCategory === null
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-fuchsia-600 text-white"
+                : "text-gray-500 hover:text-gray-900"
             }`}
           >
             All
@@ -77,8 +77,8 @@ export default function ServicesGrid({
               onClick={() => setActiveCategory(cat.id)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
                 activeCategory === cat.id
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-fuchsia-600 text-white"
+                  : "text-gray-500 hover:text-gray-900"
               }`}
             >
               {cat.name}

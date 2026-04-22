@@ -54,15 +54,15 @@ const ServiceList = ({ services, searchQuery }: { services: SerializedService[],
 
   return (
     <div className="space-y-4">
-      {/* ── Category tabs ── */}
+      {/* ── Category tabs — matches admin Services/Packages tab style ── */}
       {categories.length > 0 && (
-        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+        <div className="flex gap-1 bg-gray-100 rounded-xl p-1 w-fit overflow-x-auto scrollbar-hide max-w-full">
           <button
             onClick={() => setActiveCategory(null)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            className={`flex-shrink-0 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
               activeCategory === null
-                ? "bg-gray-900 text-white"
-                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
             }`}
           >
             All
@@ -71,10 +71,10 @@ const ServiceList = ({ services, searchQuery }: { services: SerializedService[],
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              className={`flex-shrink-0 px-5 py-2 rounded-lg text-sm font-medium transition-colors ${
                 activeCategory === cat.id
-                  ? "bg-gray-900 text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                  ? "bg-white text-gray-900 shadow-sm"
+                  : "text-gray-500 hover:text-gray-700"
               }`}
             >
               {cat.name}
