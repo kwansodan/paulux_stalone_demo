@@ -18,13 +18,25 @@ export default function ServicesGrid({
   packages?: SerializedPackage[]
 }) {
   const [searchTerm, setSearchTerm] = useState("")
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
-  const filteredServices = useMemo(() =>
-    services.filter((service) =>
-      service.name.toLowerCase().includes(searchTerm.toLowerCase())
-    ),
-    [searchTerm, services]
-  )
+  // Derive unique categories from services, preserving insertion order
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>()
+    services.forEach((s) => {
+      if (s.category && !seen.has(s.category.id)) {
+        seen.set(s.category.id, s.category.name)
+      }
+    })
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }))
+  }, [services])
+
+  const filteredServices = useMemo(() => {
+    let result = services
+    if (activeCategory) result = result.filter((s) => s.category?.id === activeCategory)
+    if (searchTerm) result = result.filter((s) => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    return result
+  }, [searchTerm, activeCategory, services])
 
   const filteredPackages = useMemo(() =>
     packages.filter((pkg) =>
@@ -43,11 +55,40 @@ export default function ServicesGrid({
   }
 
   return (
-    <div className="px-4 py-6 space-y-10">
+    <div className="px-4 py-6 space-y-6">
       <SearchBar searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
 
-      {/* ── Packages section ── */}
-      {filteredPackages.length > 0 && (
+      {/* ── Category tabs ── */}
+      {categories.length > 0 && (
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <button
+            onClick={() => setActiveCategory(null)}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+              activeCategory === null
+                ? "bg-gray-900 text-white"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+            }`}
+          >
+            All
+          </button>
+          {categories.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setActiveCategory(cat.id)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                activeCategory === cat.id
+                  ? "bg-gray-900 text-white"
+                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+              }`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Packages section (only shown on "All" tab) ── */}
+      {!activeCategory && filteredPackages.length > 0 && (
         <section className="space-y-4">
           <div className="flex items-center gap-2">
             <Package className="w-5 h-5 text-fuchsia-600" />
@@ -155,8 +196,8 @@ export default function ServicesGrid({
         </section>
       )}
 
-      {/* ── Individual services section ── */}
-      {filteredPackages.length > 0 && filteredServices.length > 0 && (
+      {/* ── Divider between packages and services (All tab only) ── */}
+      {!activeCategory && filteredPackages.length > 0 && filteredServices.length > 0 && (
         <div className="flex items-center gap-4">
           <div className="h-px flex-1 bg-gray-200" />
           <span className="text-sm text-gray-400 font-medium">Individual Services</span>
@@ -164,9 +205,10 @@ export default function ServicesGrid({
         </div>
       )}
 
-      {filteredServices.length === 0 && filteredPackages.length === 0 ? (
+      {/* ── Services grid ── */}
+      {filteredServices.length === 0 && (!activeCategory ? filteredPackages.length === 0 : true) ? (
         <div className="py-20 text-center text-gray-500">
-          No services match your search
+          {searchTerm ? "No services match your search" : "No services available in this category"}
         </div>
       ) : filteredServices.length > 0 ? (
         <section>

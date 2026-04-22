@@ -33,19 +33,35 @@ export default function SelectServiceStep({
 }: Props) {
   const [showAllServices, setShowAllServices] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
+  const [activeCategory, setActiveCategory] = useState<string | null>(null)
 
   const selectedServicesList = useMemo(
     () => services.filter((s) => selectedServiceIds.includes(s.id)),
     [services, selectedServiceIds]
   )
 
+  // Derive unique categories from the full services list
+  const categories = useMemo(() => {
+    const seen = new Map<string, string>()
+    services.forEach((s) => {
+      if (s.category && !seen.has(s.category.id)) {
+        seen.set(s.category.id, s.category.name)
+      }
+    })
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }))
+  }, [services])
+
   const filteredServices = useMemo(() => {
-    if (!searchQuery.trim()) return services
-    const q = searchQuery.toLowerCase()
-    return services.filter(
-      (s) => s.name.toLowerCase().includes(q) || (s.description?.toLowerCase() || "").includes(q)
-    )
-  }, [services, searchQuery])
+    let result = services
+    if (activeCategory) result = result.filter((s) => s.category?.id === activeCategory)
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase()
+      result = result.filter(
+        (s) => s.name.toLowerCase().includes(q) || (s.description?.toLowerCase() || "").includes(q)
+      )
+    }
+    return result
+  }, [services, searchQuery, activeCategory])
 
   const availableServices = filteredServices.filter((s) => !selectedServiceIds.includes(s.id))
 
@@ -166,6 +182,9 @@ export default function SelectServiceStep({
                 >
                   <div>
                     <h3 className="font-semibold text-gray-900">{service.name}</h3>
+                    {service.category && (
+                      <span className="text-[11px] text-gray-400">{service.category.name}</span>
+                    )}
                     <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
                       <span className="font-medium text-fuchsia-600">GHS {Number(service.price).toFixed(2)}</span>
                       <span>|</span>
@@ -199,6 +218,7 @@ export default function SelectServiceStep({
             </Button>
           ) : (
             <div className="space-y-4 pt-4 border-t border-gray-100">
+              {/* Search */}
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <Input
@@ -210,6 +230,35 @@ export default function SelectServiceStep({
                 />
               </div>
 
+              {/* Category tabs */}
+              {categories.length > 0 && (
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+                  <button
+                    onClick={() => setActiveCategory(null)}
+                    className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                      activeCategory === null
+                        ? "bg-gray-900 text-white"
+                        : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    }`}
+                  >
+                    All
+                  </button>
+                  {categories.map((cat) => (
+                    <button
+                      key={cat.id}
+                      onClick={() => setActiveCategory(cat.id)}
+                      className={`flex-shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
+                        activeCategory === cat.id
+                          ? "bg-gray-900 text-white"
+                          : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                      }`}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+
               <div className="grid gap-3 max-h-[400px] overflow-y-auto pr-2">
                 {availableServices.map((service) => (
                   <div
@@ -219,6 +268,9 @@ export default function SelectServiceStep({
                   >
                     <div className="flex-1 min-w-0 pr-4">
                       <h3 className="font-medium text-gray-900 truncate">{service.name}</h3>
+                      {service.category && (
+                        <span className="text-[11px] text-gray-400">{service.category.name}</span>
+                      )}
                       <div className="mt-1 flex items-center gap-3 text-sm text-gray-500">
                         <span className="font-medium text-fuchsia-600">GHS {Number(service.price).toFixed(2)}</span>
                         <span>|</span>
@@ -233,13 +285,18 @@ export default function SelectServiceStep({
                 ))}
                 {availableServices.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
-                    {searchQuery.trim() ? `No matching services found.` : "No more services available."}
+                    {searchQuery.trim() ? "No matching services found." : "No more services available."}
                   </div>
                 )}
               </div>
 
               <div className="flex justify-center pt-2">
-                <Button variant="ghost" size="sm" onClick={() => { setShowAllServices(false); setSearchQuery("") }} className="text-gray-500 hover:text-gray-700">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => { setShowAllServices(false); setSearchQuery(""); setActiveCategory(null) }}
+                  className="text-gray-500 hover:text-gray-700"
+                >
                   Close list
                 </Button>
               </div>
