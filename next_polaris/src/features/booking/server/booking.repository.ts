@@ -10,11 +10,17 @@ export class BookingRepository {
 
   async upsertBooking(payload: any): Promise<Booking> {
     const serviceIds = payload.serviceIds || (payload.serviceId ? [payload.serviceId] : []);
+    const productIds: string[] = payload.productIds ?? [];
 
-    // Fetch all services to calculate total price and duration
+    // Fetch all services to get price and duration snapshots
     const services = await prisma.service.findMany({
       where: { id: { in: serviceIds } }
     });
+
+    // Fetch all products to get price snapshot
+    const products = productIds.length > 0
+      ? await prisma.product.findMany({ where: { id: { in: productIds } } })
+      : [];
 
     if (payload.id) {
       const existing = await prisma.booking.findUnique({
@@ -25,7 +31,7 @@ export class BookingRepository {
         throw new Error("Booking not found. Cannot update.")
       }
 
-      // Update basic fields (fire-and-forget — no return value consumed)
+      // Update basic fields
       await prisma.booking.update({
         where: { id: payload.id },
         data: {
@@ -40,18 +46,28 @@ export class BookingRepository {
         }
       })
 
-      // Update services (delete and recreate for simplicity in many-to-many)
+      // Update services (delete and recreate)
       if (serviceIds.length > 0) {
-        await prisma.bookingService.deleteMany({
-          where: { bookingId: payload.id }
-        });
-
+        await prisma.bookingService.deleteMany({ where: { bookingId: payload.id } });
         await prisma.bookingService.createMany({
           data: services.map(s => ({
             bookingId: payload.id as string,
             serviceId: s.id,
             priceAtBooking: s.price,
             durationAtBooking: s.durationMinutes
+          }))
+        });
+      }
+
+      // Update products (delete and recreate)
+      await prisma.bookingProduct.deleteMany({ where: { bookingId: payload.id } });
+      if (products.length > 0) {
+        await prisma.bookingProduct.createMany({
+          data: products.map(p => ({
+            bookingId: payload.id as string,
+            productId: p.id,
+            priceAtBooking: p.price,
+            quantity: 1,
           }))
         });
       }
@@ -85,7 +101,16 @@ export class BookingRepository {
             priceAtBooking: s.price,
             durationAtBooking: s.durationMinutes
           }))
-        }
+        },
+        ...(products.length > 0 && {
+          products: {
+            create: products.map(p => ({
+              productId: p.id,
+              priceAtBooking: p.price,
+              quantity: 1,
+            }))
+          }
+        }),
       },
       include: bookingInclude,
     })

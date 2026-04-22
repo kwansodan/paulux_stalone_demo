@@ -9,13 +9,14 @@ import Modal from "@/components/modal"
 import { useMemo, useState } from "react"
 import { User } from "@generated/prisma/client"
 import { SerializedService } from "@/features/service/types"
+import { SerializedProduct } from "@/features/product/types"
 import EditBookingForm from "./form/edit-booking-form"
 import { toast } from "sonner"
 import CancelBookingForm from "./form/cancel-booking-form"
 import { BookingFilter, PaymentFilter } from "./booking-client-shell"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 
-export default function SelectDayPanel({ selectedDate, user, services, filter, paymentFilter }: { selectedDate: Date, user: User, services: SerializedService[], filter: BookingFilter, paymentFilter: PaymentFilter }) {
+export default function SelectDayPanel({ selectedDate, user, services, products, filter, paymentFilter }: { selectedDate: Date, user: User, services: SerializedService[], products: SerializedProduct[], filter: BookingFilter, paymentFilter: PaymentFilter }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isCancelOpen, setIsCancelOpen] = useState(false)
   const [selectedBooking, setSelectedBooking] = useState<BookingWithService | undefined | null>(null)
@@ -103,6 +104,7 @@ export default function SelectDayPanel({ selectedDate, user, services, filter, p
           booking={selectedBooking!}
           user={user}
           services={services}
+          products={products}
           onCancel={() => setIsEditModalOpen(false)}
           onSuccess={() => setIsEditModalOpen(false)}
         />

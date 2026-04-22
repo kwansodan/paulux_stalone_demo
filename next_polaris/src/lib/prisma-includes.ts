@@ -12,6 +12,11 @@ export const bookingInclude = {
       service: true,
     },
   },
+  products: {
+    include: {
+      product: true,
+    },
+  },
   payments: true,
   assignedTo: {
     select: {

@@ -5,11 +5,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useState } from "react";
 import CreateBookingForm from "./form/create-booking-form";
 import { SerializedService } from "@/features/service/types";
+import { SerializedProduct } from "@/features/product/types";
 import { User } from "@generated/prisma/client";
 import { BookingFilter, PaymentFilter } from "./booking-client-shell";
 
 export default function BookingHeader({
   services,
+  products,
   authenticatedUser,
   selectedBookingFilter,
   setSelectedBookingFilter,
@@ -17,6 +19,7 @@ export default function BookingHeader({
   setSelectedPaymentFilter
 }: {
   services: SerializedService[],
+  products: SerializedProduct[],
   authenticatedUser: User,
   selectedBookingFilter: string,
   setSelectedBookingFilter: (filter: BookingFilter) => void,
@@ -77,6 +80,7 @@ export default function BookingHeader({
         <CreateBookingForm
           user={authenticatedUser}
           services={services}
+          products={products}
           onCancel={() => setOpen(false)}
           onSuccess={() => setOpen(false)}
         />

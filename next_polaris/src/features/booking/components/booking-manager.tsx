@@ -3,10 +3,23 @@ import React, { useState } from 'react'
 import BookingsCalendar from './booking-calender'
 import SelectDayPanel from './bookings-by-day'
 import { SerializedService } from '@/features/service/types'
+import { SerializedProduct } from '@/features/product/types'
 import { User } from '@generated/prisma/client'
 import { BookingFilter, PaymentFilter } from './booking-client-shell'
 
-const BookingManager = ({ authenticatedUser, services, selectedBookingFilter, selectedPaymentFilter }: { authenticatedUser: User, services: SerializedService[], selectedBookingFilter: BookingFilter, selectedPaymentFilter: PaymentFilter }) => {
+const BookingManager = ({
+  authenticatedUser,
+  services,
+  products,
+  selectedBookingFilter,
+  selectedPaymentFilter,
+}: {
+  authenticatedUser: User
+  services: SerializedService[]
+  products: SerializedProduct[]
+  selectedBookingFilter: BookingFilter
+  selectedPaymentFilter: PaymentFilter
+}) => {
   const [selectedDate, setSelectedDate] = useState(new Date())
   return (
     <div className="flex flex-col lg:flex-row gap-6 w-full">
@@ -21,6 +34,7 @@ const BookingManager = ({ authenticatedUser, services, selectedBookingFilter, se
           filter={selectedBookingFilter}
           paymentFilter={selectedPaymentFilter}
           services={services}
+          products={products}
           user={authenticatedUser}
           selectedDate={selectedDate}
         />

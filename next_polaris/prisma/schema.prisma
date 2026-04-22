@@ -211,7 +211,8 @@ model Booking {
 
   // serviceId String  @db.Uuid
   // service   Service @relation(fields: [serviceId], references: [id])
-  services BookingService[]
+  services  BookingService[]
+  products  BookingProduct[]
 
   minDepositPercent Int?
 
@@ -268,6 +269,51 @@ model BookingService {
 
   @@id([bookingId, serviceId])
   @@map("booking_services")
+}
+
+model ProductCategory {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique
+  products  Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("product_categories")
+}
+
+model Product {
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  price       Decimal           @db.Decimal(10, 2)
+  currency    SupportedCurrency @default(GHS)
+  isActive    Boolean           @default(true)
+  imageUrl    String?
+
+  categoryId String?          @db.Uuid
+  category   ProductCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  bookings BookingProduct[]
+
+  @@index([categoryId])
+  @@map("products")
+}
+
+model BookingProduct {
+  bookingId String  @db.Uuid
+  booking   Booking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  productId String  @db.Uuid
+  product   Product @relation(fields: [productId], references: [id])
+
+  priceAtBooking Decimal @db.Decimal(10, 2)
+  quantity       Int     @default(1)
+
+  @@id([bookingId, productId])
+  @@map("booking_products")
 }
 
 model BusinessHour {

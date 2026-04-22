@@ -17,22 +17,26 @@ import {
 import { createOrEditBooking, useAvailableSlots, useEditBooking } from "../../client/hooks/use-booking"
 import { toast } from "sonner"
 import { SerializedService } from "@/features/service/types"
+import { SerializedProduct } from "@/features/product/types"
 import { Form, FormField } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { BookingWithService } from "../../types"
+import { ShoppingBag } from "lucide-react"
 
 export default function EditBookingForm({
   booking,
   user,
   services,
+  products,
   onCancel,
   onSuccess,
 }: {
   booking: BookingWithService
   user: User
   services: SerializedService[]
+  products: SerializedProduct[]
   onCancel: () => void
   onSuccess: () => void
 }) {
@@ -43,6 +47,7 @@ export default function EditBookingForm({
       clientEmail: booking.clientEmail,
       clientPhone: booking.clientPhone,
       serviceIds: booking.services.map(s => s.serviceId),
+      productIds: booking.products?.map(p => p.productId) ?? [],
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
       createdById: user.id,
@@ -52,6 +57,7 @@ export default function EditBookingForm({
 
   const date = form.watch("bookingDate")
   const serviceIds = form.watch("serviceIds") || []
+  const productIds = form.watch("productIds") || []
   const userId = form.watch("createdById") || user.id
 
   const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, userId)
@@ -60,11 +66,18 @@ export default function EditBookingForm({
   const mutation = useEditBooking()
 
   const [serviceSearch, setServiceSearch] = useState("")
+  const [productSearch, setProductSearch] = useState("")
   const filteredForDisplay = useMemo(() =>
     services.filter((s) =>
       s.name.toLowerCase().includes(serviceSearch.toLowerCase())
     ),
     [serviceSearch, services]
+  )
+  const filteredProducts = useMemo(() =>
+    products.filter((p) =>
+      p.name.toLowerCase().includes(productSearch.toLowerCase())
+    ),
+    [productSearch, products]
   )
 
   const onSubmit = async (data: BookingInput) => {
@@ -235,6 +248,64 @@ export default function EditBookingForm({
               </div>
             )}
           />
+
+          {/* Products */}
+          {products.length > 0 && (
+            <FormField
+              control={form.control}
+              name="productIds"
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
+                    <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
+                    Products <span className="text-gray-400 text-xs">(optional)</span>
+                  </Label>
+                  <input
+                    type="text"
+                    placeholder="Search products..."
+                    value={productSearch}
+                    onChange={(e) => setProductSearch(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+                  />
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1 border rounded-lg bg-white">
+                    {filteredProducts.map((p) => (
+                      <div
+                        key={p.id}
+                        className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                        onClick={() => {
+                          const current = field.value || []
+                          const next = current.includes(p.id)
+                            ? current.filter((v) => v !== p.id)
+                            : [...current, p.id]
+                          field.onChange(next)
+                        }}
+                      >
+                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(p.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
+                          {field.value?.includes(p.id) && (
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </div>
+                        <div className="flex-1 flex justify-between items-center text-sm">
+                          <span>{p.name}</span>
+                          <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(p.price).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    ))}
+                    {filteredProducts.length === 0 && (
+                      <div className="p-4 text-center text-sm text-gray-500">No products found</div>
+                    )}
+                  </div>
+                  {productIds.length > 0 && (
+                    <p className="text-xs text-fuchsia-600 font-medium">
+                      {productIds.length} product{productIds.length !== 1 ? 's' : ''} selected — GHS {products.filter(p => productIds.includes(p.id)).reduce((sum, p) => sum + Number(p.price), 0).toFixed(2)}
+                    </p>
+                  )}
+                </div>
+              )}
+            />
+          )}
 
           {/* Booking Date */}
           <FormField

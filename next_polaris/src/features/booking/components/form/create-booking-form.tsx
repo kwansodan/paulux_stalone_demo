@@ -7,23 +7,26 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useAvailableSlots, useCreateBooking } from "../../client/hooks/use-booking"
 import { SerializedService } from "@/features/service/types"
+import { SerializedProduct } from "@/features/product/types"
 import { Form, FormField } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo, useState } from "react"
-import { CalendarClock, UserRound, Info } from "lucide-react"
+import { CalendarClock, UserRound, Info, ShoppingBag } from "lucide-react"
 
 
 
 export default function CreateBookingForm({
   user,
   services,
+  products,
   onCancel,
   onSuccess
 }: {
   user: User,
   services: SerializedService[];
+  products: SerializedProduct[];
   onCancel: () => void;
   onSuccess: () => void;
 }) {
@@ -37,6 +40,7 @@ export default function CreateBookingForm({
       clientEmail: '',
       clientPhone: '',
       serviceIds: [],
+      productIds: [],
       bookingDate: '',
       bookingTime: '',
       minDepositPercent: undefined,
@@ -48,11 +52,17 @@ export default function CreateBookingForm({
   const date = form.watch("bookingDate")
   const minDepositPercent = form.watch("minDepositPercent")
   const serviceIds = form.watch("serviceIds") || []
+  const productIds = form.watch("productIds") || []
   const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
+  const selectedProducts = useMemo(() => products.filter((p) => productIds.includes(p.id)), [productIds, products])
   const [searchTerm, setSearchTerm] = useState('')
+  const [productSearchTerm, setProductSearchTerm] = useState('')
   const filteredServices = useMemo(() => {
     return services.filter(s => s.name.toLowerCase().includes(searchTerm.toLowerCase()))
   }, [services, searchTerm])
+  const filteredProducts = useMemo(() => {
+    return products.filter(p => p.name.toLowerCase().includes(productSearchTerm.toLowerCase()))
+  }, [products, productSearchTerm])
 
   const { data, isLoading, error } = useAvailableSlots(
     !isWalkIn ? date : undefined,
@@ -277,11 +287,75 @@ export default function CreateBookingForm({
               </div>
             )}
           />
+          {/* Products */}
+          {products.length > 0 && (
+            <FormField
+              control={form.control}
+              name="productIds"
+              render={({ field }) => (
+                <div className="space-y-2">
+                  <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
+                    <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
+                    Products <span className="text-gray-400 text-xs">(optional)</span>
+                  </Label>
+                  <Input
+                    placeholder="Search products..."
+                    value={productSearchTerm}
+                    onChange={(e) => setProductSearchTerm(e.target.value)}
+                    className="h-10 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+                  />
+                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1 border rounded-lg bg-white">
+                    {filteredProducts.length > 0 ? (
+                      filteredProducts.map((p) => (
+                        <div
+                          key={p.id}
+                          className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                          onClick={() => {
+                            const current = field.value || []
+                            const next = current.includes(p.id)
+                              ? current.filter((v) => v !== p.id)
+                              : [...current, p.id]
+                            field.onChange(next)
+                          }}
+                        >
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(p.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
+                            {field.value?.includes(p.id) && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 flex justify-between items-center text-sm">
+                            <span>{p.name}</span>
+                            <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(p.price).toFixed(2)}</span>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-sm text-gray-500">No products found</div>
+                    )}
+                  </div>
+                </div>
+              )}
+            />
+          )}
+
+          {/* Booking summary */}
           {selectedServices && selectedServices.length > 0 && (
             <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600 space-y-2">
-              <div className="flex justify-between items-center text-sm border-b border-fuchsia-200 pb-2">
-                <span className="font-medium">Total Price:</span>
-                <span className="font-bold text-lg">GHS {selectedServices.reduce((sum, s) => sum + Number(s.price), 0).toFixed(2)}</span>
+              <div className="flex justify-between items-center text-sm">
+                <span className="text-gray-600">Services:</span>
+                <span className="font-medium">GHS {selectedServices.reduce((sum, s) => sum + Number(s.price), 0).toFixed(2)}</span>
+              </div>
+              {selectedProducts.length > 0 && (
+                <div className="flex justify-between items-center text-sm">
+                  <span className="text-gray-600">Products:</span>
+                  <span className="font-medium">GHS {selectedProducts.reduce((sum, p) => sum + Number(p.price), 0).toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between items-center text-sm border-t border-fuchsia-200 pt-2">
+                <span className="font-medium">Total:</span>
+                <span className="font-bold text-lg">GHS {(selectedServices.reduce((sum, s) => sum + Number(s.price), 0) + selectedProducts.reduce((sum, p) => sum + Number(p.price), 0)).toFixed(2)}</span>
               </div>
               <div className="flex gap-2 items-center">
                 <p className="font-semibold text-sm">Minimum deposit required: </p>
