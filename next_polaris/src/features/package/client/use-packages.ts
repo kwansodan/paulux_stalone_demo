@@ -24,7 +24,7 @@ export function useCreatePackage() {
       description?: string
       imageUrl?: string | null
       price: number
-      minDepositPercent: number
+      minDepositFixed: number
       isActive: boolean
       serviceIds: string[]
     }) => {
@@ -44,7 +44,7 @@ export function useUpdatePackage() {
       description?: string | null
       imageUrl?: string | null
       price?: number
-      minDepositPercent?: number
+      minDepositFixed?: number
       isActive?: boolean
       serviceIds?: string[]
     }) => {

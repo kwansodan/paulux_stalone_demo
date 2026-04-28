@@ -43,14 +43,14 @@ export default function CreateBookingForm({
       productIds: [],
       bookingDate: '',
       bookingTime: '',
-      minDepositPercent: undefined,
+      minDepositFixed: undefined,
       createdById: user.id,
       bookingType: "SCHEDULED",
     }
   })
 
   const date = form.watch("bookingDate")
-  const minDepositPercent = form.watch("minDepositPercent")
+  const minDepositFixed = form.watch("minDepositFixed")
   const serviceIds = form.watch("serviceIds") || []
   const productIds = form.watch("productIds") || []
   const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
@@ -274,14 +274,14 @@ export default function CreateBookingForm({
           {/* Payment / Deposit */}
           <FormField
             control={form.control}
-            name="minDepositPercent"
+            name="minDepositFixed"
             render={({ field }) => (
               <div className="space-y-1">
-                <Label className="text-sm font-normal text-foreground">Minimum deposit (%)</Label>
-                <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} max={100} {...field} />
-                {form.formState.errors.minDepositPercent && (
+                <Label className="text-sm font-normal text-foreground">Minimum deposit (GHS)</Label>
+                <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} {...field} />
+                {form.formState.errors.minDepositFixed && (
                   <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.minDepositPercent.message}
+                    {form.formState.errors.minDepositFixed.message}
                   </p>
                 )}
               </div>
@@ -361,9 +361,9 @@ export default function CreateBookingForm({
                 <p className="font-semibold text-sm">Minimum deposit required: </p>
                 <span className="text-[18px] text-fuchsia-700 font-semibold">
                   GHS {
-                    minDepositPercent !== undefined
-                      ? (Number(minDepositPercent) / 100) * selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
-                      : selectedServices.reduce((sum, s) => sum + (Number(s.price) * (s.minDepositPercent / 100)), 0).toFixed(2)
+                    minDepositFixed !== undefined
+                      ? Number(minDepositFixed).toFixed(2)
+                      : selectedServices.reduce((sum, s) => sum + Number(s.minDepositFixed), 0).toFixed(2)
                   }
                 </span>
               </div>

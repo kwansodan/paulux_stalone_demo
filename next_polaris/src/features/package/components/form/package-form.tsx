@@ -25,7 +25,7 @@ export default function PackageForm({ pkg, services, onCancel, onSuccess }: Pack
   const [description, setDescription] = useState(pkg?.description ?? "")
   const [imageUrl, setImageUrl] = useState<string | null>(pkg?.imageUrl ?? null)
   const [price, setPrice] = useState(pkg ? String(Number(pkg.price)) : "")
-  const [minDepositPercent, setMinDepositPercent] = useState(String(pkg?.minDepositPercent ?? 0))
+  const [minDepositFixed, setMinDepositFixed] = useState(String(pkg?.minDepositFixed ?? 0))
   const [isActive, setIsActive] = useState(pkg?.isActive ?? true)
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(
     pkg?.services.map((ps) => ps.serviceId) ?? []
@@ -59,7 +59,7 @@ export default function PackageForm({ pkg, services, onCancel, onSuccess }: Pack
       description: description.trim() || undefined,
       imageUrl: imageUrl || null,
       price: parseFloat(price),
-      minDepositPercent: parseInt(minDepositPercent) || 0,
+      minDepositFixed: parseFloat(minDepositFixed) || 0,
       isActive,
       serviceIds: selectedServiceIds,
     }
@@ -121,13 +121,13 @@ export default function PackageForm({ pkg, services, onCancel, onSuccess }: Pack
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-sm font-normal">Min deposit (%)</Label>
+            <Label className="text-sm font-normal">Min deposit (GHS)</Label>
             <Input
               type="number"
+              step="0.01"
               min={0}
-              max={100}
-              value={minDepositPercent}
-              onChange={(e) => setMinDepositPercent(e.target.value)}
+              value={minDepositFixed}
+              onChange={(e) => setMinDepositFixed(e.target.value)}
               className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
             />
           </div>

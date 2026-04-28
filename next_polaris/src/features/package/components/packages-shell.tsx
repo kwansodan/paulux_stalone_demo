@@ -106,7 +106,7 @@ export default function PackagesShell({ initialPackages, services }: PackagesShe
                       )}
                     </div>
                     <span className="text-[11px] font-medium bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full">
-                      {pkg.minDepositPercent}% deposit
+                      {Number(pkg.minDepositFixed) > 0 ? `GHS ${Number(pkg.minDepositFixed).toFixed(2)} deposit` : "No deposit"}
                     </span>
                   </div>
                 </CardContent>

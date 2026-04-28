@@ -45,11 +45,10 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const totalPrice = Math.max(0, baseTotal - discountAmount)
 
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
-  const minDepositPct = pkg
-    ? pkg.minDepositPercent
-    : (formData.minDepositPercent ?? services.reduce((max, s) => Math.max(max, s.minDepositPercent), 0))
-  const hasDepositRequirement = minDepositPct < 100
-  const depositPayment = totalPrice * (minDepositPct / 100)
+  const depositPayment = pkg
+    ? Number(pkg.minDepositFixed)
+    : (formData.minDepositFixed ?? services.reduce((sum, s) => sum + Number(s.minDepositFixed), 0))
+  const hasDepositRequirement = depositPayment > 0 && depositPayment < totalPrice
 
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
     hasDepositRequirement ? "deposit" : "full"
@@ -312,7 +311,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           </div>
 
           {/* Pay Deposit */}
-          {(formData.minDepositPercent !== undefined ? formData.minDepositPercent < 100 : hasDepositRequirement) && (
+          {hasDepositRequirement && (
             <button
               onClick={() => setPaymentOption("deposit")}
               className={`
@@ -344,7 +343,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
                   </div>
                   <p className="text-xs text-gray-600 mb-2">
                     Secure your booking now, pay the remaining GHS{" "}
-                    {depositPayment.toFixed(2)} at the salon
+                    {(totalPrice - depositPayment).toFixed(2)} at the salon
                   </p>
                   <span className="text-xl font-bold text-fuchsia-600">
                     GHS {depositPayment.toFixed(2)}

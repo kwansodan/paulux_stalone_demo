@@ -8,7 +8,7 @@ const UpdatePackageSchema = z.object({
   description: z.string().nullable().optional(),
   imageUrl: z.string().url().nullable().optional(),
   price: z.number().min(0).optional(),
-  minDepositPercent: z.number().min(0).max(100).optional(),
+  minDepositFixed: z.number().min(0).optional(),
   isActive: z.boolean().optional(),
   serviceIds: z.array(z.string().uuid()).min(1).optional(),
 })

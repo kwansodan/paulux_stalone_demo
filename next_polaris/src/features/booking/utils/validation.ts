@@ -48,12 +48,12 @@ export const BookingInputSchema = z.object({
     .optional(),
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
-  minDepositPercent: z
+  minDepositFixed: z
     .string()
     .optional()
     .refine(
-      (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0 && Number(val) <= 100),
-      "Must be 0–100"
+      (val) => !val || (!isNaN(Number(val)) && Number(val) >= 0),
+      "Must be a positive amount"
     ),
   paymentStatus: PaymentStatusEnum.optional(),
   termsAccepted: z.boolean().optional(),
@@ -70,7 +70,7 @@ export const BookingInputSchema = z.object({
 export const BookingSchema = BookingInputSchema.extend({
   id: z.string().uuid().optional(),
   bookingReference: z.string().optional(),
-  minDepositPercent: z.string().optional(),
+  minDepositFixed: z.string().optional(),
   status: BookingStatusEnum.default("PENDING"),
   paymentStatus: PaymentStatusEnum.default("PENDING"),
   paymentRef: z.string().optional().nullable(),

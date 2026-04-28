@@ -8,7 +8,7 @@ const CreatePackageSchema = z.object({
   description: z.string().optional(),
   imageUrl: z.string().url().nullable().optional(),
   price: z.number().min(0, "Price must be 0 or greater"),
-  minDepositPercent: z.number().min(0).max(100).default(0),
+  minDepositFixed: z.number().min(0).default(0),
   isActive: z.boolean().default(true),
   serviceIds: z.array(z.string().uuid()).min(1, "At least one service is required"),
 })
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
         description: validated.description ?? null,
         imageUrl: validated.imageUrl ?? null,
         price: validated.price,
-        minDepositPercent: validated.minDepositPercent,
+        minDepositFixed: validated.minDepositFixed,
         isActive: validated.isActive,
         services: {
           create: validated.serviceIds.map((serviceId) => ({ serviceId })),

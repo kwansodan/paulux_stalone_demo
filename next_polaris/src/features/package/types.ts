@@ -7,7 +7,7 @@ export interface SerializedPackage {
   imageUrl: string | null
   price: string
   currency: string
-  minDepositPercent: number
+  minDepositFixed: number
   isActive: boolean
   createdAt: string
   updatedAt: string

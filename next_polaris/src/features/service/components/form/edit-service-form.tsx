@@ -39,7 +39,7 @@ export default function EditServiceForm({
       price: Number(service.price),
       maxBookingsPerDay: service.maxBookingsPerDay,
       latestBookingTime: service.latestBookingTime,
-      minDepositPercent: service.minDepositPercent,
+      minDepositFixed: Number(service.minDepositFixed),
       isActive: service.isActive,
       imageUrl: service.imageUrl,
       categoryId: service.categoryId ?? null,
@@ -251,14 +251,14 @@ export default function EditServiceForm({
             {/* Payment */}
             <FormField
               control={form.control}
-              name="minDepositPercent"
+              name="minDepositFixed"
               render={({ field }) => (
                 <div className="space-y-1">
-                  <Label className="text-sm font-normal text-foreground">Minimum deposit (%)</Label>
-                  <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} max={100} {...field} />
-                  {form.formState.errors.minDepositPercent && (
+                  <Label className="text-sm font-normal text-foreground">Minimum deposit (GHS)</Label>
+                  <Input className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg" step="0.01" type="number" min={0} {...field} />
+                  {form.formState.errors.minDepositFixed && (
                     <p className="text-red-500 text-sm mt-1">
-                      {form.formState.errors.minDepositPercent.message}
+                      {form.formState.errors.minDepositFixed.message}
                     </p>
                   )}
                 </div>

@@ -98,7 +98,7 @@ export default function ServiceCard({ service }: { service: SerializedService })
           {/* Bottom row */}
           <div className="flex items-center gap-3">
             <span className="flex items-center text-[11px] font-medium bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full whitespace-nowrap">
-              {service.minDepositPercent}% deposit
+              {Number(service.minDepositFixed) > 0 ? `GHS ${Number(service.minDepositFixed).toFixed(2)} deposit` : "No deposit"}
             </span>
 
             <ToggleSwitch

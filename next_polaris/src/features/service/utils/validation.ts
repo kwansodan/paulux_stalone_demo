@@ -17,10 +17,10 @@ export const ServiceInputSchema = z.object({
     .transform((val) => Number(val))
     .refine((val) => !isNaN(val) && val >= 0, "Price must be valid"),
 
-  minDepositPercent: z
+  minDepositFixed: z
     .union([z.string(), z.number()])
     .transform((val) => Number(val))
-    .refine((val) => !isNaN(val) && val >= 0 && val <= 100, "Must be 0–100"),
+    .refine((val) => !isNaN(val) && val >= 0, "Must be a positive amount"),
 
 
   maxBookingsPerDay: z

@@ -18,7 +18,7 @@ export type BookingFormData = {
   email: string
   phone: string
 
-  minDepositPercent?: number
+  minDepositFixed?: number
 
   // Step 2: Service (individual) or Package
   serviceIds: string[]

@@ -70,10 +70,10 @@ export async function POST(
             amountToCharge = customAmount;
             transactionType = totalPaid > 0 ? 'subsequent' : 'initial';
         } else if (totalPaid === 0) {
-            // First payment: Calculate min deposit amount
-            const minDepositAmount = booking.minDepositPercent != null
-                ? totalPrice * (booking.minDepositPercent / 100)
-                : booking.services.reduce((sum, s) => sum + (Number(s.priceAtBooking) * (s.service.minDepositPercent / 100)), 0);
+            // First payment: use fixed deposit amount
+            const minDepositAmount = booking.minDepositFixed != null
+                ? Number(booking.minDepositFixed)
+                : booking.services.reduce((sum, s) => sum + Number(s.service.minDepositFixed), 0);
 
             if (minDepositAmount > 0 && minDepositAmount < totalPrice) {
                 amountToCharge = minDepositAmount;
