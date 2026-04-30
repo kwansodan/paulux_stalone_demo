@@ -41,8 +41,8 @@ export default function CreateBookingForm({
       clientPhone: '',
       serviceIds: [],
       productIds: [],
-      bookingDate: '',
-      bookingTime: '',
+      bookingDate: undefined,
+      bookingTime: undefined,
       minDepositFixed: undefined,
       createdById: user.id,
       bookingType: "SCHEDULED",
@@ -82,8 +82,8 @@ export default function CreateBookingForm({
     setBookingType(type)
     // Clear date/time when switching to walk-in
     if (type === "WALKIN") {
-      form.setValue("bookingDate", "")
-      form.setValue("bookingTime", "")
+      form.setValue("bookingDate", undefined)
+      form.setValue("bookingTime", undefined)
       form.clearErrors(["bookingDate", "bookingTime"])
     }
   }

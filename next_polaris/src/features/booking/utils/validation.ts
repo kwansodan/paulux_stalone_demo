@@ -40,12 +40,12 @@ export const BookingInputSchema = z.object({
     .optional(),
   bookingDate: z
     .string()
-    .regex(dateRegex, "Date must be YYYY-MM-DD")
-    .optional(),
+    .optional()
+    .refine(val => !val || dateRegex.test(val), "Date must be YYYY-MM-DD"),
   bookingTime: z
     .string()
-    .regex(timeRegex, "Time must be HH:mm")
-    .optional(),
+    .optional()
+    .refine(val => !val || timeRegex.test(val), "Time must be HH:mm"),
   createdById: z.string().uuid().optional(),
   status: BookingStatusEnum.optional(),
   minDepositFixed: z
