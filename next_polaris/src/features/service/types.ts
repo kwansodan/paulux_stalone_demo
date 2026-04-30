@@ -1,7 +1,8 @@
 import { Service, ServiceCategory } from "@generated/prisma/client";
 
-export type SerializedService = Omit<Service, 'price' | 'createdAt' | 'updatedAt'> & {
+export type SerializedService = Omit<Service, 'price' | 'minDepositFixed' | 'createdAt' | 'updatedAt'> & {
   price: string;
+  minDepositFixed: number;
   imageUrl: string | null;
   createdAt: string;
   updatedAt: string;

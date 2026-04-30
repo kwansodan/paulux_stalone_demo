@@ -18,6 +18,7 @@ export default async function ServicesPage() {
   const serializedPackages = packages.map((pkg) => ({
     ...pkg,
     price: pkg.price.toString(),
+    minDepositFixed: Number(pkg.minDepositFixed),
     createdAt: pkg.createdAt.toISOString(),
     updatedAt: pkg.updatedAt.toISOString(),
     services: pkg.services.map((ps) => ({
@@ -25,6 +26,7 @@ export default async function ServicesPage() {
       service: {
         ...ps.service,
         price: ps.service.price.toString(),
+        minDepositFixed: Number(ps.service.minDepositFixed),
         createdAt: ps.service.createdAt.toISOString(),
         updatedAt: ps.service.updatedAt.toISOString(),
       },

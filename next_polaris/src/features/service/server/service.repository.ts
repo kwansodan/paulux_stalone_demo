@@ -21,6 +21,7 @@ export class ServiceRepository {
     return services.map(service => ({
       ...service,
       price: service.price.toString(),
+      minDepositFixed: Number(service.minDepositFixed),
       imageUrl: patchLegacyUrl(service.imageUrl),
       createdAt: service.createdAt.toISOString(),
       updatedAt: service.updatedAt.toISOString(),
@@ -116,6 +117,7 @@ export class ServiceRepository {
     const serializedService = {
       ...upsertedService,
       price: upsertedService.price.toString(),
+      minDepositFixed: Number(upsertedService.minDepositFixed),
       imageUrl: patchLegacyUrl(upsertedService.imageUrl),
       createdAt: upsertedService.createdAt.toISOString(),
       updatedAt: upsertedService.updatedAt.toISOString(),

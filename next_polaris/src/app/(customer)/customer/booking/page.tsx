@@ -23,6 +23,7 @@ export default async function CustomerBookingPage({
   const serializedPackages = packages.map((pkg) => ({
     ...pkg,
     price: pkg.price.toString(),
+    minDepositFixed: Number(pkg.minDepositFixed),
     createdAt: pkg.createdAt.toISOString(),
     updatedAt: pkg.updatedAt.toISOString(),
     services: pkg.services.map((ps) => ({
@@ -30,6 +31,7 @@ export default async function CustomerBookingPage({
       service: {
         ...ps.service,
         price: ps.service.price.toString(),
+        minDepositFixed: Number(ps.service.minDepositFixed),
         createdAt: ps.service.createdAt.toISOString(),
         updatedAt: ps.service.updatedAt.toISOString(),
       },
