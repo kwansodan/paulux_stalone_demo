@@ -10,7 +10,11 @@ export class BookingRepository {
 
   async upsertBooking(payload: any): Promise<Booking> {
     const serviceIds = payload.serviceIds || (payload.serviceId ? [payload.serviceId] : []);
-    const productIds: string[] = payload.productIds ?? [];
+    const productEntries: { id: string; quantity: number }[] = (payload.productIds ?? []).map(
+      (p: string | { id: string; quantity: number }) =>
+        typeof p === 'string' ? { id: p, quantity: 1 } : p
+    );
+    const productIds = productEntries.map(p => p.id);
 
     // Fetch all services to get price and duration snapshots
     const services = await prisma.service.findMany({
@@ -67,7 +71,7 @@ export class BookingRepository {
             bookingId: payload.id as string,
             productId: p.id,
             priceAtBooking: p.price,
-            quantity: 1,
+            quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1,
           }))
         });
       }
@@ -107,7 +111,7 @@ export class BookingRepository {
             create: products.map(p => ({
               productId: p.id,
               priceAtBooking: p.price,
-              quantity: 1,
+              quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1,
             }))
           }
         }),

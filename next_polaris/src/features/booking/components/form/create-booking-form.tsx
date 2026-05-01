@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo, useState } from "react"
-import { CalendarClock, UserRound, Info, ShoppingBag } from "lucide-react"
+import { CalendarClock, UserRound, Info, ShoppingBag, Minus, Plus } from "lucide-react"
 
 
 
@@ -52,9 +52,14 @@ export default function CreateBookingForm({
   const date = form.watch("bookingDate")
   const minDepositFixed = form.watch("minDepositFixed")
   const serviceIds = form.watch("serviceIds") || []
-  const productIds = form.watch("productIds") || []
+  const productEntries = form.watch("productIds") || []
   const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
-  const selectedProducts = useMemo(() => products.filter((p) => productIds.includes(p.id)), [productIds, products])
+  const selectedProducts = useMemo(
+    () => products
+      .filter(p => productEntries.some(e => e.id === p.id))
+      .map(p => ({ ...p, quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1 })),
+    [productEntries, products]
+  )
   const [searchTerm, setSearchTerm] = useState('')
   const [productSearchTerm, setProductSearchTerm] = useState('')
   const filteredServices = useMemo(() => {
@@ -292,51 +297,103 @@ export default function CreateBookingForm({
             <FormField
               control={form.control}
               name="productIds"
-              render={({ field }) => (
-                <div className="space-y-2">
-                  <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
-                    <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
-                    Products <span className="text-gray-400 text-xs">(optional)</span>
-                  </Label>
-                  <Input
-                    placeholder="Search products..."
-                    value={productSearchTerm}
-                    onChange={(e) => setProductSearchTerm(e.target.value)}
-                    className="h-10 bg-white shadow-none border-[#E2E8F0] rounded-lg"
-                  />
-                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1 border rounded-lg bg-white">
-                    {filteredProducts.length > 0 ? (
-                      filteredProducts.map((p) => (
-                        <div
-                          key={p.id}
-                          className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          onClick={() => {
-                            const current = field.value || []
-                            const next = current.includes(p.id)
-                              ? current.filter((v) => v !== p.id)
-                              : [...current, p.id]
-                            field.onChange(next)
-                          }}
-                        >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(p.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
-                            {field.value?.includes(p.id) && (
-                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                              </svg>
-                            )}
-                          </div>
-                          <div className="flex-1 flex justify-between items-center text-sm">
-                            <span>{p.name}</span>
-                            <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(p.price).toFixed(2)}</span>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-sm text-gray-500">No products found</div>
-                    )}
+              render={({ field }) => {
+                const entries: { id: string; quantity: number }[] = field.value || []
+
+                function isSelected(id: string) {
+                  return entries.some(e => e.id === id)
+                }
+
+                function toggleProduct(id: string) {
+                  if (isSelected(id)) {
+                    field.onChange(entries.filter(e => e.id !== id))
+                  } else {
+                    field.onChange([...entries, { id, quantity: 1 }])
+                  }
+                }
+
+                function changeQty(id: string, delta: number) {
+                  field.onChange(
+                    entries.map(e =>
+                      e.id === id ? { ...e, quantity: Math.max(1, e.quantity + delta) } : e
+                    )
+                  )
+                }
+
+                return (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
+                      <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
+                      Products <span className="text-gray-400 text-xs">(optional)</span>
+                    </Label>
+                    <Input
+                      placeholder="Search products..."
+                      value={productSearchTerm}
+                      onChange={(e) => setProductSearchTerm(e.target.value)}
+                      className="h-10 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+                    />
+                    <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                      {filteredProducts.length > 0 ? (
+                        filteredProducts.map((p) => {
+                          const selected = isSelected(p.id)
+                          const qty = entries.find(e => e.id === p.id)?.quantity ?? 1
+                          return (
+                            <div key={p.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                              {/* Checkbox */}
+                              <div
+                                className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${selected ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}
+                                onClick={() => toggleProduct(p.id)}
+                              >
+                                {selected && (
+                                  <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+
+                              {/* Name — clicking also toggles */}
+                              <div
+                                className="flex-1 text-sm cursor-pointer"
+                                onClick={() => toggleProduct(p.id)}
+                              >
+                                {p.name}
+                              </div>
+
+                              {/* Quantity stepper — only visible when selected */}
+                              {selected && (
+                                <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => changeQty(p.id, -1)}
+                                    className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                  >
+                                    <Minus className="w-3 h-3" />
+                                  </button>
+                                  <span className="w-6 text-center text-sm font-medium">{qty}</span>
+                                  <button
+                                    type="button"
+                                    onClick={() => changeQty(p.id, 1)}
+                                    className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                  >
+                                    <Plus className="w-3 h-3" />
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Price (unit × qty when selected) */}
+                              <span className="text-fuchsia-600 font-medium text-sm whitespace-nowrap ml-1">
+                                GHS {(Number(p.price) * (selected ? qty : 1)).toFixed(2)}
+                              </span>
+                            </div>
+                          )
+                        })
+                      ) : (
+                        <div className="p-4 text-center text-sm text-gray-500">No products found</div>
+                      )}
+                    </div>
                   </div>
-                </div>
-              )}
+                )
+              }}
             />
           )}
 
@@ -350,12 +407,12 @@ export default function CreateBookingForm({
               {selectedProducts.length > 0 && (
                 <div className="flex justify-between items-center text-sm">
                   <span className="text-gray-600">Products:</span>
-                  <span className="font-medium">GHS {selectedProducts.reduce((sum, p) => sum + Number(p.price), 0).toFixed(2)}</span>
+                  <span className="font-medium">GHS {selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0).toFixed(2)}</span>
                 </div>
               )}
               <div className="flex justify-between items-center text-sm border-t border-fuchsia-200 pt-2">
                 <span className="font-medium">Total:</span>
-                <span className="font-bold text-lg">GHS {(selectedServices.reduce((sum, s) => sum + Number(s.price), 0) + selectedProducts.reduce((sum, p) => sum + Number(p.price), 0)).toFixed(2)}</span>
+                <span className="font-bold text-lg">GHS {(selectedServices.reduce((sum, s) => sum + Number(s.price), 0) + selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)).toFixed(2)}</span>
               </div>
               <div className="flex gap-2 items-center">
                 <p className="font-semibold text-sm">Minimum deposit required: </p>
