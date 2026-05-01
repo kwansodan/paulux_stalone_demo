@@ -298,7 +298,7 @@ export default function CreateBookingForm({
               control={form.control}
               name="productIds"
               render={({ field }) => {
-                const entries: { id: string; quantity: number }[] = field.value || []
+                const entries = (field.value || []).map(e => ({ id: e.id, quantity: e.quantity ?? 1 }))
 
                 function isSelected(id: string) {
                   return entries.some(e => e.id === id)
