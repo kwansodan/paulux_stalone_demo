@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { BookingWithService } from "../../types"
-import { ShoppingBag } from "lucide-react"
+import { ShoppingBag, Minus, Plus } from "lucide-react"
 
 export default function EditBookingForm({
   booking,
@@ -47,7 +47,7 @@ export default function EditBookingForm({
       clientEmail: booking.clientEmail,
       clientPhone: booking.clientPhone,
       serviceIds: booking.services.map(s => s.serviceId),
-      productIds: booking.products?.map(p => p.productId) ?? [],
+      productIds: booking.products?.map(p => ({ id: p.productId, quantity: p.quantity ?? 1 })) ?? [],
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
       createdById: user.id,
@@ -57,7 +57,7 @@ export default function EditBookingForm({
 
   const date = form.watch("bookingDate")
   const serviceIds = form.watch("serviceIds") || []
-  const productIds = form.watch("productIds") || []
+  const productEntries = form.watch("productIds") || []
   const userId = form.watch("createdById") || user.id
 
   const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, userId)
@@ -254,56 +254,102 @@ export default function EditBookingForm({
             <FormField
               control={form.control}
               name="productIds"
-              render={({ field }) => (
-                <div className="space-y-2">
-                  <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
-                    <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
-                    Products <span className="text-gray-400 text-xs">(optional)</span>
-                  </Label>
-                  <input
-                    type="text"
-                    placeholder="Search products..."
-                    value={productSearch}
-                    onChange={(e) => setProductSearch(e.target.value)}
-                    className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
-                  />
-                  <div className="grid grid-cols-1 gap-2 max-h-40 overflow-y-auto p-1 border rounded-lg bg-white">
-                    {filteredProducts.map((p) => (
-                      <div
-                        key={p.id}
-                        className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                        onClick={() => {
-                          const current = field.value || []
-                          const next = current.includes(p.id)
-                            ? current.filter((v) => v !== p.id)
-                            : [...current, p.id]
-                          field.onChange(next)
-                        }}
-                      >
-                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(p.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
-                          {field.value?.includes(p.id) && (
-                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 flex justify-between items-center text-sm">
-                          <span>{p.name}</span>
-                          <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(p.price).toFixed(2)}</span>
-                        </div>
-                      </div>
-                    ))}
-                    {filteredProducts.length === 0 && (
-                      <div className="p-4 text-center text-sm text-gray-500">No products found</div>
+              render={({ field }) => {
+                const entries = (field.value || []).map(e => ({ id: e.id, quantity: e.quantity ?? 1 }))
+
+                function isSelected(id: string) {
+                  return entries.some(e => e.id === id)
+                }
+
+                function toggleProduct(id: string) {
+                  if (isSelected(id)) {
+                    field.onChange(entries.filter(e => e.id !== id))
+                  } else {
+                    field.onChange([...entries, { id, quantity: 1 }])
+                  }
+                }
+
+                function changeQty(id: string, delta: number) {
+                  field.onChange(
+                    entries.map(e =>
+                      e.id === id ? { ...e, quantity: Math.max(1, e.quantity + delta) } : e
+                    )
+                  )
+                }
+
+                return (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-normal text-foreground flex items-center gap-1.5">
+                      <ShoppingBag className="w-4 h-4 text-fuchsia-600" />
+                      Products <span className="text-gray-400 text-xs">(optional)</span>
+                    </Label>
+                    <input
+                      type="text"
+                      placeholder="Search products..."
+                      value={productSearch}
+                      onChange={(e) => setProductSearch(e.target.value)}
+                      className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+                    />
+                    <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                      {filteredProducts.map((p) => {
+                        const selected = isSelected(p.id)
+                        const qty = entries.find(e => e.id === p.id)?.quantity ?? 1
+                        return (
+                          <div key={p.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                            <div
+                              className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${selected ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}
+                              onClick={() => toggleProduct(p.id)}
+                            >
+                              {selected && (
+                                <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                              )}
+                            </div>
+                            <div className="flex-1 text-sm cursor-pointer" onClick={() => toggleProduct(p.id)}>
+                              {p.name}
+                            </div>
+                            {selected && (
+                              <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => changeQty(p.id, -1)}
+                                  className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                >
+                                  <Minus className="w-3 h-3" />
+                                </button>
+                                <span className="w-6 text-center text-sm font-medium">{qty}</span>
+                                <button
+                                  type="button"
+                                  onClick={() => changeQty(p.id, 1)}
+                                  className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100 transition-colors"
+                                >
+                                  <Plus className="w-3 h-3" />
+                                </button>
+                              </div>
+                            )}
+                            <span className="text-fuchsia-600 font-medium text-sm whitespace-nowrap ml-1">
+                              GHS {(Number(p.price) * (selected ? qty : 1)).toFixed(2)}
+                            </span>
+                          </div>
+                        )
+                      })}
+                      {filteredProducts.length === 0 && (
+                        <div className="p-4 text-center text-sm text-gray-500">No products found</div>
+                      )}
+                    </div>
+                    {entries.length > 0 && (
+                      <p className="text-xs text-fuchsia-600 font-medium">
+                        {entries.length} product{entries.length !== 1 ? 's' : ''} selected — GHS{' '}
+                        {products
+                          .filter(p => isSelected(p.id))
+                          .reduce((sum, p) => sum + Number(p.price) * (entries.find(e => e.id === p.id)?.quantity ?? 1), 0)
+                          .toFixed(2)}
+                      </p>
                     )}
                   </div>
-                  {productIds.length > 0 && (
-                    <p className="text-xs text-fuchsia-600 font-medium">
-                      {productIds.length} product{productIds.length !== 1 ? 's' : ''} selected — GHS {products.filter(p => productIds.includes(p.id)).reduce((sum, p) => sum + Number(p.price), 0).toFixed(2)}
-                    </p>
-                  )}
-                </div>
-              )}
+                )
+              }}
             />
           )}
 
