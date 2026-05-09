@@ -25,7 +25,13 @@
       "Bash(curl -s http://localhost:5556/)",
       "Bash(node -e ':*)",
       "Bash(curl -s http://localhost:5557/)",
-      "Bash(node -e \"console.log\\(require\\('./node_modules/zod/package.json'\\).version\\)\")"
+      "Bash(node -e \"console.log\\(require\\('./node_modules/zod/package.json'\\).version\\)\")",
+      "Bash(DATABASE_URL=\"postgresql://postgres:pol56!Ris@db:5432/polaris\" npx prisma db push)",
+      "Bash(mkdir -p \"C:/Users/DLP USER/Documents/polaris-live/polaris/next_polaris/src/app/api/products/[id]/status\")",
+      "Bash(mkdir -p \"C:/Users/DLP USER/Documents/polaris-live/polaris/next_polaris/src/app/api/product-categories/[id]\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }
