@@ -75,8 +75,8 @@ services:
       - PRIMARY_PAYSTACK_SECRET_KEY=${PRIMARY_PAYSTACK_SECRET_KEY}
       - SECONDARY_PAYSTACK_SECRET_KEY=${SECONDARY_PAYSTACK_SECRET_KEY}
       - SECURE_COOKIES=${SECURE_COOKIES:-false}
-    ports:
-      - "3001:3000"
+    expose:
+      - "3000"
     depends_on:
       db:
         condition: service_healthy
@@ -103,9 +103,9 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9002}
     command: server /data --console-address ":9001"
-    ports:
-      - "9006:9000"   # API  (prod uses 9005)
-      - "9002:9001"   # Console (prod uses 9001)
+    expose:
+      - "9000"
+      - "9001"
     volumes:
       - minio_data:/data
     healthcheck:
