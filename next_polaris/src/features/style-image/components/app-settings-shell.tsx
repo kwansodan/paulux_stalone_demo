@@ -195,7 +195,7 @@ function GeneralSection({ initialWalkinEmail }: { initialWalkinEmail: string }) 
 // Section: Hero Gallery
 // ─────────────────────────────────────────────────────────────────────────────
 function HeroGallerySection({ initialImages }: { initialImages: StyleImage[] }) {
-  const { data: images = initialImages } = useGetStyleImages()
+  const { data: images = initialImages } = useGetStyleImages({ all: true })
   const createMutation = useCreateStyleImage()
   const updateMutation = useUpdateStyleImage()
   const deleteMutation = useDeleteStyleImage()

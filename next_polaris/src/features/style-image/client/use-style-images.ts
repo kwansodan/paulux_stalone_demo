@@ -18,11 +18,12 @@ const QUERY_KEY = ["style-images"]
 
 // ── Queries ──────────────────────────────────────────────────────────────────
 
-export function useGetStyleImages() {
+export function useGetStyleImages({ all = false }: { all?: boolean } = {}) {
   return useQuery<StyleImage[]>({
-    queryKey: QUERY_KEY,
+    queryKey: [...QUERY_KEY, { all }],
     queryFn: async () => {
-      const { data } = await axios.get("/api/style-images")
+      const url = all ? "/api/style-images?all=true" : "/api/style-images"
+      const { data } = await axios.get(url)
       return data.data
     },
   })

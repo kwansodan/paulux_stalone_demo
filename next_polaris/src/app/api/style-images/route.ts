@@ -10,10 +10,19 @@ const CreateStyleImageSchema = z.object({
   sortOrder: z.number().int().optional(),
 })
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url)
+    const all = searchParams.get("all") === "true"
+
+    // Returning inactive images is an admin-only operation
+    if (all) {
+      const auth = await requireRoleApi(["ADMIN"])
+      if (!auth.ok) return auth.response
+    }
+
     const images = await prisma.styleImage.findMany({
-      where: { isActive: true },
+      where: all ? undefined : { isActive: true },
       orderBy: { sortOrder: "asc" },
     })
     return NextResponse.json({ success: true, data: images })
