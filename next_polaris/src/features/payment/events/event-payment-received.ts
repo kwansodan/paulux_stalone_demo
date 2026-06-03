@@ -1,7 +1,8 @@
 import { inngest } from "@/lib/inngest";
 import { prisma } from "@/lib/prisma";
 import { sendPaymentReceivedEmail } from "../emails/send-payment-received-email";
-import { UserRole } from "@generated/prisma/client";
+import { sendCustomerReceiptEmail } from "../emails/send-customer-receipt-email";
+import { UserRole, PaymentStatus } from "@generated/prisma/client";
 import { sendSMS } from "@/lib/arkesal";
 import { formatDate, formatTime } from "@/features/booking/utils/helpers";
 import { customerBookingSummaryPath } from "@/app/paths";
@@ -13,11 +14,14 @@ export const paymentReceivedEvent = inngest.createFunction(
     async ({ event, step }) => {
         const { bookingId, amountPaid, provider } = event.data;
 
-        // Fetch the booking with its service
+        // Fetch the booking with its services and payments
         const booking = await step.run("fetch-booking", async () => {
             return prisma.booking.findUniqueOrThrow({
                 where: { id: bookingId },
-                include: { services: { include: { service: true } } },
+                include: {
+                    services: { include: { service: true } },
+                    payments: { where: { status: PaymentStatus.PAID } },
+                },
             });
         });
 
@@ -33,14 +37,13 @@ export const paymentReceivedEvent = inngest.createFunction(
             return users;
         });
 
-        if (admins.length === 0) {
-            return { message: "No admins to notify" };
-        }
-
         const serviceNames = booking.services.map(s => s.service.name).join(", ");
 
         // Send an email to each admin
         const emailResults = await step.run("notify-admins", async () => {
+            if (admins.length === 0) {
+                return { total: 0, sent: 0, failed: 0 };
+            }
             const results = await Promise.allSettled(
                 admins.map((admin) =>
                     sendPaymentReceivedEmail(
@@ -69,7 +72,40 @@ export const paymentReceivedEvent = inngest.createFunction(
             };
         });
 
-        // 4. Notify customer via SMS
+        // Send receipt email to the customer (if they have an email address)
+        let customerEmailResult = null;
+        if (booking.clientEmail) {
+            customerEmailResult = await step.run("send-customer-receipt", async () => {
+                const totalAmount = booking.services.reduce(
+                    (sum, s) => sum + Number(s.priceAtBooking), 0
+                );
+                const totalPaid = booking.payments.reduce(
+                    (sum, p) => sum + Number(p.amount), 0
+                );
+                const dateFormatted = formatDate(booking.bookingDate);
+                const timeFormatted = formatTime(booking.bookingTime);
+
+                const result = await sendCustomerReceiptEmail(
+                    booking.clientEmail!,
+                    booking.clientName,
+                    booking.bookingReference,
+                    serviceNames,
+                    dateFormatted,
+                    timeFormatted,
+                    amountPaid,
+                    totalAmount,
+                    totalPaid,
+                    booking.id,
+                );
+
+                if (!result?.data?.id) {
+                    console.error("Failed to send customer receipt email for booking", bookingId);
+                }
+                return result;
+            });
+        }
+
+        // Notify customer via SMS
         let customerSmsResult = null;
         if (booking.clientPhone) {
             customerSmsResult = await step.run("notify-customer-sms", async () => {
@@ -96,7 +132,8 @@ export const paymentReceivedEvent = inngest.createFunction(
         return {
             notified: emailResults.total,
             failed: emailResults.failed,
-            smsStatus: customerSmsResult?.success ? "sent" : (booking.clientPhone ? "failed" : "no_phone")
+            customerReceiptEmail: booking.clientEmail ? (customerEmailResult?.data?.id ? "sent" : "failed") : "no_email",
+            smsStatus: customerSmsResult?.success ? "sent" : (booking.clientPhone ? "failed" : "no_phone"),
         };
     }
 );
