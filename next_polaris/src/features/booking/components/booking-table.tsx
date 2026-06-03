@@ -10,6 +10,7 @@ import { Banknote, Scissors } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
+import RecordPaymentModal from "./form/record-payment-modal"
 
 const initialFilters: BookingFilters = {
   from: undefined,
@@ -24,6 +25,7 @@ export default function BookingsTable() {
   const [filters, setFilters] = useState<BookingFilters>(initialFilters)
   const [chargeBooking, setChargeBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const [assignBooking, setAssignBooking] = useState<BookingWithServiceAndPayment | null>(null)
+  const [recordPaymentBooking, setRecordPaymentBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
 
@@ -156,7 +158,7 @@ export default function BookingsTable() {
                 variant="outline"
                 className="h-8 bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
                 disabled={markAsPaid.isPending}
-                onClick={() => markAsPaid.mutate(row.id)}
+                onClick={() => setRecordPaymentBooking(row)}
               >
                 <Banknote className="w-3.5 h-3.5 mr-1" />
                 Cash
@@ -196,6 +198,19 @@ export default function BookingsTable() {
           booking={assignBooking}
           open={!!assignBooking}
           onClose={() => setAssignBooking(null)}
+        />
+      )}
+      {recordPaymentBooking && (
+        <RecordPaymentModal
+          booking={recordPaymentBooking}
+          open={!!recordPaymentBooking}
+          onClose={() => setRecordPaymentBooking(null)}
+          onConfirm={(amount) => {
+            markAsPaid.mutate({ id: recordPaymentBooking.id, amount }, {
+              onSuccess: () => setRecordPaymentBooking(null),
+            })
+          }}
+          isPending={markAsPaid.isPending}
         />
       )}
       <div className="space-y-4">

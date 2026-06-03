@@ -6,13 +6,17 @@ import { PaymentsFilters } from "./payment-filters"
 import { PaymentFilters, PaymentWithBookingAndService } from "../types"
 import { SerializedService } from "@/features/service/types"
 import { Loader2 } from "lucide-react"
+import { useMarkAsPaid } from "@/features/booking/client/hooks/use-booking"
+import RecordPaymentModal from "@/features/booking/components/form/record-payment-modal"
 
 export default function PaymentManager({ services }: { services: SerializedService[] }) {
   const [filters, setFilters] = useState<PaymentFilters | null>(null)
+  const [recordPaymentTarget, setRecordPaymentTarget] = useState<PaymentWithBookingAndService | null>(null)
 
   const { data = [], isLoading } = usePayments(filters ?? {})
 
   const collectPayment = useCollectPayment()
+  const markAsPaid = useMarkAsPaid()
 
   const columns = [
     {
@@ -67,8 +71,8 @@ export default function PaymentManager({ services }: { services: SerializedServi
 
         return (
           <button
-            onClick={() => collectPayment.mutate(p.bookingId)}
-            disabled={collectPayment.isPending}
+            onClick={() => setRecordPaymentTarget(p)}
+            disabled={markAsPaid.isPending}
             className="text-lime-600 bg-[#F9FAFB] border border-lime-700 rounded-lg px-3 py-1 hover:bg-lime-50 flex items-center gap-2"
           >
             {isCollecting && <Loader2 className="w-3 h-3 animate-spin" />}
@@ -93,6 +97,20 @@ export default function PaymentManager({ services }: { services: SerializedServi
         loading={isLoading}
         emptyText="No payments yet"
       />
+
+      {recordPaymentTarget && (
+        <RecordPaymentModal
+          booking={recordPaymentTarget.booking as any}
+          open={!!recordPaymentTarget}
+          onClose={() => setRecordPaymentTarget(null)}
+          onConfirm={(amount) => {
+            markAsPaid.mutate({ id: recordPaymentTarget.bookingId, amount }, {
+              onSuccess: () => setRecordPaymentTarget(null),
+            })
+          }}
+          isPending={markAsPaid.isPending}
+        />
+      )}
     </div>
   )
 }

@@ -49,13 +49,34 @@ export async function POST(
             );
         }
 
+        // Optional partial amount — defaults to full remaining balance
+        const body = await request.json().catch(() => ({}));
+        const requestedAmount = body?.amount ? Number(body.amount) : null;
+
+        if (requestedAmount !== null) {
+            if (isNaN(requestedAmount) || requestedAmount <= 0) {
+                return NextResponse.json(
+                    { success: false, message: "Amount must be greater than 0" },
+                    { status: 400 }
+                );
+            }
+            if (requestedAmount > remainingBalance) {
+                return NextResponse.json(
+                    { success: false, message: `Amount cannot exceed remaining balance of GHS ${remainingBalance.toFixed(2)}` },
+                    { status: 400 }
+                );
+            }
+        }
+
+        const amountToRecord = requestedAmount ?? remainingBalance;
+
         // Create MANUAL payment record
         await prisma.payment.create({
             data: {
                 bookingId: booking.id,
                 provider: PaymentProvider.MANUAL,
                 providerRef: `MANUAL_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
-                amount: remainingBalance,
+                amount: amountToRecord,
                 currency: booking.services[0]?.service.currency || "GHS",
                 status: PaymentStatus.PAID,
                 rawPayload: { method: "CASH_IN_PERSON", markedByAdminId: auth.user.id },
@@ -95,7 +116,7 @@ export async function POST(
             name: "app/payment.payment-received",
             data: {
                 bookingId: booking.id,
-                amountPaid: remainingBalance,
+                amountPaid: amountToRecord,
                 provider: PaymentProvider.MANUAL,
             },
         });

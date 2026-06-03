@@ -15,6 +15,7 @@ import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
+import RecordPaymentModal from "./form/record-payment-modal"
 
 type BookingCardProps = {
   booking: BookingWithService
@@ -26,6 +27,7 @@ type BookingCardProps = {
 export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
   const [chargeModalOpen, setChargeModalOpen] = useState(false)
   const [assignModalOpen, setAssignModalOpen] = useState(false)
+  const [recordPaymentOpen, setRecordPaymentOpen] = useState(false)
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
@@ -118,7 +120,7 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
           )}
 
           {(bookingPaymentStatus === 'PENDING' || bookingPaymentStatus === 'PARTIAL') && booking.status !== 'CANCELLED' && (
-            <DropdownMenuItem onClick={() => markAsPaid.mutate(booking.id)} className="flex gap-2 text-blue-600">
+            <DropdownMenuItem onClick={() => setRecordPaymentOpen(true)} className="flex gap-2 text-blue-600">
               <CircleCheck className="text-blue-600" />
               <span className="w-full">Mark as paid</span>
             </DropdownMenuItem>
@@ -145,6 +147,18 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
         booking={booking}
         open={assignModalOpen}
         onClose={() => setAssignModalOpen(false)}
+      />
+
+      <RecordPaymentModal
+        booking={booking}
+        open={recordPaymentOpen}
+        onClose={() => setRecordPaymentOpen(false)}
+        onConfirm={(amount) => {
+          markAsPaid.mutate({ id: booking.id, amount }, {
+            onSuccess: () => setRecordPaymentOpen(false),
+          })
+        }}
+        isPending={markAsPaid.isPending}
       />
     </div>
   )
