@@ -9,7 +9,14 @@ import { bookingInclude } from "@/lib/prisma-includes";
 export class BookingRepository {
 
   async upsertBooking(payload: any): Promise<Booking> {
-    const serviceIds = payload.serviceIds || (payload.serviceId ? [payload.serviceId] : []);
+    // Normalise service entries — accept both legacy string[] and new { id, quantity }[]
+    const serviceEntries: { id: string; quantity: number }[] = (
+      payload.serviceIds || (payload.serviceId ? [payload.serviceId] : [])
+    ).map((s: string | { id: string; quantity: number }) =>
+      typeof s === 'string' ? { id: s, quantity: 1 } : s
+    );
+    const serviceIds = serviceEntries.map(s => s.id);
+
     const productEntries: { id: string; quantity: number }[] = (payload.productIds ?? []).map(
       (p: string | { id: string; quantity: number }) =>
         typeof p === 'string' ? { id: p, quantity: 1 } : p
@@ -58,7 +65,8 @@ export class BookingRepository {
             bookingId: payload.id as string,
             serviceId: s.id,
             priceAtBooking: s.price,
-            durationAtBooking: s.durationMinutes
+            durationAtBooking: s.durationMinutes,
+            quantity: serviceEntries.find(e => e.id === s.id)?.quantity ?? 1,
           }))
         });
       }
@@ -103,7 +111,8 @@ export class BookingRepository {
           create: services.map(s => ({
             serviceId: s.id,
             priceAtBooking: s.price,
-            durationAtBooking: s.durationMinutes
+            durationAtBooking: s.durationMinutes,
+            quantity: serviceEntries.find(e => e.id === s.id)?.quantity ?? 1,
           }))
         },
         ...(products.length > 0 && {

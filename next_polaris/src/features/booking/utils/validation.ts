@@ -35,7 +35,10 @@ export const BookingInputSchema = z.object({
     .uuid("Invalid service id")
     .optional(),
   serviceIds: z
-    .array(z.string().uuid("Invalid service id"))
+    .array(z.object({
+      id: z.string().uuid("Invalid service id"),
+      quantity: z.number().int().min(1).default(1),
+    }))
     .min(1, "At least one service is required")
     .optional(),
   bookingDate: z

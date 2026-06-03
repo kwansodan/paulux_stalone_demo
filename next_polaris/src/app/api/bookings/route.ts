@@ -149,7 +149,12 @@ export async function POST(request: NextRequest) {
     }
 
     // If packageId provided, expand to the package's service IDs
-    let resolvedServiceIds = validatedBody.serviceIds || (validatedBody.serviceId ? [validatedBody.serviceId] : [])
+    // Normalise service entries — support both legacy string[] and new { id, quantity }[]
+    let resolvedServiceEntries: { id: string; quantity: number }[] = (
+      validatedBody.serviceIds ?? (validatedBody.serviceId ? [validatedBody.serviceId] : [])
+    ).map((s: string | { id: string; quantity: number }) =>
+      typeof s === 'string' ? { id: s, quantity: 1 } : s
+    )
     let packageId: string | undefined = validatedBody.packageId
 
     if (packageId) {
@@ -163,11 +168,10 @@ export async function POST(request: NextRequest) {
       if (!pkg.isActive) {
         return NextResponse.json({ success: false, error: "Package is no longer available" }, { status: 409 })
       }
-      resolvedServiceIds = pkg.services.map((ps) => ps.serviceId)
+      resolvedServiceEntries = pkg.services.map((ps) => ({ id: ps.serviceId, quantity: 1 }))
     }
 
-    //  validate that body contains valid serviceIds
-    const serviceIds = resolvedServiceIds
+    const serviceIds = resolvedServiceEntries.map(e => e.id)
 
     if (serviceIds.length === 0) {
       return NextResponse.json(
@@ -232,7 +236,7 @@ export async function POST(request: NextRequest) {
         validatedBody.bookingTime!,
         totalDuration,
         validatedBody.id,
-        serviceIds,
+        serviceIds,   // plain string[] — slot check doesn't need quantities
       )
 
       if (!isAvailable) {
@@ -277,7 +281,7 @@ export async function POST(request: NextRequest) {
 
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
-      serviceIds,
+      serviceIds: resolvedServiceEntries,
       packageId: packageId ?? null,
       termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
       promoCodeId: verifiedPromoCodeId,

@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { useMemo, useState } from "react"
-import { CalendarClock, UserRound, Info, ShoppingBag, Minus, Plus } from "lucide-react"
+import { CalendarClock, UserRound, Info, ShoppingBag, Minus, Plus, Tag, X, CheckCircle2 } from "lucide-react"
 
 
 
@@ -33,6 +33,18 @@ export default function CreateBookingForm({
   const [bookingType, setBookingType] = useState<"SCHEDULED" | "WALKIN">("SCHEDULED")
   const isWalkIn = bookingType === "WALKIN"
 
+  // Promo code state
+  const [promoInput, setPromoInput] = useState("")
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [appliedPromo, setAppliedPromo] = useState<{
+    promoCodeId: string
+    code: string
+    discountAmount: number
+    discountType: string
+    discountValue: number
+  } | null>(null)
+
   const form = useForm<BookingInput>({
     resolver: zodResolver(BookingInputSchema),
     defaultValues: {
@@ -51,7 +63,11 @@ export default function CreateBookingForm({
 
   const date = form.watch("bookingDate")
   const minDepositFixed = form.watch("minDepositFixed")
-  const serviceIds = form.watch("serviceIds") || []
+  const serviceEntries = (form.watch("serviceIds") || []).map(
+    (s: string | { id: string; quantity: number }) =>
+      typeof s === 'string' ? { id: s, quantity: 1 } : s
+  )
+  const serviceIds = serviceEntries.map((e: { id: string }) => e.id)
   const productEntries = form.watch("productIds") || []
   const selectedServices = useMemo(() => services?.filter((service) => serviceIds.includes(service.id)), [serviceIds, services])
   const selectedProducts = useMemo(
@@ -77,6 +93,46 @@ export default function CreateBookingForm({
   const slots = data?.slots ?? []
 
   const mutation = useCreateBooking();
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return
+    const baseTotal = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+    setPromoLoading(true)
+    setPromoError(null)
+    try {
+      const res = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim(), bookingTotal: baseTotal }),
+      })
+      const resData = await res.json()
+      if (resData.valid) {
+        setAppliedPromo({
+          promoCodeId: resData.promoCodeId,
+          code: promoInput.trim().toUpperCase(),
+          discountAmount: resData.discountAmount,
+          discountType: resData.discountType,
+          discountValue: resData.discountValue,
+        })
+        form.setValue("promoCodeId", resData.promoCodeId)
+        form.setValue("discountAmount", resData.discountAmount)
+        setPromoInput("")
+      } else {
+        setPromoError(resData.message || "Invalid promo code")
+      }
+    } catch {
+      setPromoError("Failed to validate promo code. Please try again.")
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null)
+    setPromoError(null)
+    form.setValue("promoCodeId", undefined)
+    form.setValue("discountAmount", undefined)
+  }
 
   const onSubmit = async (data: BookingInput) => {
     await mutation.mutateAsync({ ...data, bookingType })
@@ -221,12 +277,31 @@ export default function CreateBookingForm({
           <FormField
             control={form.control}
             name="serviceIds"
-            render={({ field }) => (
-              <div className="space-y-2">
-                <Label className="text-sm font-normal text-foreground">
-                  Services <span className="text-red-500">*</span>
-                </Label>
+            render={({ field }) => {
+              const entries = (field.value || []).map(
+                (s: string | { id: string; quantity: number }) =>
+                  typeof s === 'string' ? { id: s, quantity: 1 } : s
+              )
+              function isSelected(id: string) { return entries.some((e: any) => e.id === id) }
+              function toggleService(id: string) {
+                if (isSelected(id)) {
+                  field.onChange(entries.filter((e: any) => e.id !== id))
+                } else {
+                  field.onChange([...entries, { id, quantity: 1 }])
+                }
+              }
+              function changeQty(id: string, delta: number) {
+                field.onChange(
+                  entries.map((e: any) =>
+                    e.id === id ? { ...e, quantity: Math.max(1, e.quantity + delta) } : e
+                  )
+                )
+              }
+              return (
                 <div className="space-y-2">
+                  <Label className="text-sm font-normal text-foreground">
+                    Services <span className="text-red-500">*</span>
+                  </Label>
                   <Input
                     placeholder="Search services..."
                     value={searchTerm}
@@ -234,46 +309,52 @@ export default function CreateBookingForm({
                     className="h-10 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   />
                   <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
-                    {filteredServices.length > 0 ? (
-                      filteredServices.map((s) => (
-                        <div
-                          key={s.id}
-                          className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                          onClick={() => {
-                            const current = field.value || [];
-                            const next = current.includes(s.id)
-                              ? current.filter((v) => v !== s.id)
-                              : [...current, s.id];
-                            field.onChange(next);
-                          }}
-                        >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
-                            {field.value?.includes(s.id) && (
+                    {filteredServices.length > 0 ? filteredServices.map((s) => {
+                      const selected = isSelected(s.id)
+                      const qty = entries.find((e: any) => e.id === s.id)?.quantity ?? 1
+                      return (
+                        <div key={s.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                          <div
+                            className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${selected ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}
+                            onClick={() => toggleService(s.id)}
+                          >
+                            {selected && (
                               <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                               </svg>
                             )}
                           </div>
-                          <div className="flex-1 flex justify-between items-center text-sm">
-                            <span>{s.name}</span>
-                            <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
+                          <div className="flex-1 text-sm cursor-pointer" onClick={() => toggleService(s.id)}>
+                            {s.name}
                           </div>
+                          {selected && (
+                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                              <button type="button" onClick={() => changeQty(s.id, -1)} className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="w-6 text-center text-sm font-medium">{qty}</span>
+                              <button type="button" onClick={() => changeQty(s.id, 1)} className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                          <span className="text-fuchsia-600 font-medium text-sm whitespace-nowrap ml-1">
+                            GHS {(Number(s.price) * (selected ? qty : 1)).toFixed(2)}
+                          </span>
                         </div>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center text-sm text-gray-500">
-                        No services found
-                      </div>
+                      )
+                    }) : (
+                      <div className="p-4 text-center text-sm text-gray-500">No services found</div>
                     )}
                   </div>
+                  {form.formState.errors.serviceIds && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {form.formState.errors.serviceIds.message}
+                    </p>
+                  )}
                 </div>
-                {form.formState.errors.serviceIds && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.serviceIds.message}
-                  </p>
-                )}
-              </div>
-            )}
+              )
+            }}
           />
 
           {/* Payment / Deposit */}
@@ -397,35 +478,100 @@ export default function CreateBookingForm({
             />
           )}
 
-          {/* Booking summary */}
-          {selectedServices && selectedServices.length > 0 && (
-            <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600 space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-gray-600">Services:</span>
-                <span className="font-medium">GHS {selectedServices.reduce((sum, s) => sum + Number(s.price), 0).toFixed(2)}</span>
-              </div>
-              {selectedProducts.length > 0 && (
-                <div className="flex justify-between items-center text-sm">
-                  <span className="text-gray-600">Products:</span>
-                  <span className="font-medium">GHS {selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0).toFixed(2)}</span>
+          {/* Booking summary + promo code */}
+          {selectedServices && selectedServices.length > 0 && (() => {
+            const servicesTotal = selectedServices.reduce((sum, s) => {
+              const qty = serviceEntries.find((e: any) => e.id === s.id)?.quantity ?? 1
+              return sum + Number(s.price) * qty
+            }, 0)
+            const productsTotal = selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)
+            const baseTotal = servicesTotal + productsTotal
+            const discountAmt = appliedPromo?.discountAmount ?? 0
+            const finalTotal = Math.max(0, baseTotal - discountAmt)
+            return (
+              <div className="space-y-3">
+                <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Services:</span>
+                    <span className="font-medium">GHS {servicesTotal.toFixed(2)}</span>
+                  </div>
+                  {selectedProducts.length > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Products:</span>
+                      <span className="font-medium">GHS {productsTotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {appliedPromo && (
+                    <div className="flex justify-between items-center text-sm text-green-600">
+                      <span>Discount ({appliedPromo.code}):</span>
+                      <span>- GHS {discountAmt.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-sm border-t border-fuchsia-200 pt-2">
+                    <span className="font-medium">Total:</span>
+                    <span className="font-bold text-lg">GHS {finalTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <p className="font-semibold text-sm">Minimum deposit required: </p>
+                    <span className="text-[18px] text-fuchsia-700 font-semibold">
+                      GHS {
+                        minDepositFixed !== undefined
+                          ? Number(minDepositFixed).toFixed(2)
+                          : selectedServices.reduce((sum, s) => sum + Number(s.minDepositFixed), 0).toFixed(2)
+                      }
+                    </span>
+                  </div>
                 </div>
-              )}
-              <div className="flex justify-between items-center text-sm border-t border-fuchsia-200 pt-2">
-                <span className="font-medium">Total:</span>
-                <span className="font-bold text-lg">GHS {(selectedServices.reduce((sum, s) => sum + Number(s.price), 0) + selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)).toFixed(2)}</span>
+
+                {/* Promo Code */}
+                <div className="space-y-2">
+                  {!appliedPromo ? (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                        <Tag className="w-4 h-4 text-fuchsia-500" />
+                        Promo Code <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Enter code"
+                          value={promoInput}
+                          onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+                          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleApplyPromo())}
+                          className="h-10 bg-white border-[#E2E8F0] rounded-lg uppercase placeholder:normal-case shadow-none"
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={handleApplyPromo}
+                          disabled={promoLoading || !promoInput.trim()}
+                          className="rounded-lg border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-50 px-4 flex-shrink-0"
+                        >
+                          {promoLoading ? "..." : "Apply"}
+                        </Button>
+                      </div>
+                      {promoError && <p className="text-xs text-red-500">{promoError}</p>}
+                    </div>
+                  ) : (
+                    <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                        <div>
+                          <p className="text-sm font-semibold text-green-700">{appliedPromo.code}</p>
+                          <p className="text-xs text-green-600">
+                            Saves GHS {appliedPromo.discountAmount.toFixed(2)}
+                            {appliedPromo.discountType === "PERCENTAGE" && ` (${appliedPromo.discountValue}% off)`}
+                          </p>
+                        </div>
+                      </div>
+                      <button type="button" onClick={handleRemovePromo} className="p-1 text-gray-400 hover:text-red-500">
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="flex gap-2 items-center">
-                <p className="font-semibold text-sm">Minimum deposit required: </p>
-                <span className="text-[18px] text-fuchsia-700 font-semibold">
-                  GHS {
-                    minDepositFixed !== undefined
-                      ? Number(minDepositFixed).toFixed(2)
-                      : selectedServices.reduce((sum, s) => sum + Number(s.minDepositFixed), 0).toFixed(2)
-                  }
-                </span>
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* Date & Time — only shown for scheduled bookings */}
           {!isWalkIn && (

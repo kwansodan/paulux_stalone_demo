@@ -104,7 +104,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
 
       // Step 1: Create the booking
       const payload: any = {
-        serviceIds: formData.serviceIds,
+        serviceIds: formData.serviceIds.map(id => ({ id, quantity: 1 })),
         bookingTime: formData.time!,
         bookingDate: formData.date!,
         clientName: formData.fullName,

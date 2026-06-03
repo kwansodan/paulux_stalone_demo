@@ -46,7 +46,7 @@ export default function EditBookingForm({
       clientName: booking.clientName,
       clientEmail: booking.clientEmail,
       clientPhone: booking.clientPhone,
-      serviceIds: booking.services.map(s => s.serviceId),
+      serviceIds: booking.services.map(s => ({ id: s.serviceId, quantity: (s as any).quantity ?? 1 })),
       productIds: booking.products?.map(p => ({ id: p.productId, quantity: p.quantity ?? 1 })) ?? [],
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
@@ -201,52 +201,83 @@ export default function EditBookingForm({
           <FormField
             control={form.control}
             name="serviceIds"
-            render={({ field }) => (
-              <div className="space-y-2">
-                <Label className="text-sm font-normal text-foreground">
-                  Services <span className="text-red-500">*</span>
-                </Label>
-                <input
-                  type="text"
-                  placeholder="Search services..."
-                  value={serviceSearch}
-                  onChange={(e) => setServiceSearch(e.target.value)}
-                  className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
-                />
-                <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
-                  {filteredForDisplay.map((s) => (
-                    <div
-                      key={s.id}
-                      className="flex items-center space-x-3 p-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
-                      onClick={() => {
-                        const current = field.value || [];
-                        const next = current.includes(s.id)
-                          ? current.filter((v) => v !== s.id)
-                          : [...current, s.id];
-                        field.onChange(next);
-                      }}
-                    >
-                      <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${field.value?.includes(s.id) ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}>
-                        {field.value?.includes(s.id) && (
-                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                      <div className="flex-1 flex justify-between items-center text-sm">
-                        <span>{s.name}</span>
-                        <span className="text-fuchsia-600 font-medium whitespace-nowrap ml-2">GHS {Number(s.price).toFixed(2)}</span>
-                      </div>
-                    </div>
-                  ))}
+            render={({ field }) => {
+              const entries = (field.value || []).map(
+                (s: string | { id: string; quantity: number }) =>
+                  typeof s === 'string' ? { id: s, quantity: 1 } : s
+              )
+              function isSelected(id: string) { return entries.some((e: any) => e.id === id) }
+              function toggleService(id: string) {
+                if (isSelected(id)) {
+                  field.onChange(entries.filter((e: any) => e.id !== id))
+                } else {
+                  field.onChange([...entries, { id, quantity: 1 }])
+                }
+              }
+              function changeQty(id: string, delta: number) {
+                field.onChange(
+                  entries.map((e: any) =>
+                    e.id === id ? { ...e, quantity: Math.max(1, e.quantity + delta) } : e
+                  )
+                )
+              }
+              return (
+                <div className="space-y-2">
+                  <Label className="text-sm font-normal text-foreground">
+                    Services <span className="text-red-500">*</span>
+                  </Label>
+                  <input
+                    type="text"
+                    placeholder="Search services..."
+                    value={serviceSearch}
+                    onChange={(e) => setServiceSearch(e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm border border-[#E2E8F0] rounded-md mb-1 focus:outline-none focus:ring-1 focus:ring-fuchsia-400"
+                  />
+                  <div className="grid grid-cols-1 gap-2 max-h-48 overflow-y-auto p-1 border rounded-lg bg-white">
+                    {filteredForDisplay.map((s) => {
+                      const selected = isSelected(s.id)
+                      const qty = entries.find((e: any) => e.id === s.id)?.quantity ?? 1
+                      return (
+                        <div key={s.id} className="flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 transition-colors">
+                          <div
+                            className={`w-4 h-4 rounded border flex-shrink-0 flex items-center justify-center transition-colors cursor-pointer ${selected ? 'bg-fuchsia-600 border-fuchsia-600' : 'border-gray-300'}`}
+                            onClick={() => toggleService(s.id)}
+                          >
+                            {selected && (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <div className="flex-1 text-sm cursor-pointer" onClick={() => toggleService(s.id)}>
+                            {s.name}
+                          </div>
+                          {selected && (
+                            <div className="flex items-center gap-1" onClick={e => e.stopPropagation()}>
+                              <button type="button" onClick={() => changeQty(s.id, -1)} className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <Minus className="w-3 h-3" />
+                              </button>
+                              <span className="w-6 text-center text-sm font-medium">{qty}</span>
+                              <button type="button" onClick={() => changeQty(s.id, 1)} className="w-6 h-6 rounded border border-gray-300 flex items-center justify-center hover:bg-gray-100">
+                                <Plus className="w-3 h-3" />
+                              </button>
+                            </div>
+                          )}
+                          <span className="text-fuchsia-600 font-medium text-sm whitespace-nowrap ml-1">
+                            GHS {(Number(s.price) * (selected ? qty : 1)).toFixed(2)}
+                          </span>
+                        </div>
+                      )
+                    })}
+                  </div>
+                  {form.formState.errors.serviceIds && (
+                    <p className="text-red-500 text-sm mt-1">
+                      {form.formState.errors.serviceIds.message}
+                    </p>
+                  )}
                 </div>
-                {form.formState.errors.serviceIds && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {form.formState.errors.serviceIds.message}
-                  </p>
-                )}
-              </div>
-            )}
+              )
+            }}
           />
 
           {/* Products */}
