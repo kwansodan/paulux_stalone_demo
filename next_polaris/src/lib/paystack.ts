@@ -78,6 +78,13 @@ export async function initializeTransaction(
     phone?: string,
 ): Promise<PaystackInitializeResponse> {
     const secretKey = getSecretKey(provider);
+
+    // Normalise phone to international format for Paystack MoMo pre-fill
+    // e.g. 0241234567 → 233241234567
+    const normalisedPhone = phone
+        ? phone.replace(/\D/g, '').replace(/^0(\d{9})$/, '233$1')
+        : undefined
+
     try {
         const response = await axios.post(
             `${PAYSTACK_BASE_URL}/transaction/initialize`,
@@ -88,7 +95,7 @@ export async function initializeTransaction(
                 callback_url: callbackUrl,
                 currency,
                 channels,
-                ...(phone ? { phone } : {}),
+                ...(normalisedPhone ? { phone: normalisedPhone } : {}),
             },
             {
                 headers: {
