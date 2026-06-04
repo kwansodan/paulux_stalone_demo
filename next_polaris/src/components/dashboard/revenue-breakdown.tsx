@@ -78,8 +78,8 @@ export default function RevenueBreakdown({ cash, momo, card, discounts, bookedTo
 
       {/* New bookings booked today */}
       <div className="border-t pt-5">
-        <h2 className="font-semibold text-base sm:text-lg mb-1">Booked Today</h2>
-        <p className="text-xs text-gray-400 mb-3">Value of new bookings created today (any service date)</p>
+        <h2 className="font-semibold text-base sm:text-lg mb-1">New Bookings</h2>
+        <p className="text-xs text-gray-400 mb-3">Value of bookings created in the selected period (any service date)</p>
 
         <Row
           icon={<CalendarPlus className="w-4 h-4" />}

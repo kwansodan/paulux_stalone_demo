@@ -21,7 +21,7 @@ export default function MetricsGrid({
       <MetricCard
         icon={<Calendar />}
         iconClassName="bg-fuchsia-50 text-fuchsia-500"
-        title="Today's bookings"
+        title="Bookings"
         value={todaysCount}
       />
 
@@ -40,7 +40,7 @@ export default function MetricsGrid({
           </svg>
         }
         iconClassName="bg-gray-100"
-        title="Today's revenue"
+        title="Revenue"
         value={`GHS ${revenue.toFixed(2)}`}
       />
 
