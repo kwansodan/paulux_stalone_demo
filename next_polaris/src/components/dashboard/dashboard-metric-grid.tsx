@@ -1,10 +1,11 @@
-import { Calendar, CircleCheckIcon, TriangleAlert } from "lucide-react"
+import { Calendar, CircleCheckIcon, TriangleAlert, CircleX } from "lucide-react"
 import MetricCard from "../metric-card"
 
 type Props = {
   todaysCount: number
   pending: number
   confirmed: number
+  cancelled: number
   revenue: number
 }
 
@@ -12,10 +13,11 @@ export default function MetricsGrid({
   todaysCount,
   pending,
   confirmed,
+  cancelled,
   revenue
 }: Props) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
       <MetricCard
         icon={<Calendar />}
         iconClassName="bg-fuchsia-50 text-fuchsia-500"
@@ -47,6 +49,13 @@ export default function MetricsGrid({
         iconClassName="bg-green-50 text-green-600"
         title="Confirmed"
         value={confirmed}
+      />
+
+      <MetricCard
+        icon={<CircleX />}
+        iconClassName="bg-red-50 text-red-500"
+        title="Cancelled"
+        value={cancelled}
       />
     </div>
   )

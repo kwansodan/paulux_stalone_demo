@@ -23,10 +23,12 @@ export default async function DashboardPage() {
   )
 
 
-  // Derive today's pending and confirmed counts from the already date-filtered bookings
-  // (countByStatus has no date scope and returns all-time totals)
+  // Derive today's counts from the already date-filtered bookings
   const pending = bookings.filter(b => b.status === "PENDING").length
   const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
+  const cancelled = bookings.filter(b => b.status === "CANCELLED").length
+  // Today's bookings excludes cancelled so the count reflects active bookings
+  const activeCount = (count ?? bookings.length) - cancelled
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full">
@@ -34,9 +36,10 @@ export default async function DashboardPage() {
       <DashboardHeader />
 
       <MetricsGrid
-        todaysCount={count ?? 0}
+        todaysCount={activeCount}
         pending={pending}
         confirmed={confirmed}
+        cancelled={cancelled}
         revenue={revenue ?? 0}
       />
 
