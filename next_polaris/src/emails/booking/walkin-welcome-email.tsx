@@ -1,0 +1,110 @@
+import React from "react"
+import {
+  Html, Head, Body, Tailwind, Container, Section,
+  Text, Button, Img, Hr,
+} from "@react-email/components"
+import { getBaseUrl } from "@/utils/url"
+
+interface WalkinWelcomeEmailProps {
+  clientName: string
+  bookingReference: string
+  serviceNames: string[]
+  bookingSummaryUrl: string
+}
+
+const WalkinWelcomeEmail = ({
+  clientName,
+  bookingReference,
+  serviceNames,
+  bookingSummaryUrl,
+}: WalkinWelcomeEmailProps) => {
+  return (
+    <Html>
+      <Head />
+      <Tailwind>
+        <Body className="font-sans bg-gray-50 p-8">
+          <Container className="bg-white rounded-lg shadow-sm max-w-2xl mx-auto p-8">
+
+            {/* Logo */}
+            <Section className="mb-8">
+              <Img
+                src={getBaseUrl() + "/images/polarisicon.png"}
+                alt="Polaris Beauty Lounge"
+                width={100}
+                height={50}
+              />
+            </Section>
+
+            {/* Welcome heading */}
+            <Section className="mb-6">
+              <Text className="text-3xl font-bold text-gray-900 mb-2">
+                Welcome to Polaris! 🌟
+              </Text>
+              <Text className="text-gray-700 text-base leading-relaxed mb-0">
+                Hi {clientName}, we&apos;re so happy to have you with us today.
+                You&apos;re about to experience something special — sit back and let us
+                take care of everything.
+              </Text>
+            </Section>
+
+            <Hr className="border-gray-200 my-6" />
+
+            {/* Services */}
+            <Section className="mb-6">
+              <Text className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">
+                Today you&apos;ll be enjoying
+              </Text>
+              {serviceNames.map((name, i) => (
+                <Text key={i} className="text-fuchsia-700 text-lg font-semibold mb-1">
+                  ✨ {name}
+                </Text>
+              ))}
+            </Section>
+
+            <Hr className="border-gray-200 my-6" />
+
+            {/* Relaxation message */}
+            <Section className="bg-fuchsia-50 rounded-xl p-6 mb-6">
+              <Text className="text-fuchsia-900 text-base leading-relaxed m-0">
+                You&apos;re in great hands. Our team is ready to give you the best
+                experience possible. Relax, enjoy the moment, and leave feeling
+                absolutely amazing. 💆‍♀️
+              </Text>
+            </Section>
+
+            {/* Instagram */}
+            <Section className="mb-6">
+              <Text className="text-gray-600 text-sm leading-relaxed">
+                Have any questions or concerns? We&apos;re always here for you.
+                Reach out to us on Instagram and we&apos;ll get back to you right away.
+              </Text>
+              <Text className="text-fuchsia-600 font-semibold text-base mb-0">
+                📸 @polarisbeautylounge
+              </Text>
+            </Section>
+
+            {/* CTA */}
+            <Section className="mb-8">
+              <Button
+                href={bookingSummaryUrl}
+                className="bg-fuchsia-600 text-white font-medium px-8 py-3 rounded-md"
+              >
+                View Your Booking
+              </Button>
+            </Section>
+
+            {/* Footer */}
+            <Section className="border-t border-gray-100 pt-6">
+              <Text className="text-gray-400 text-xs m-0">
+                Ref: {bookingReference} · Polaris Beauty Lounge
+              </Text>
+            </Section>
+
+          </Container>
+        </Body>
+      </Tailwind>
+    </Html>
+  )
+}
+
+export default WalkinWelcomeEmail
