@@ -68,7 +68,7 @@ export const bookingCreatedEvent = inngest.createFunction(
     if (booking.clientPhone) {
       smsResult = await step.run("send-confirmation-sms", async () => {
         const message = isWalkIn
-          ? `Welcome to Polaris! 🌟 We're so glad you're here, ${booking.clientName}. Today you'll be enjoying ${serviceNamesJoined}. Sit back and relax — you're in great hands! Any concerns? Find us on Instagram ${INSTAGRAM_HANDLE}`
+          ? `Welcome to Polaris! 🌟 We're so glad you're here, ${booking.clientName}. Today you'll be enjoying ${serviceNamesJoined}. Sit back and relax — you're in great hands! Note: No-shows forfeit payment. Cancellations eligible for refund within policy. Full details: ${summaryUrl}. Instagram: ${INSTAGRAM_HANDLE}`
           : `Hi ${booking.clientName}, your booking for ${serviceNamesJoined} on ${dateFormatted} at ${timeFormatted} has been received. Ref: ${booking.bookingReference}. View details: ${summaryUrl}`
 
         const result = await sendSMS({

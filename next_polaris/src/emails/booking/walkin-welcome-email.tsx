@@ -93,6 +93,24 @@ const WalkinWelcomeEmail = ({
               </Button>
             </Section>
 
+            <Hr className="border-gray-200 my-6" />
+
+            {/* Refund Policy */}
+            <Section className="mb-6">
+              <Text className="text-gray-700 text-sm font-semibold mb-3">
+                📋 Refund Policy
+              </Text>
+              <Text className="text-gray-600 text-sm leading-relaxed mb-2">
+                <strong>Eligible refunds:</strong> If we cancel your appointment, your booking is rejected after payment, or a technical error results in a duplicate charge.
+              </Text>
+              <Text className="text-gray-600 text-sm leading-relaxed mb-2">
+                <strong>Non-refundable:</strong> Failure to attend your appointment without prior cancellation (no-show) will result in forfeiture of payment.
+              </Text>
+              <Text className="text-gray-600 text-sm leading-relaxed mb-0">
+                <strong>Refund process:</strong> Refunds are processed manually and may take 5–10 business days. To request a refund, contact us at <strong>polarisbeautylounge@gmail.com</strong> with your booking reference <strong>{bookingReference}</strong>.
+              </Text>
+            </Section>
+
             {/* Footer */}
             <Section className="border-t border-gray-100 pt-6">
               <Text className="text-gray-400 text-xs m-0">
