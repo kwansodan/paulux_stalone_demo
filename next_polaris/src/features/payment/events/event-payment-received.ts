@@ -113,7 +113,17 @@ export const paymentReceivedEvent = inngest.createFunction(
                 const timeFormatted = formatTime(booking.bookingTime);
                 const summaryLink = getBaseUrl() + customerBookingSummaryPath(booking.id);
 
-                const message = `Hi ${booking.clientName}, your booking for ${serviceNames} on ${dateFormatted} at ${timeFormatted} is confirmed. Ref: ${booking.bookingReference}. Details: ${summaryLink}`;
+                const totalAmount = booking.services.reduce(
+                    (sum, s) => sum + Number(s.priceAtBooking), 0
+                );
+                const totalPaid = booking.payments.reduce(
+                    (sum, p) => sum + Number(p.amount), 0
+                );
+                const remaining = Math.max(0, totalAmount - totalPaid);
+
+                const message = remaining > 0
+                    ? `Hi ${booking.clientName}, we've received your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames} on ${dateFormatted} at ${timeFormatted}. Outstanding balance: GHS ${remaining.toFixed(2)}. Ref: ${booking.bookingReference}. Details: ${summaryLink}`
+                    : `Hi ${booking.clientName}, your payment of GHS ${amountPaid.toFixed(2)} is confirmed! Your appointment for ${serviceNames} on ${dateFormatted} at ${timeFormatted} is all set. Ref: ${booking.bookingReference}. Details: ${summaryLink}`;
 
                 const result = await sendSMS({
                     recipients: [booking.clientPhone],
