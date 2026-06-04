@@ -1,27 +1,27 @@
 import React from "react"
 import {
   Html, Head, Body, Tailwind, Container, Section,
-  Text, Button, Img, Row, Column,
+  Text, Button, Heading, Img, Row, Column, Hr,
 } from "@react-email/components"
 import { getBaseUrl } from "@/utils/url"
 
-interface EmailBookingCancelledProps {
+interface BookingConfirmedEmailProps {
   clientName: string
   bookingReference: string
   serviceNames: string
   bookingDate: string
   bookingTime: string
-  url: string
+  bookingSummaryUrl: string
 }
 
-const EmailBookingCancelled = ({
+const BookingConfirmedEmail = ({
   clientName,
   bookingReference,
   serviceNames,
   bookingDate,
   bookingTime,
-  url,
-}: EmailBookingCancelledProps) => {
+  bookingSummaryUrl,
+}: BookingConfirmedEmailProps) => {
   return (
     <Html>
       <Head />
@@ -41,9 +41,12 @@ const EmailBookingCancelled = ({
 
             {/* Heading */}
             <Section className="mb-6">
-              <Text className="text-2xl font-bold text-gray-900 mb-2">Booking Cancelled</Text>
+              <Heading className="text-2xl font-bold text-gray-900 mb-2">
+                ✅ Booking Confirmed!
+              </Heading>
               <Text className="text-gray-600 text-base mb-0">
-                Hi {clientName}, your booking has been cancelled. We&apos;re sorry to see you go!
+                Hi {clientName}, your booking has been received and is being processed.
+                We look forward to seeing you!
               </Text>
             </Section>
 
@@ -71,27 +74,22 @@ const EmailBookingCancelled = ({
               </Row>
             </Section>
 
-            <Section className="mb-6">
-              <Text className="text-gray-700 text-sm">
-                If this was a mistake or you have questions, please contact us and we&apos;ll be happy to help.
-                Any payments made will be refunded according to our refund policy.
-              </Text>
-            </Section>
+            <Hr className="border-gray-200 mb-6" />
 
             {/* CTA */}
             <Section className="mb-8">
               <Button
-                href={url}
+                href={bookingSummaryUrl}
                 className="bg-fuchsia-600 text-white font-medium px-8 py-3 rounded-md"
               >
-                View Booking Summary
+                View Booking Details
               </Button>
             </Section>
 
             {/* Footer */}
             <Section className="border-t border-gray-100 pt-6">
               <Text className="text-gray-500 text-sm m-0">
-                We hope to welcome you back to Polaris Beauty Lounge soon.
+                Polaris Beauty Lounge — we can&apos;t wait to see you!
               </Text>
             </Section>
 
@@ -102,4 +100,4 @@ const EmailBookingCancelled = ({
   )
 }
 
-export default EmailBookingCancelled
+export default BookingConfirmedEmail

@@ -1,27 +1,27 @@
-import EmailBookingCancelled from "@/emails/booking/booking-cancelled-email"
+import BookingConfirmedEmail from "@/emails/booking/booking-confirmed-email"
 import { resend } from "@/lib/resend"
 
-export const sendBookingCancelEmail = async (
+export const sendBookingConfirmedEmail = async (
   email: string,
   clientName: string,
   bookingReference: string,
   serviceNames: string,
   bookingDate: string,
   bookingTime: string,
-  bookingSummaryLink: string,
+  bookingSummaryUrl: string,
 ) => {
   return await resend.emails.send({
     from: "no-reply@polarisbeautylounge.com",
     to: email,
-    subject: `Your Booking Has Been Cancelled – ${bookingReference}`,
+    subject: `Booking Confirmed – ${bookingReference}`,
     react: (
-      <EmailBookingCancelled
+      <BookingConfirmedEmail
         clientName={clientName}
         bookingReference={bookingReference}
         serviceNames={serviceNames}
         bookingDate={bookingDate}
         bookingTime={bookingTime}
-        url={bookingSummaryLink}
+        bookingSummaryUrl={bookingSummaryUrl}
       />
     ),
   })
