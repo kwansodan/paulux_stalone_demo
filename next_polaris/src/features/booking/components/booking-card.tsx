@@ -32,6 +32,9 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
   const bookingPaymentStatus = calculatePaymentStatus(booking)
+  const bookingTotal =
+    booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking) * ((s as any).quantity ?? 1), 0) +
+    ((booking as any).products?.reduce((sum: number, p: any) => sum + Number(p.priceAtBooking) * (p.quantity ?? 1), 0) ?? 0)
 
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
@@ -65,6 +68,9 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
         </div>
         <p className="text-sm text-gray-500">
           {booking.services.map(s => s.service.name).join(", ")}
+        </p>
+        <p className="text-sm font-semibold text-fuchsia-700">
+          GHS {bookingTotal.toFixed(2)}
         </p>
         {/* Stylist assignment display */}
         <div className="flex items-center gap-1 mt-0.5">
