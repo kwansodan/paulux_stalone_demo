@@ -205,14 +205,14 @@ export default function ServicesGrid({
         </div>
       )}
 
-      {/* ── Services grid ── */}
+      {/* ── Services list ── */}
       {filteredServices.length === 0 && (!activeCategory ? filteredPackages.length === 0 : true) ? (
         <div className="py-20 text-center text-gray-500">
           {searchTerm ? "No services match your search" : "No services available in this category"}
         </div>
       ) : filteredServices.length > 0 ? (
         <section>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 px-4">
             {filteredServices.map((service) => (
               <ServiceCard key={service.id} service={service} />
             ))}

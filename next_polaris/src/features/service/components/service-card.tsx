@@ -11,8 +11,6 @@ import { useState } from "react"
 import Modal from "@/components/modal"
 import EditServiceForm from "./form/edit-service-form"
 import { Button } from "@/components/ui/button"
-import Image from "next/image"
-
 export default function ServiceCard({ service }: { service: SerializedService }) {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
@@ -31,17 +29,6 @@ export default function ServiceCard({ service }: { service: SerializedService })
   const deleteServiceMutation = useDeleteService()
   return (
     <Card className="relative rounded-3xl border shadow-none p-0 w-full overflow-hidden hover:shadow-md transition-shadow duration-200">
-      {service.imageUrl && (
-        <div className="relative w-full h-40">
-          <Image
-            src={service.imageUrl}
-            alt={service.name}
-            fill
-            unoptimized
-            className="object-cover"
-          />
-        </div>
-      )}
       <CardContent className="p-4 space-y-3">
 
         {/* Top row */}
