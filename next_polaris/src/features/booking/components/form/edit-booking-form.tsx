@@ -203,8 +203,7 @@ export default function EditBookingForm({
             name="serviceIds"
             render={({ field }) => {
               const entries = (field.value || []).map(
-                (s: string | { id: string; quantity: number }) =>
-                  typeof s === 'string' ? { id: s, quantity: 1 } : s
+                (s) => ({ id: s.id, quantity: s.quantity ?? 1 })
               )
               function isSelected(id: string) { return entries.some((e: any) => e.id === id) }
               function toggleService(id: string) {

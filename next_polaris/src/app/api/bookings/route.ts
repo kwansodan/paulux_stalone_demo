@@ -152,8 +152,8 @@ export async function POST(request: NextRequest) {
     // Normalise service entries — support both legacy string[] and new { id, quantity }[]
     let resolvedServiceEntries: { id: string; quantity: number }[] = (
       validatedBody.serviceIds ?? (validatedBody.serviceId ? [validatedBody.serviceId] : [])
-    ).map((s: string | { id: string; quantity: number }) =>
-      typeof s === 'string' ? { id: s, quantity: 1 } : s
+    ).map((s) =>
+      typeof s === 'string' ? { id: s, quantity: 1 } : { id: s.id, quantity: s.quantity ?? 1 }
     )
     let packageId: string | undefined = validatedBody.packageId
 
