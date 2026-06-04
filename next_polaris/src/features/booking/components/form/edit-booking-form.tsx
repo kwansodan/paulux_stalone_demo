@@ -56,7 +56,10 @@ export default function EditBookingForm({
   })
 
   const date = form.watch("bookingDate")
-  const serviceIds = form.watch("serviceIds") || []
+  const serviceEntries = (form.watch("serviceIds") || []).map(
+    (s) => ({ id: s.id, quantity: s.quantity ?? 1 })
+  )
+  const serviceIds = serviceEntries.map(e => e.id)
   const productEntries = form.watch("productIds") || []
   const userId = form.watch("createdById") || user.id
 
