@@ -23,11 +23,10 @@ export default async function DashboardPage() {
   )
 
 
-  const pending =
-    await bookingRepository.countByStatus("PENDING")
-
-  const confirmed =
-    await bookingRepository.countByStatus("CONFIRMED")
+  // Derive today's pending and confirmed counts from the already date-filtered bookings
+  // (countByStatus has no date scope and returns all-time totals)
+  const pending = bookings.filter(b => b.status === "PENDING").length
+  const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full">

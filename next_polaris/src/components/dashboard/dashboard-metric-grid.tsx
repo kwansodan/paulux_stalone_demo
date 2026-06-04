@@ -26,7 +26,7 @@ export default function MetricsGrid({
       <MetricCard
         icon={<TriangleAlert />}
         iconClassName="bg-[#FCF2E2] text-orange-200"
-        title="Pending Approvals"
+        title="Pending Payments"
         value={pending}
       />
 
