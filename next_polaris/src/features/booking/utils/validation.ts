@@ -20,7 +20,8 @@ export const BookingInputSchema = z.object({
   clientName: z
     .string()
     .min(2, "Client name must be at least 2 characters")
-    .optional(),
+    .optional()
+    .or(z.literal("")),
   clientEmail: z
     .string()
     .email("Invalid email address")
