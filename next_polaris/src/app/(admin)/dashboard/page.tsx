@@ -9,35 +9,50 @@ import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string }>
+}) {
   await requireRole([UserRole.ADMIN])
 
-  const today = new Date()
-  today.setHours(0, 0, 0, 0)
-  const tomorrow = new Date(today)
+  const { date: dateParam } = await searchParams
+
+  // Resolve selected date from URL param, default to today
+  const selectedDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
+    ? new Date(dateParam + "T00:00:00")
+    : new Date()
+  selectedDate.setHours(0, 0, 0, 0)
+
+  const tomorrow = new Date(selectedDate)
   tomorrow.setDate(tomorrow.getDate() + 1)
 
-  const todayStr = today.toISOString().split('T')[0]
+  const todayStr = new Date().toISOString().split("T")[0]
+  const selectedStr = selectedDate.toISOString().split("T")[0]
+  const isToday = selectedStr === todayStr
+  const dateLabel = selectedDate.toLocaleDateString("en-GB", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  })
 
-  const [{ bookings, count, revenue }, todayPayments, bookedTodayServices] = await Promise.all([
-    // Today's bookings — services being delivered today
+  const [{ bookings, count, revenue }, receivedPayments, bookedServices] = await Promise.all([
+    // Bookings where the service is on the selected date
     bookingRepository.getAllBookings(
-      { bookingDate: todayStr },
+      { bookingDate: selectedStr },
       { includeCount: true, includeRevenue: true }
     ),
-    // Cash received today — payments made today regardless of booking date
+    // Cash received on the selected date (payment.createdAt)
     prisma.payment.findMany({
       where: {
         status: PaymentStatus.PAID,
-        createdAt: { gte: today, lt: tomorrow },
+        createdAt: { gte: selectedDate, lt: tomorrow },
       },
       select: { amount: true, provider: true, rawPayload: true },
     }),
-    // Bookings created today — value of new business booked today
+    // Bookings created on the selected date (any future service date)
     prisma.bookingService.findMany({
       where: {
         booking: {
-          createdAt: { gte: today, lt: tomorrow },
+          createdAt: { gte: selectedDate, lt: tomorrow },
           status: { not: "CANCELLED" },
         },
       },
@@ -51,10 +66,10 @@ export default async function DashboardPage() {
   const cancelled = bookings.filter(b => b.status === "CANCELLED").length
   const activeCount = (count ?? bookings.length) - cancelled
 
-  // Cash received today — broken down by payment method
+  // Cash received — broken down by payment method
   let cash = 0, momo = 0, card = 0
 
-  for (const p of todayPayments) {
+  for (const p of receivedPayments) {
     const amount = Number(p.amount)
     if (p.provider === PaymentProvider.MANUAL) {
       cash += amount
@@ -74,8 +89,8 @@ export default async function DashboardPage() {
     0
   )
 
-  // Value of all new bookings created today (any future service date)
-  const bookedTodayValue = bookedTodayServices.reduce(
+  // Value of new bookings created on the selected date (any future service date)
+  const bookedTodayValue = bookedServices.reduce(
     (sum, s) => sum + Number(s.priceAtBooking) * (s.quantity ?? 1),
     0
   )
@@ -83,7 +98,7 @@ export default async function DashboardPage() {
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full space-y-6">
 
-      <DashboardHeader />
+      <DashboardHeader isToday={isToday} dateLabel={dateLabel} />
 
       <MetricsGrid
         todaysCount={activeCount}
