@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,18 +16,22 @@ import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
 import RecordPaymentModal from "./form/record-payment-modal"
+import EditServicesModal from "./form/edit-services-modal"
+import { SerializedService } from "@/features/service/types"
 
 type BookingCardProps = {
   booking: BookingWithService
   user: User
+  services: SerializedService[]
   onEdit: (bookingId: string) => void
   onCancel: (bookingId: string) => void
 }
 
-export default function BookingCard({ booking, user, onEdit, onCancel }: BookingCardProps) {
+export default function BookingCard({ booking, user, services, onEdit, onCancel }: BookingCardProps) {
   const [chargeModalOpen, setChargeModalOpen] = useState(false)
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false)
+  const [editServicesOpen, setEditServicesOpen] = useState(false)
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
@@ -101,6 +105,14 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
             </DropdownMenuItem>
           )}
 
+          {/* Edit Services */}
+          {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (
+            <DropdownMenuItem onClick={() => setEditServicesOpen(true)} className="flex gap-2 text-fuchsia-600">
+              <Sparkles className="text-fuchsia-600" />
+              <span className="w-full">Edit Services</span>
+            </DropdownMenuItem>
+          )}
+
           {/* Assign Stylist — available for any non-cancelled/completed booking */}
           {!['CANCELLED', 'COMPLETED'].includes(booking.status) && (
             <DropdownMenuItem onClick={() => setAssignModalOpen(true)} className="flex gap-2 text-fuchsia-600">
@@ -165,6 +177,13 @@ export default function BookingCard({ booking, user, onEdit, onCancel }: Booking
           })
         }}
         isPending={markAsPaid.isPending}
+      />
+
+      <EditServicesModal
+        booking={booking}
+        services={services}
+        open={editServicesOpen}
+        onClose={() => setEditServicesOpen(false)}
       />
     </div>
   )

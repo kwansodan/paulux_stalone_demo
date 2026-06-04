@@ -85,6 +85,7 @@ export default function SelectDayPanel({ selectedDate, user, services, products,
                   key={b.id}
                   user={user}
                   booking={b}
+                  services={services}
                   onEdit={(bookingId) => handleBookingAction(bookingId, 'edit')}
                   onCancel={(bookingId) => handleBookingAction(bookingId, 'delete')}
                 />
