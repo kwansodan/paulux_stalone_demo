@@ -40,8 +40,8 @@ export default function RevenueBreakdown({ cash, momo, card, discounts, bookedTo
 
       {/* Cash received today */}
       <div>
-        <h2 className="font-semibold text-base sm:text-lg mb-1">Cash Received Today</h2>
-        <p className="text-xs text-gray-400 mb-3">Actual payments received today, by method</p>
+        <h2 className="font-semibold text-base sm:text-lg mb-1">Cash Received</h2>
+        <p className="text-xs text-gray-400 mb-3">Actual payments received in the selected period, by method</p>
 
         <Row
           icon={<Banknote className="w-4 h-4" />}

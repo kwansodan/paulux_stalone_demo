@@ -9,50 +9,49 @@ import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
 
+function fmt(d: Date) {
+  return d.toISOString().split("T")[0]
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string }>
+  searchParams: Promise<{ from?: string; to?: string }>
 }) {
   await requireRole([UserRole.ADMIN])
 
-  const { date: dateParam } = await searchParams
+  const { from: fromParam, to: toParam } = await searchParams
 
-  // Resolve selected date from URL param, default to today
-  const selectedDate = dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)
-    ? new Date(dateParam + "T00:00:00")
-    : new Date()
-  selectedDate.setHours(0, 0, 0, 0)
+  const todayStr = fmt(new Date())
+  const dateRegex = /^\d{4}-\d{2}-\d{2}$/
 
-  const tomorrow = new Date(selectedDate)
-  tomorrow.setDate(tomorrow.getDate() + 1)
+  const fromStr = fromParam && dateRegex.test(fromParam) ? fromParam : todayStr
+  const toStr   = toParam   && dateRegex.test(toParam)   ? toParam   : todayStr
 
-  const todayStr = new Date().toISOString().split("T")[0]
-  const selectedStr = selectedDate.toISOString().split("T")[0]
-  const isToday = selectedStr === todayStr
-  const dateLabel = selectedDate.toLocaleDateString("en-GB", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  })
+  // Start of fromStr date, end of toStr date
+  const fromDate = new Date(fromStr + "T00:00:00")
+  const toDateEnd = new Date(toStr + "T00:00:00")
+  toDateEnd.setDate(toDateEnd.getDate() + 1) // exclusive upper bound
 
   const [{ bookings, count, revenue }, receivedPayments, bookedServices] = await Promise.all([
-    // Bookings where the service is on the selected date
+    // Bookings where the service falls within the selected range
     bookingRepository.getAllBookings(
-      { bookingDate: selectedStr },
+      { bookingDate: { gte: fromStr, lte: toStr } },
       { includeCount: true, includeRevenue: true }
     ),
-    // Cash received on the selected date (payment.createdAt)
+    // Payments received within the selected range
     prisma.payment.findMany({
       where: {
         status: PaymentStatus.PAID,
-        createdAt: { gte: selectedDate, lt: tomorrow },
+        createdAt: { gte: fromDate, lt: toDateEnd },
       },
       select: { amount: true, provider: true, rawPayload: true },
     }),
-    // Bookings created on the selected date (any future service date)
+    // New bookings created within the selected range (any future service date)
     prisma.bookingService.findMany({
       where: {
         booking: {
-          createdAt: { gte: selectedDate, lt: tomorrow },
+          createdAt: { gte: fromDate, lt: toDateEnd },
           status: { not: "CANCELLED" },
         },
       },
@@ -60,13 +59,13 @@ export default async function DashboardPage({
     }),
   ])
 
-  // Metric card counts — scoped to today's bookings
+  // Metric counts
   const pending   = bookings.filter(b => b.status === "PENDING").length
   const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
   const cancelled = bookings.filter(b => b.status === "CANCELLED").length
   const activeCount = (count ?? bookings.length) - cancelled
 
-  // Cash received — broken down by payment method
+  // Cash received breakdown by payment method
   let cash = 0, momo = 0, card = 0
 
   for (const p of receivedPayments) {
@@ -83,13 +82,13 @@ export default async function DashboardPage({
     }
   }
 
-  // Discounts applied on today's bookings
+  // Discounts applied on bookings in the range
   const discounts = bookings.reduce(
     (sum, b) => sum + (b.discountAmount ? Number(b.discountAmount) : 0),
     0
   )
 
-  // Value of new bookings created on the selected date (any future service date)
+  // Value of new bookings created within the range
   const bookedTodayValue = bookedServices.reduce(
     (sum, s) => sum + Number(s.priceAtBooking) * (s.quantity ?? 1),
     0
@@ -98,7 +97,7 @@ export default async function DashboardPage({
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full space-y-6">
 
-      <DashboardHeader isToday={isToday} dateLabel={dateLabel} />
+      <DashboardHeader />
 
       <MetricsGrid
         todaysCount={activeCount}
