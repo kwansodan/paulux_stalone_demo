@@ -10,6 +10,13 @@ import SearchBar from "./SearchBar"
 import { customerBookingPath } from "@/app/paths"
 import { ArrowRight, Package, Timer } from "lucide-react"
 
+const tabClass = (active: boolean) =>
+  `flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+    active
+      ? "bg-fuchsia-600 text-white"
+      : "text-gray-600 hover:text-gray-900 border border-gray-200 bg-white"
+  }`
+
 export default function ServicesGrid({
   services,
   packages = [],
@@ -46,6 +53,24 @@ export default function ServicesGrid({
     [searchTerm, packages]
   )
 
+  // Group services by category for the "All" view
+  const grouped = useMemo(() => {
+    if (activeCategory || searchTerm) return null
+    const map = new Map<string, { name: string; services: SerializedService[] }>()
+    const uncategorised: SerializedService[] = []
+    filteredServices.forEach((s) => {
+      if (s.category) {
+        if (!map.has(s.category.id)) map.set(s.category.id, { name: s.category.name, services: [] })
+        map.get(s.category.id)!.services.push(s)
+      } else {
+        uncategorised.push(s)
+      }
+    })
+    const groups = Array.from(map.values())
+    if (uncategorised.length) groups.push({ name: "Other", services: uncategorised })
+    return groups
+  }, [filteredServices, activeCategory, searchTerm])
+
   if (!services.length && !packages.length) {
     return (
       <div className="py-20 text-center text-gray-500">
@@ -60,27 +85,12 @@ export default function ServicesGrid({
 
       {/* ── Category tabs ── */}
       {categories.length > 0 && (
-        <div className="flex gap-3 overflow-x-auto scrollbar-hide pb-1">
-          <button
-            onClick={() => setActiveCategory(null)}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === null
-                ? "bg-fuchsia-600 text-white"
-                : "text-gray-500 hover:text-gray-900"
-            }`}
-          >
+        <div className="flex gap-2 overflow-x-auto scrollbar-hide pb-1">
+          <button onClick={() => setActiveCategory(null)} className={tabClass(activeCategory === null)}>
             All
           </button>
           {categories.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat.id
-                  ? "bg-fuchsia-600 text-white"
-                  : "text-gray-500 hover:text-gray-900"
-              }`}
-            >
+            <button key={cat.id} onClick={() => setActiveCategory(cat.id)} className={tabClass(activeCategory === cat.id)}>
               {cat.name}
             </button>
           ))}
@@ -212,11 +222,30 @@ export default function ServicesGrid({
         </div>
       ) : filteredServices.length > 0 ? (
         <section>
-          <div className="bg-white rounded-2xl border border-gray-100 divide-y divide-gray-50 px-4">
-            {filteredServices.map((service) => (
-              <ServiceCard key={service.id} service={service} />
-            ))}
-          </div>
+          {grouped ? (
+            /* All tab — grouped by category */
+            <div className="space-y-6">
+              {grouped.map((group) => (
+                <div key={group.name}>
+                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">
+                    {group.name}
+                  </p>
+                  <div className="bg-white rounded-2xl border border-gray-100 px-4">
+                    {group.services.map((service) => (
+                      <ServiceCard key={service.id} service={service} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            /* Single category or search result — flat list */
+            <div className="bg-white rounded-2xl border border-gray-100 px-4">
+              {filteredServices.map((service) => (
+                <ServiceCard key={service.id} service={service} />
+              ))}
+            </div>
+          )}
         </section>
       ) : null}
     </div>
