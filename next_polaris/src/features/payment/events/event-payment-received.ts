@@ -128,14 +128,9 @@ export const paymentReceivedEvent = inngest.createFunction(
                 );
                 const remaining = Math.max(0, totalAmount - totalPaid);
 
-                const totalAmt = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
-                const totalPd = booking.payments.reduce((sum, p) => sum + Number(p.amount), 0);
-                const remaining = Math.max(0, totalAmt - totalPd);
-                const dateFormatted2 = formatDate(booking.bookingDate);
-
                 const message = remaining > 0
-                    ? `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted2}. Outstanding: GHS ${remaining.toFixed(2)}. Ref: ${booking.bookingReference}. Enquiries: instagram.com/polarisbeautylounge`
-                    : `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted2}. Ref: ${booking.bookingReference}. Thank you for choosing us! Enquiries: instagram.com/polarisbeautylounge`;
+                    ? `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted}. Outstanding: GHS ${remaining.toFixed(2)}. Ref: ${booking.bookingReference}. Enquiries: instagram.com/polarisbeautylounge`
+                    : `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted}. Ref: ${booking.bookingReference}. Thank you for choosing us! Enquiries: instagram.com/polarisbeautylounge`;
 
                 const result = await sendSMS({
                     recipients: [booking.clientPhone],
