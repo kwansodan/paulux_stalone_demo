@@ -165,6 +165,7 @@ export class BookingRepository {
     }
     if (options.includeRevenue) {
       const activeBookings = bookings.filter(b => b.status !== BookingStatus.CANCELLED)
+      // Sum service value of today's bookings — this is revenue earned by delivering services today
       queryResult['revenue'] = activeBookings.reduce((sum, booking) => {
         return sum + booking.services.reduce((sSum, bs) => sSum + Number(bs.priceAtBooking), 0);
       }, 0);

@@ -19,12 +19,13 @@ export default async function DashboardPage() {
 
   const todayStr = today.toISOString().split('T')[0]
 
-  const [{ bookings, count, revenue }, todayPayments] = await Promise.all([
+  const [{ bookings, count, revenue }, todayPayments, bookedTodayServices] = await Promise.all([
+    // Today's bookings — services being delivered today
     bookingRepository.getAllBookings(
       { bookingDate: todayStr },
       { includeCount: true, includeRevenue: true }
     ),
-    // Payments actually received today (by payment creation date)
+    // Cash received today — payments made today regardless of booking date
     prisma.payment.findMany({
       where: {
         status: PaymentStatus.PAID,
@@ -32,15 +33,25 @@ export default async function DashboardPage() {
       },
       select: { amount: true, provider: true, rawPayload: true },
     }),
+    // Bookings created today — value of new business booked today
+    prisma.bookingService.findMany({
+      where: {
+        booking: {
+          createdAt: { gte: today, lt: tomorrow },
+          status: { not: "CANCELLED" },
+        },
+      },
+      select: { priceAtBooking: true, quantity: true },
+    }),
   ])
 
-  // Metric card counts
+  // Metric card counts — scoped to today's bookings
   const pending   = bookings.filter(b => b.status === "PENDING").length
   const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
   const cancelled = bookings.filter(b => b.status === "CANCELLED").length
   const activeCount = (count ?? bookings.length) - cancelled
 
-  // Revenue breakdown by payment method
+  // Cash received today — broken down by payment method
   let cash = 0, momo = 0, card = 0
 
   for (const p of todayPayments) {
@@ -48,7 +59,6 @@ export default async function DashboardPage() {
     if (p.provider === PaymentProvider.MANUAL) {
       cash += amount
     } else {
-      // Paystack — check channel from rawPayload if available
       const channel = (p.rawPayload as any)?.data?.channel ?? "mobile_money"
       if (channel === "card") {
         card += amount
@@ -58,9 +68,15 @@ export default async function DashboardPage() {
     }
   }
 
-  // Total discounts given on today's bookings
+  // Discounts applied on today's bookings
   const discounts = bookings.reduce(
     (sum, b) => sum + (b.discountAmount ? Number(b.discountAmount) : 0),
+    0
+  )
+
+  // Value of all new bookings created today (any future service date)
+  const bookedTodayValue = bookedTodayServices.reduce(
+    (sum, s) => sum + Number(s.priceAtBooking) * (s.quantity ?? 1),
     0
   )
 
@@ -83,6 +99,7 @@ export default async function DashboardPage() {
           momo={momo}
           card={card}
           discounts={discounts}
+          bookedTodayValue={bookedTodayValue}
         />
         <ScheduleList bookings={bookings} />
       </div>
