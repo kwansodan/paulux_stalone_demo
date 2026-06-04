@@ -31,7 +31,8 @@ export type GatewayPaymentMetrics = {
 
 export type PaymentFilters = {
   serviceId?: string
-  date?: string
+  from?: string
+  to?: string
   search?: string
   gateway?: string
   status?: string

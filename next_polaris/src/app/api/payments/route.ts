@@ -7,7 +7,8 @@ export async function GET(req: NextRequest) {
 
   const search = searchParams.get("search")
   const serviceId = searchParams.get("serviceId")
-  const date = searchParams.get("date")
+  const from = searchParams.get("from")
+  const to = searchParams.get("to")
   const gateway = searchParams.get("gateway")
   const status = searchParams.get("status")
 
@@ -29,19 +30,18 @@ export async function GET(req: NextRequest) {
     and.push({ booking: { serviceId } })
   }
 
-  if (date) {
-    const start = new Date(date)
-    start.setHours(0, 0, 0, 0) // midnight start of day
-
-    const end = new Date(date)
-    end.setHours(23, 59, 59, 999) // end of day
-
-    and.push({
-      createdAt: {
-        gte: start,
-        lte: end,
-      },
-    })
+  if (from || to) {
+    const createdAt: any = {}
+    if (from) {
+      const start = new Date(from + "T00:00:00")
+      createdAt.gte = start
+    }
+    if (to) {
+      const end = new Date(to + "T00:00:00")
+      end.setHours(23, 59, 59, 999)
+      createdAt.lte = end
+    }
+    and.push({ createdAt })
   }
 
   if (gateway) {

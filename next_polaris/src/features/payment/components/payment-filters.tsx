@@ -3,6 +3,7 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { X } from "lucide-react"
 import { PaymentFilters } from "../types"
+import DateRangePicker from "@/components/ui/date-range-picker"
 
 export function PaymentsFilters({
   filters,
@@ -13,7 +14,7 @@ export function PaymentsFilters({
   setFilters: (v: any) => void
   services: { id: string; name: string }[]
 }) {
-  const count = Object.values(filters || {}).filter(Boolean).length
+  const count = [filters?.search, filters?.serviceId, filters?.from, filters?.gateway, filters?.status].filter(Boolean).length
 
   return (
     <div className="flex items-end gap-3">
@@ -41,14 +42,14 @@ export function PaymentsFilters({
         </Select>
       </div>
 
-      {/* Date Input with Label */}
+      {/* Date range picker */}
       <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-600">Payment Date</label>
-        <Input
-          type="date"
-          value={filters?.date || ""}
-          onChange={(e) => setFilters({ ...filters, date: e.target.value })}
-          className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
+        <label className="text-sm font-medium text-gray-600">Period</label>
+        <DateRangePicker
+          from={filters?.from || ""}
+          to={filters?.to || ""}
+          onChange={(from, to) => setFilters({ ...filters, from, to })}
+          placeholder="All time"
         />
       </div>
 
