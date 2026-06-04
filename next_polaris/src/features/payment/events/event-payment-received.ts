@@ -2,7 +2,7 @@ import { inngest } from "@/lib/inngest";
 import { prisma } from "@/lib/prisma";
 import { sendPaymentReceivedEmail } from "../emails/send-payment-received-email";
 import { sendCustomerReceiptEmail } from "../emails/send-customer-receipt-email";
-import { UserRole, PaymentStatus } from "@generated/prisma/client";
+import { UserRole, PaymentStatus, PaymentProvider } from "@generated/prisma/client";
 import { sendSMS } from "@/lib/arkesal";
 import { formatDate, formatTime } from "@/features/booking/utils/helpers";
 import { customerBookingSummaryPath } from "@/app/paths";
@@ -37,7 +37,16 @@ export const paymentReceivedEvent = inngest.createFunction(
             return users;
         });
 
-        const serviceNames = booking.services.map(s => s.service.name).join(", ");
+        const serviceNamesList = booking.services.map(s => s.service.name);
+        const serviceNames = serviceNamesList.join(", ");
+
+        // Human-readable payment method label
+        const paymentMethod =
+            provider === PaymentProvider.MANUAL
+                ? "Cash"
+                : provider === PaymentProvider.PRIMARY_PAYSTACK || provider === PaymentProvider.SECONDARY_PAYSTACK
+                    ? "Mobile Money"
+                    : "Online Payment";
 
         // Send an email to each admin
         const emailResults = await step.run("notify-admins", async () => {
@@ -82,20 +91,18 @@ export const paymentReceivedEvent = inngest.createFunction(
                 const totalPaid = booking.payments.reduce(
                     (sum, p) => sum + Number(p.amount), 0
                 );
+                const remainingBalance = Math.max(0, totalAmount - totalPaid);
                 const dateFormatted = formatDate(booking.bookingDate);
-                const timeFormatted = formatTime(booking.bookingTime);
 
                 const result = await sendCustomerReceiptEmail(
                     booking.clientEmail!,
                     booking.clientName,
                     booking.bookingReference,
-                    serviceNames,
+                    serviceNamesList,
                     dateFormatted,
-                    timeFormatted,
                     amountPaid,
-                    totalAmount,
-                    totalPaid,
-                    booking.id,
+                    paymentMethod,
+                    remainingBalance,
                 );
 
                 if (!result?.data?.id) {
@@ -121,9 +128,14 @@ export const paymentReceivedEvent = inngest.createFunction(
                 );
                 const remaining = Math.max(0, totalAmount - totalPaid);
 
+                const totalAmt = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+                const totalPd = booking.payments.reduce((sum, p) => sum + Number(p.amount), 0);
+                const remaining = Math.max(0, totalAmt - totalPd);
+                const dateFormatted2 = formatDate(booking.bookingDate);
+
                 const message = remaining > 0
-                    ? `Hi ${booking.clientName}, we've received your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames} on ${dateFormatted} at ${timeFormatted}. Outstanding balance: GHS ${remaining.toFixed(2)}. Ref: ${booking.bookingReference}. Details: ${summaryLink}`
-                    : `Hi ${booking.clientName}, your payment of GHS ${amountPaid.toFixed(2)} is confirmed! Your appointment for ${serviceNames} on ${dateFormatted} at ${timeFormatted} is all set. Ref: ${booking.bookingReference}. Details: ${summaryLink}`;
+                    ? `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted2}. Outstanding: GHS ${remaining.toFixed(2)}. Ref: ${booking.bookingReference}. Enquiries: instagram.com/polarisbeautylounge`
+                    : `Hello ${booking.clientName}, Polaris Beauty Lounge confirms receipt of your payment of GHS ${amountPaid.toFixed(2)} for ${serviceNames}. Method: ${paymentMethod}. Date: ${dateFormatted2}. Ref: ${booking.bookingReference}. Thank you for choosing us! Enquiries: instagram.com/polarisbeautylounge`;
 
                 const result = await sendSMS({
                     recipients: [booking.clientPhone],

@@ -5,29 +5,25 @@ export const sendCustomerReceiptEmail = async (
   customerEmail: string,
   clientName: string,
   bookingReference: string,
-  serviceNames: string,
-  bookingDate: string,
-  bookingTime: string,
+  serviceNames: string[],
+  paymentDate: string,
   amountPaid: number,
-  totalAmount: number,
-  totalPaid: number,
-  bookingId: string,
+  paymentMethod: string,
+  remainingBalance: number,
 ) => {
   return await resend.emails.send({
     from: "no-reply@polarisbeautylounge.com",
     to: customerEmail,
-    subject: `Payment Receipt – ${bookingReference}`,
+    subject: `Payment Confirmation – ${bookingReference}`,
     react: (
       <CustomerReceiptEmail
         clientName={clientName}
         bookingReference={bookingReference}
         serviceNames={serviceNames}
-        bookingDate={bookingDate}
-        bookingTime={bookingTime}
+        paymentDate={paymentDate}
         amountPaid={amountPaid}
-        totalAmount={totalAmount}
-        totalPaid={totalPaid}
-        bookingId={bookingId}
+        paymentMethod={paymentMethod}
+        remainingBalance={remainingBalance}
       />
     ),
   })

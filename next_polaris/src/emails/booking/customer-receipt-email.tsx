@@ -1,40 +1,30 @@
 import React from "react"
 import {
   Html, Head, Body, Tailwind, Container, Section,
-  Text, Button, Heading, Img, Row, Column, Hr,
+  Text, Img, Hr,
 } from "@react-email/components"
 import { getBaseUrl } from "@/utils/url"
 
 interface CustomerReceiptEmailProps {
   clientName: string
   bookingReference: string
-  serviceNames: string
-  bookingDate: string
-  bookingTime: string
-  /** Amount paid in this transaction */
+  serviceNames: string[]
+  paymentDate: string
   amountPaid: number
-  /** Grand total for the booking */
-  totalAmount: number
-  /** Total paid across all transactions so far (including this one) */
-  totalPaid: number
-  bookingId: string
+  paymentMethod: string
+  /** Remaining balance — shows only when > 0 */
+  remainingBalance?: number
 }
 
 const CustomerReceiptEmail = ({
   clientName,
   bookingReference,
   serviceNames,
-  bookingDate,
-  bookingTime,
+  paymentDate,
   amountPaid,
-  totalAmount,
-  totalPaid,
-  bookingId,
+  paymentMethod,
+  remainingBalance = 0,
 }: CustomerReceiptEmailProps) => {
-  const summaryUrl = getBaseUrl() + `/customer/booking/summary/${bookingId}`
-  const remainingBalance = Math.max(0, totalAmount - totalPaid)
-  const isFullyPaid = remainingBalance === 0
-
   return (
     <Html>
       <Head />
@@ -52,108 +42,75 @@ const CustomerReceiptEmail = ({
               />
             </Section>
 
-            {/* Heading */}
-            <Section className="mb-6">
-              <Heading className="text-2xl font-bold text-gray-900 mb-2">
-                {isFullyPaid ? "✅ Payment Confirmed" : "💳 Payment Receipt"}
-              </Heading>
-              <Text className="text-gray-600 text-base mb-0">
-                Hi {clientName}, thank you for your payment. Here is your receipt.
+            {/* Greeting */}
+            <Section className="mb-4">
+              <Text className="text-gray-900 text-base font-semibold mb-1">
+                Hello {clientName},
+              </Text>
+              <Text className="text-gray-700 text-base mb-0">
+                Thank you for choosing Polaris Beauty Lounge.
               </Text>
             </Section>
 
-            {/* Booking details */}
-            <Section className="bg-gray-50 rounded-lg p-6 mb-6">
-              <Row className="mb-4">
-                <Column className="w-1/2">
-                  <Text className="text-gray-500 text-sm font-medium m-0">Booking Reference</Text>
-                  <Text className="text-gray-900 text-base font-semibold m-0">{bookingReference}</Text>
-                </Column>
-                <Column className="w-1/2">
-                  <Text className="text-gray-500 text-sm font-medium m-0">Service(s)</Text>
-                  <Text className="text-gray-900 text-base font-semibold m-0">{serviceNames}</Text>
-                </Column>
-              </Row>
-              <Row className="mb-4">
-                <Column className="w-1/2">
-                  <Text className="text-gray-500 text-sm font-medium m-0">Date</Text>
-                  <Text className="text-gray-900 text-base font-semibold m-0">{bookingDate}</Text>
-                </Column>
-                <Column className="w-1/2">
-                  <Text className="text-gray-500 text-sm font-medium m-0">Time</Text>
-                  <Text className="text-gray-900 text-base font-semibold m-0">{bookingTime}</Text>
-                </Column>
-              </Row>
+            <Hr className="border-gray-200 my-5" />
+
+            {/* Payment confirmation */}
+            <Section className="mb-4">
+              <Text className="text-gray-700 text-base mb-4">
+                We confirm receipt of your payment of{" "}
+                <strong className="text-fuchsia-700">GHS {amountPaid.toFixed(2)}</strong>{" "}
+                for the following service(s):
+              </Text>
+
+              {/* Service list */}
+              {serviceNames.map((name, i) => (
+                <Text key={i} className="text-gray-800 text-base mb-1 pl-2">
+                  • {name}
+                </Text>
+              ))}
             </Section>
 
-            {/* Payment breakdown */}
-            <Section className="mb-6">
-              <Row className="mb-2">
-                <Column>
-                  <Text className="text-gray-600 text-sm m-0">Amount paid now</Text>
-                </Column>
-                <Column className="text-right">
-                  <Text className="text-fuchsia-600 text-base font-bold m-0">
-                    GHS {amountPaid.toFixed(2)}
-                  </Text>
-                </Column>
-              </Row>
-              <Hr className="border-gray-200 my-2" />
-              <Row className="mb-2">
-                <Column>
-                  <Text className="text-gray-600 text-sm m-0">Total paid to date</Text>
-                </Column>
-                <Column className="text-right">
-                  <Text className="text-gray-900 text-sm font-semibold m-0">
-                    GHS {totalPaid.toFixed(2)}
-                  </Text>
-                </Column>
-              </Row>
-              <Row className="mb-2">
-                <Column>
-                  <Text className="text-gray-600 text-sm m-0">Booking total</Text>
-                </Column>
-                <Column className="text-right">
-                  <Text className="text-gray-900 text-sm font-semibold m-0">
-                    GHS {totalAmount.toFixed(2)}
-                  </Text>
-                </Column>
-              </Row>
-              {!isFullyPaid && (
-                <Row>
-                  <Column>
-                    <Text className="text-amber-700 text-sm font-medium m-0">Remaining balance</Text>
-                  </Column>
-                  <Column className="text-right">
-                    <Text className="text-amber-700 text-sm font-bold m-0">
-                      GHS {remainingBalance.toFixed(2)}
-                    </Text>
-                  </Column>
-                </Row>
+            {/* Payment details */}
+            <Section className="bg-gray-50 rounded-lg p-5 mb-4">
+              <Text className="text-gray-700 text-sm mb-1">
+                <strong>Payment Method:</strong> {paymentMethod}
+              </Text>
+              <Text className="text-gray-700 text-sm mb-0">
+                <strong>Date:</strong> {paymentDate}
+              </Text>
+              {remainingBalance > 0 && (
+                <Text className="text-amber-700 text-sm mt-2 mb-0">
+                  <strong>Outstanding balance:</strong> GHS {remainingBalance.toFixed(2)}
+                </Text>
               )}
-              {isFullyPaid && (
-                <Row>
-                  <Column>
-                    <Text className="text-green-700 text-sm font-semibold m-0">✓ Fully paid</Text>
-                  </Column>
-                </Row>
-              )}
+              <Text className="text-gray-400 text-xs mt-2 mb-0">
+                Ref: {bookingReference}
+              </Text>
             </Section>
 
-            {/* CTA */}
-            <Section className="mb-8">
-              <Button
-                href={summaryUrl}
-                className="bg-fuchsia-600 text-white font-medium px-8 py-3 rounded-md"
-              >
-                View Booking Details
-              </Button>
+            <Hr className="border-gray-200 my-5" />
+
+            {/* Closing */}
+            <Section className="mb-4">
+              <Text className="text-gray-700 text-base mb-3">
+                We appreciate your business and look forward to serving you again.
+              </Text>
+              <Text className="text-gray-700 text-base mb-0">
+                For suggestions and complaints, please send us a message on our
+                Instagram account at{" "}
+                <a
+                  href="https://instagram.com/polarisbeautylounge"
+                  className="text-fuchsia-600"
+                >
+                  instagram.com/polarisbeautylounge
+                </a>
+              </Text>
             </Section>
 
             {/* Footer */}
-            <Section className="border-t border-gray-100 pt-6">
-              <Text className="text-gray-500 text-sm m-0">
-                Polaris Beauty Lounge &mdash; thank you for choosing us. See you soon!
+            <Section className="border-t border-gray-100 pt-5">
+              <Text className="text-gray-400 text-xs m-0">
+                Polaris Beauty Lounge
               </Text>
             </Section>
 
