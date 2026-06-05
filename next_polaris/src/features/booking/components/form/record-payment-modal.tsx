@@ -5,6 +5,8 @@ import Modal from "@/components/modal"
 import { Button } from "@/components/ui/button"
 import { BookingWithService } from "../../types"
 
+import { calculateBookingTotal } from "../../utils/helpers"
+
 type Props = {
   booking: BookingWithService
   open: boolean
@@ -14,11 +16,11 @@ type Props = {
 }
 
 export default function RecordPaymentModal({ booking, open, onClose, onConfirm, isPending }: Props) {
-  const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
+  const totalPrice = calculateBookingTotal(booking)
   const totalPaid = (booking as any).payments
     ?.filter((p: any) => p.status === "PAID")
     .reduce((sum: number, p: any) => sum + Number(p.amount), 0) ?? 0
-  const remainingBalance = totalPrice - totalPaid
+  const remainingBalance = Math.max(0, totalPrice - totalPaid)
 
   const [amount, setAmount] = useState<string>(remainingBalance.toFixed(2))
   const [error, setError] = useState<string>("")

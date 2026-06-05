@@ -4,6 +4,7 @@ import { generateBookingReference, timeToMinutes } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment, BookingWithService } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { bookingInclude } from "@/lib/prisma-includes";
+import { calculateBookingTotal } from "../utils/helpers";
 
 
 export class BookingRepository {
@@ -167,7 +168,7 @@ export class BookingRepository {
       const activeBookings = bookings.filter(b => b.status !== BookingStatus.CANCELLED)
       // Sum service value of today's bookings — this is revenue earned by delivering services today
       queryResult['revenue'] = activeBookings.reduce((sum, booking) => {
-        return sum + booking.services.reduce((sSum, bs) => sSum + Number(bs.priceAtBooking), 0);
+        return sum + calculateBookingTotal(booking);
       }, 0);
     }
 

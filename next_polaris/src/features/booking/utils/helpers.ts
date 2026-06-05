@@ -73,3 +73,19 @@ export function minutesToTime(minutes: number): string {
   const m = minutes % 60;
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
+
+export function calculateBookingTotal(booking: any): number {
+  if (!booking) return 0;
+
+  const servicesTotal = booking.services?.reduce((sum: number, s: any) => {
+    return sum + (Number(s.priceAtBooking) * (s.quantity || 1));
+  }, 0) || 0;
+
+  const productsTotal = booking.products?.reduce((sum: number, p: any) => {
+    return sum + (Number(p.priceAtBooking) * (p.quantity || 1));
+  }, 0) || 0;
+
+  const discount = Number(booking.discountAmount || 0);
+
+  return Math.max(0, (servicesTotal + productsTotal) - discount);
+}

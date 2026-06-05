@@ -2,6 +2,7 @@ import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { paymentService } from "@/features/payment/server/payment.service";
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers";
+import { calculateBookingTotal } from "@/features/booking/utils/helpers";
 import { PaymentProvider, PaymentStatus } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -35,7 +36,7 @@ export async function POST(
             );
         }
 
-        const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+        const totalPrice = calculateBookingTotal(booking);
 
         // Filter for PAID payments
         const paidPayments = booking.payments?.filter(p => p.status === PaymentStatus.PAID) || [];

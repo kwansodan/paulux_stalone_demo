@@ -8,6 +8,7 @@ import { useBookings, useChargeCustomer, useMarkAsPaid } from "../client/hooks/u
 import { Button } from "@/components/ui/button"
 import { Banknote, Scissors } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
+import { calculateBookingTotal } from "../utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
 import RecordPaymentModal from "./form/record-payment-modal"
@@ -123,7 +124,7 @@ export default function BookingsTable() {
       key: "amount",
       label: "Amount",
       render: (row: BookingWithServiceAndPayment) => {
-        const total = row.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+        const total = calculateBookingTotal(row);
         return `GHS ${total.toFixed(2)}`;
       },
     },

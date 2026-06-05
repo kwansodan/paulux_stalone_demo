@@ -1,8 +1,6 @@
 import { BookingWithServiceAndPayment } from "@/features/booking/types";
 import { PaymentStatus } from "../types";
-
-
-
+import { calculateBookingTotal } from "@/features/booking/utils/helpers";
 
 export function calculatePaymentStatus(booking: BookingWithServiceAndPayment): PaymentStatus {
   if (!booking.payments?.length) {
@@ -20,7 +18,7 @@ export function calculatePaymentStatus(booking: BookingWithServiceAndPayment): P
   }
 
   const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0);
+  const totalPrice = calculateBookingTotal(booking);
 
   if (totalPaid >= totalPrice) {
     return PaymentStatus.PAID;

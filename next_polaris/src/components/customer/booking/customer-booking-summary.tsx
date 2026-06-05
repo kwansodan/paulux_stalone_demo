@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
-import { formatDate, formatTime } from "@/features/booking/utils/helpers"
+import { formatDate, formatTime, calculateBookingTotal } from "@/features/booking/utils/helpers"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
@@ -120,7 +120,7 @@ export default function BookingSummary({ booking }: Props) {
     const payment = booking.payments?.[0]
     if (!payment) return "Not paid"
 
-    const totalPrice = booking.services.reduce((sum: number, s: any) => sum + Number(s.priceAtBooking), 0)
+    const totalPrice = calculateBookingTotal(booking)
 
     if (payment.status === "PAID") {
       return Number(payment.amount) >= totalPrice ? "Paid in full" : "Deposit paid"

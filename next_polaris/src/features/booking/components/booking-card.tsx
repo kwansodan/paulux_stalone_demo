@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BookingWithService } from "../types"
-import { formatTime, isBookingOwner } from "../utils/helpers"
+import { calculateBookingTotal, formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
@@ -36,9 +36,7 @@ export default function BookingCard({ booking, user, services, onEdit, onCancel 
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
   const bookingPaymentStatus = calculatePaymentStatus(booking)
-  const bookingTotal =
-    booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking) * ((s as any).quantity ?? 1), 0) +
-    ((booking as any).products?.reduce((sum: number, p: any) => sum + Number(p.priceAtBooking) * (p.quantity ?? 1), 0) ?? 0)
+  const bookingTotal = calculateBookingTotal(booking)
 
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">

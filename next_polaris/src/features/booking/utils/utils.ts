@@ -1,4 +1,5 @@
 import { BookingWithServiceAndPayment } from "../types"
+import { calculateBookingTotal } from "./helpers"
 
 export function exportBookingsToCSV(bookings: BookingWithServiceAndPayment[], filename = "bookings-export.csv") {
   const headers = [
@@ -28,7 +29,7 @@ export function exportBookingsToCSV(bookings: BookingWithServiceAndPayment[], fi
       booking.bookingTime || "",
       booking.status || "",
       payment?.status || "No payment",
-      booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0).toFixed(2),
+      calculateBookingTotal(booking).toFixed(2),
     ]
   })
 
