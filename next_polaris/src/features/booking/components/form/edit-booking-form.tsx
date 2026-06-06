@@ -44,14 +44,15 @@ export default function EditBookingForm({
     resolver: zodResolver(BookingInputSchema),
     defaultValues: {
       clientName: booking.clientName,
-      clientEmail: booking.clientEmail,
+      clientEmail: booking.clientEmail ?? "",
       clientPhone: booking.clientPhone,
       serviceIds: booking.services.map(s => ({ id: s.serviceId, quantity: (s as any).quantity ?? 1 })),
       productIds: booking.products?.map(p => ({ id: p.productId, quantity: p.quantity ?? 1 })) ?? [],
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
       createdById: user.id,
-      status: booking.status
+      status: booking.status,
+      bookingType: booking.bookingType,
     },
   })
 
@@ -67,6 +68,7 @@ export default function EditBookingForm({
   const slots = data?.slots ?? []
 
   const mutation = useEditBooking()
+  const isWalkIn = booking.bookingType === "WALKIN"
 
   const [serviceSearch, setServiceSearch] = useState("")
   const [productSearch, setProductSearch] = useState("")
@@ -87,6 +89,7 @@ export default function EditBookingForm({
     await mutation.mutateAsync({
       ...data,
       id: booking.id,
+      bookingType: booking.bookingType,
     })
     onSuccess()
   }
@@ -103,7 +106,7 @@ export default function EditBookingForm({
             render={({ field }) => (
               <div className="space-y-1">
                 <Label className="text-sm font-normal text-foreground">
-                  Customer Name <span className="text-red-500">*</span>
+                  Customer Name {!isWalkIn && <span className="text-red-500">*</span>}
                 </Label>
                 <Input
                   placeholder="Customer name"
@@ -126,10 +129,10 @@ export default function EditBookingForm({
             render={({ field }) => (
               <div className="space-y-1">
                 <Label className="text-sm font-normal text-foreground">
-                  Customer Email <span className="text-red-500">*</span>
+                  Customer Email {!isWalkIn && <span className="text-red-500">*</span>}
                 </Label>
                 <Input
-                  placeholder="Customer email"
+                  placeholder={isWalkIn ? "Leave blank to use walk-in email" : "Customer email"}
                   type="email"
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}

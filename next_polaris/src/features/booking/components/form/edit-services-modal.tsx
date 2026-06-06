@@ -71,6 +71,7 @@ export default function EditServicesModal({ booking, services, open, onClose }: 
       bookingDate: booking.bookingDate.slice(0, 10),
       bookingTime: booking.bookingTime,
       status: booking.status,
+      bookingType: booking.bookingType,
     }, {
       onSuccess: () => onClose(),
     })

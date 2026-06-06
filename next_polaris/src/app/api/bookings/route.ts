@@ -89,10 +89,24 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const validatedBody = BookingSchema.parse(body)
 
-    const isWalkIn = validatedBody.bookingType === "WALKIN"
+    let isWalkIn = validatedBody.bookingType === "WALKIN"
 
-    // Walk-in bookings are admin-only
-    if (isWalkIn) {
+    // If updating, retrieve the existing booking to ensure we use the correct bookingType
+    if (validatedBody.id) {
+      const auth = await requireRoleApi(['ADMIN'])
+      if (!auth.ok) return auth.response
+
+      const existingBooking = await prisma.booking.findUnique({
+        where: { id: validatedBody.id },
+        select: { bookingType: true }
+      })
+      if (!existingBooking) {
+        return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 })
+      }
+      isWalkIn = existingBooking.bookingType === "WALKIN"
+      validatedBody.bookingType = existingBooking.bookingType
+    } else if (isWalkIn) {
+      // Walk-in bookings are admin-only
       const auth = await requireRoleApi(['ADMIN'])
       if (!auth.ok) return auth.response
       if (!validatedBody.createdById) {
@@ -100,12 +114,6 @@ export async function POST(request: NextRequest) {
           { success: false, error: 'Walk-in bookings require a createdById (admin only)' },
           { status: 400 })
       }
-    }
-
-    // Authorization check for updates
-    if (validatedBody.id) {
-      const auth = await requireRoleApi(['ADMIN'])
-      if (!auth.ok) return auth.response
     }
 
     if (validatedBody.createdById) {
