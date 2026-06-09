@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, Prisma } from "@generated/prisma/client"
 import { PaymentMetrics } from "../types"
 import { BookingStatus } from "@/features/booking/types"
+import { calculateBookingTotal } from "@/features/booking/utils/helpers"
 
 type PaymentDTO = {
   id?: string
@@ -24,6 +25,7 @@ export class PaymentRepository {
         booking: {
           include: {
             services: { include: { service: true } },
+            products: { include: { product: true } },
             payments: true,
           }
         }
@@ -133,7 +135,7 @@ export class PaymentRepository {
           in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED]
         }
       },
-      include: { services: { include: { service: true } }, payments: true }
+      include: { services: { include: { service: true } }, products: { include: { product: true } }, payments: true }
     })
 
 
@@ -166,14 +168,14 @@ export class PaymentRepository {
           in: [BookingStatus.CONFIRMED, BookingStatus.COMPLETED, BookingStatus.PENDING]
         }
       },
-      include: { services: { include: { service: true } }, payments: true }
+      include: { services: { include: { service: true } }, products: { include: { product: true } }, payments: true }
     })
 
     // Calculate totalBalanceDueToday (all unpaid from day 1 till today)
     let totalBalanceDueToday = 0
 
     for (const booking of allBookingsUpToToday) {
-      const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
+      const totalPrice = calculateBookingTotal(booking)
       const totalPayments = booking.payments
         .filter(p => p.status !== PaymentStatus.REFUNDED)
         .reduce((sum, p) => sum + Number(p.amount), 0)
@@ -188,7 +190,7 @@ export class PaymentRepository {
     let todaysPendingCollections = 0
 
     for (const booking of todaysBookings) {
-      const totalPrice = booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
+      const totalPrice = calculateBookingTotal(booking)
       const totalPayments = booking.payments.reduce((sum, p) => sum + Number(p.amount), 0)
       const unpaidBalance = totalPrice - totalPayments
 

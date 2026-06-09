@@ -8,6 +8,7 @@ import { SerializedService } from "@/features/service/types"
 import { Loader2 } from "lucide-react"
 import { useMarkAsPaid } from "@/features/booking/client/hooks/use-booking"
 import RecordPaymentModal from "@/features/booking/components/form/record-payment-modal"
+import { calculateBookingTotal } from "@/features/booking/utils/helpers"
 
 export default function PaymentManager({ services }: { services: SerializedService[] }) {
   const [filters, setFilters] = useState<PaymentFilters | null>(null)
@@ -43,7 +44,7 @@ export default function PaymentManager({ services }: { services: SerializedServi
         const totalPaid = p.booking.payments
           .filter(pay => pay.status === "PAID")
           .reduce((sum, pay) => sum + Number(pay.amount), 0)
-        const totalPrice = p.booking.services.reduce((sum, s) => sum + Number(s.priceAtBooking), 0)
+        const totalPrice = calculateBookingTotal(p.booking)
         const due = totalPrice - totalPaid
         return (
           <p className={due === 0 ? "text-gray-600" : "text-[#D10505]"}>
