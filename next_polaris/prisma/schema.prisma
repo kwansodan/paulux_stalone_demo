@@ -194,12 +194,27 @@ model Payment {
   rawPayload Json?
   reason     String?
 
+  manualMethodId String?              @db.Uuid
+  manualMethod   ManualPaymentMethod? @relation(fields: [manualMethodId], references: [id])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([provider, providerRef])
   @@index([bookingId])
   @@map("payments")
+}
+
+model ManualPaymentMethod {
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique
+  isActive  Boolean   @default(true)
+  sortOrder Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  payments  Payment[]
+
+  @@map("manual_payment_methods")
 }
 
 model Booking {

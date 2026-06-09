@@ -169,8 +169,8 @@ export default function BookingCard({ booking, user, services, onEdit, onCancel 
         booking={booking}
         open={recordPaymentOpen}
         onClose={() => setRecordPaymentOpen(false)}
-        onConfirm={(amount) => {
-          markAsPaid.mutate({ id: booking.id, amount }, {
+        onConfirm={(amount, methodId) => {
+          markAsPaid.mutate({ id: booking.id, amount, methodId }, {
             onSuccess: () => setRecordPaymentOpen(false),
           })
         }}

@@ -268,12 +268,16 @@ export function useMarkAsPaid() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ id, amount }: { id: string; amount?: number }) =>
-      api.post(`/bookings/${id}/mark-as-paid`, amount !== undefined ? { amount } : {}),
+    mutationFn: ({ id, amount, methodId }: { id: string; amount?: number; methodId?: string }) => {
+      const body: Record<string, unknown> = {}
+      if (amount !== undefined) body.amount = amount
+      if (methodId !== undefined) body.methodId = methodId
+      return api.post(`/bookings/${id}/mark-as-paid`, body)
+    },
     onMutate: () => {
       toast.loading("Recording payment...", { id: "mark-as-paid" })
     },
-    onSuccess: (_data: any, variables: { id: string; amount?: number }) => {
+    onSuccess: (_data: any, variables: { id: string; amount?: number; methodId?: string }) => {
       queryClient.invalidateQueries({ queryKey: ["slots"] })
       queryClient.invalidateQueries({ queryKey: ["bookings"] })
       queryClient.invalidateQueries({ queryKey: ["reports-bookings"] })

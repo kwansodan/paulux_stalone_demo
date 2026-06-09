@@ -103,8 +103,8 @@ export default function PaymentManager({ services }: { services: SerializedServi
           booking={recordPaymentTarget.booking as any}
           open={!!recordPaymentTarget}
           onClose={() => setRecordPaymentTarget(null)}
-          onConfirm={(amount) => {
-            markAsPaid.mutate({ id: recordPaymentTarget.bookingId, amount }, {
+          onConfirm={(amount, methodId) => {
+            markAsPaid.mutate({ id: recordPaymentTarget.bookingId, amount, methodId }, {
               onSuccess: () => setRecordPaymentTarget(null),
             })
           }}

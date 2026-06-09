@@ -206,8 +206,8 @@ export default function BookingsTable() {
           booking={recordPaymentBooking}
           open={!!recordPaymentBooking}
           onClose={() => setRecordPaymentBooking(null)}
-          onConfirm={(amount) => {
-            markAsPaid.mutate({ id: recordPaymentBooking.id, amount }, {
+          onConfirm={(amount, methodId) => {
+            markAsPaid.mutate({ id: recordPaymentBooking.id, amount, methodId }, {
               onSuccess: () => setRecordPaymentBooking(null),
             })
           }}

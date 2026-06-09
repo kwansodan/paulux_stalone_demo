@@ -12,7 +12,7 @@ export const paymentReceivedEvent = inngest.createFunction(
     { id: "payment-received-admin-notify" },
     { event: "app/payment.payment-received" },
     async ({ event, step }) => {
-        const { bookingId, amountPaid, provider } = event.data;
+        const { bookingId, amountPaid, provider, manualMethodName } = event.data;
 
         // Fetch the booking with its services and payments
         const booking = await step.run("fetch-booking", async () => {
@@ -43,8 +43,8 @@ export const paymentReceivedEvent = inngest.createFunction(
         // Human-readable payment method label
         const paymentMethod =
             provider === PaymentProvider.MANUAL
-                ? "Cash"
-                : provider === PaymentProvider.PRIMARY_PAYSTACK || provider === PaymentProvider.SECONDARY_PAYSTACK
+                ? (manualMethodName || "Manual")
+                : (provider === PaymentProvider.PRIMARY_PAYSTACK || provider === PaymentProvider.SECONDARY_PAYSTACK)
                     ? "Mobile Money"
                     : "Online Payment";
 

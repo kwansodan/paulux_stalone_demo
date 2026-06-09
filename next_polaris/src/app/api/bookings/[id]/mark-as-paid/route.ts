@@ -50,9 +50,20 @@ export async function POST(
             );
         }
 
-        // Optional partial amount — defaults to full remaining balance
+        // Optional partial amount + payment method
         const body = await request.json().catch(() => ({}));
         const requestedAmount = body?.amount ? Number(body.amount) : null;
+        const methodId: string | null = body?.methodId ?? null;
+
+        // Resolve method name for downstream use (receipt email, audit log)
+        let methodName = "Manual"
+        if (methodId) {
+            const method = await prisma.manualPaymentMethod.findUnique({ where: { id: methodId } })
+            if (!method) {
+                return NextResponse.json({ success: false, message: "Payment method not found" }, { status: 400 })
+            }
+            methodName = method.name
+        }
 
         if (requestedAmount !== null) {
             if (isNaN(requestedAmount) || requestedAmount <= 0) {
@@ -80,7 +91,8 @@ export async function POST(
                 amount: amountToRecord,
                 currency: booking.services[0]?.service.currency || "GHS",
                 status: PaymentStatus.PAID,
-                rawPayload: { method: "CASH_IN_PERSON", markedByAdminId: auth.user.id },
+                manualMethodId: methodId ?? undefined,
+                rawPayload: { method: methodName, markedByAdminId: auth.user.id },
             }
         });
 
@@ -119,6 +131,7 @@ export async function POST(
                 bookingId: booking.id,
                 amountPaid: amountToRecord,
                 provider: PaymentProvider.MANUAL,
+                manualMethodName: methodName,
             },
         });
 

@@ -6,8 +6,14 @@ import axios from "axios"
 import {
   Plus, CircleX, PencilLine, GalleryHorizontal,
   ToggleLeft, ToggleRight, Loader2, Mail, Save,
-  Settings2, Layers, Timer, Users,
+  Settings2, Layers, Timer, Users, CreditCard, Check, X,
 } from "lucide-react"
+import {
+  useGetManualPaymentMethods,
+  useCreateManualPaymentMethod,
+  useUpdateManualPaymentMethod,
+  useDeleteManualPaymentMethod,
+} from "@/features/payment/client/use-manual-payment-methods"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -353,7 +359,149 @@ function HeroGallerySection({ initialImages }: { initialImages: StyleImage[] }) 
 // ─────────────────────────────────────────────────────────────────────────────
 // Nav items definition
 // ─────────────────────────────────────────────────────────────────────────────
-type SectionId = "general" | "gallery" | "categories" | "availability" | "staff"
+// Section: Payment Methods
+// ─────────────────────────────────────────────────────────────────────────────
+function PaymentMethodsSection() {
+  const { data: methods = [], isLoading } = useGetManualPaymentMethods()
+  const createMutation = useCreateManualPaymentMethod()
+  const updateMutation = useUpdateManualPaymentMethod()
+  const deleteMutation = useDeleteManualPaymentMethod()
+
+  const [newName, setNewName] = useState("")
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editName, setEditName] = useState("")
+
+  async function handleAdd() {
+    const name = newName.trim()
+    if (!name) return
+    await createMutation.mutateAsync(name)
+    setNewName("")
+  }
+
+  function startEdit(id: string, currentName: string) {
+    setEditingId(id)
+    setEditName(currentName)
+  }
+
+  async function saveEdit(id: string) {
+    const name = editName.trim()
+    if (!name) return
+    await updateMutation.mutateAsync({ id, name })
+    setEditingId(null)
+  }
+
+  return (
+    <div className="space-y-1">
+      <h2 className="text-lg font-semibold text-gray-900">Payment Methods</h2>
+      <p className="text-sm text-gray-500 pb-4">
+        Manual payment methods shown when recording cash or off-platform payments. These appear as selectable options when an admin marks a booking as paid.
+      </p>
+
+      {/* Add new */}
+      <div className="flex gap-2 mb-5">
+        <input
+          type="text"
+          className="flex-1 h-10 px-3 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+          placeholder="e.g. GT, MTN MoMo, Bank Transfer"
+          value={newName}
+          onChange={(e) => setNewName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter") handleAdd() }}
+        />
+        <Button
+          className="bg-fuchsia-600 hover:bg-fuchsia-700 h-10 px-4"
+          onClick={handleAdd}
+          disabled={!newName.trim() || createMutation.isPending}
+        >
+          {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-1" />Add</>}
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="flex items-center gap-2 text-sm text-gray-400 py-4">
+          <Loader2 className="w-4 h-4 animate-spin" />Loading...
+        </div>
+      ) : methods.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-2xl text-center">
+          <CreditCard className="w-8 h-8 text-gray-300 mb-2" />
+          <p className="text-gray-500 font-medium text-sm">No payment methods yet</p>
+          <p className="text-gray-400 text-xs mt-1">Add methods like "Cash", "GT", or "MTN MoMo"</p>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-gray-200 divide-y divide-gray-100">
+          {methods.map((method) => (
+            <div key={method.id} className="flex items-center justify-between px-5 py-4 gap-3">
+              {editingId === method.id ? (
+                <input
+                  autoFocus
+                  className="flex-1 h-9 px-3 border border-fuchsia-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEdit(method.id)
+                    if (e.key === "Escape") setEditingId(null)
+                  }}
+                />
+              ) : (
+                <span className={`flex-1 text-sm font-medium ${!method.isActive ? "text-gray-400 line-through" : "text-gray-900"}`}>
+                  {method.name}
+                </span>
+              )}
+
+              <div className="flex items-center gap-1 flex-shrink-0">
+                {editingId === method.id ? (
+                  <>
+                    <button
+                      onClick={() => saveEdit(method.id)}
+                      disabled={updateMutation.isPending}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-green-50 text-green-600"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => setEditingId(null)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={() => updateMutation.mutate({ id: method.id, isActive: !method.isActive })}
+                      disabled={updateMutation.isPending}
+                      className="flex items-center gap-1 text-xs text-gray-500 hover:text-fuchsia-600 transition-colors px-2 py-1"
+                    >
+                      {method.isActive
+                        ? <ToggleRight className="w-5 h-5 text-fuchsia-600" />
+                        : <ToggleLeft className="w-5 h-5 text-gray-400" />}
+                      <span>{method.isActive ? "Active" : "Hidden"}</span>
+                    </button>
+                    <button
+                      onClick={() => startEdit(method.id, method.name)}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500"
+                    >
+                      <PencilLine className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteMutation.mutate(method.id)}
+                      disabled={deleteMutation.isPending}
+                      className="h-8 w-8 flex items-center justify-center rounded-full hover:bg-red-50 text-red-500"
+                    >
+                      <CircleX className="w-4 h-4" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+type SectionId = "general" | "gallery" | "categories" | "availability" | "staff" | "payment-methods"
 
 const navItems: { id: SectionId; label: string; icon: React.ReactNode; description: string }[] = [
   {
@@ -385,6 +533,12 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; descripti
     label: "Staff",
     icon: <Users className="w-4 h-4" />,
     description: "Stylists & team members",
+  },
+  {
+    id: "payment-methods",
+    label: "Payment Methods",
+    icon: <CreditCard className="w-4 h-4" />,
+    description: "Manual payment options",
   },
 ]
 
@@ -503,6 +657,9 @@ export default function AppSettingsShell({
               <p className="text-sm text-gray-500 pb-4">Manage your stylists and assign them to bookings.</p>
               <StaffShell initialStaff={initialStaff} />
             </div>
+          )}
+          {activeSection === "payment-methods" && (
+            <PaymentMethodsSection />
           )}
         </div>
       </div>

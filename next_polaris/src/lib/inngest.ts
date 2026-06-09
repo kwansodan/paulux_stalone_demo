@@ -23,6 +23,7 @@ export type PaymentReceivedEventArgs = {
     bookingId: string;
     amountPaid: number;
     provider: string;
+    manualMethodName?: string;
   };
 };
 
