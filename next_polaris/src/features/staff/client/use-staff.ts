@@ -13,6 +13,23 @@ export function useGetStaff() {
   })
 }
 
+export function useUpdateStaffRole() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, customRoleId }: { id: string; customRoleId: string | null }) => {
+      const res = await api.patch(`/staff/${id}`, { customRoleId })
+      return res.data.data as StaffMember
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] })
+      toast.success("Role updated")
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Failed to update role")
+    },
+  })
+}
+
 export function useCreateStaff() {
   const queryClient = useQueryClient()
   return useMutation({

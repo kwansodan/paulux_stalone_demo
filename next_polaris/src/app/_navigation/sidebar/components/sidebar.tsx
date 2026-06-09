@@ -14,13 +14,18 @@ import { Button } from '@/components/ui/button'
 import { useSignout } from '@/features/auth/client/hooks/use-sign-out'
 import Link from 'next/link'
 
-const Sidebar = () => {
+const Sidebar = ({ userPermissions = ["*"] }: { userPermissions?: string[] }) => {
   const [isOpen, setIsOpen] = useState(true)
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false)
   const pathname = usePathname();
   const signOutMutation = useSignout()
 
-  const { activeIndex } = getActivePath(pathname, navItems.map((item) => item.href), [signInPath()])
+  const hasAll = userPermissions.includes("*")
+  const visibleItems = navItems.filter(
+    (item) => hasAll || !item.permission || userPermissions.includes(item.permission)
+  )
+
+  const { activeIndex } = getActivePath(pathname, visibleItems.map((item) => item.href), [signInPath()])
 
   return (
     <nav
@@ -68,7 +73,7 @@ const Sidebar = () => {
 
       {/* Navigation Items */}
       <div className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((navItem: NavItem, index: number) => (
+        {visibleItems.map((navItem: NavItem, index: number) => (
           <SidebarItem
             key={navItem.title}
             isOpen={isOpen}

@@ -11,9 +11,11 @@ export const dynamic = "force-dynamic"
 const WALKIN_EMAIL_DEFAULT = "walkin@polarisbeautylounge.com"
 
 export default async function AppSettingsPage() {
-  await requireRole([UserRole.ADMIN])
+  await requireRole([UserRole.ADMIN], "settings.view")
 
-  const [images, walkinSetting, categories, businessHours, blockedDates, staffRaw] = await Promise.all([
+  const db = prisma as any
+
+  const [images, walkinSetting, categories, businessHours, blockedDates, staffRaw, rolesRaw] = await Promise.all([
     prisma.styleImage.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.systemSetting.findUnique({ where: { key: "walkin_email" } }),
     prisma.serviceCategory.findMany({
@@ -22,7 +24,7 @@ export default async function AppSettingsPage() {
     }),
     businessHourRepository.getAll(),
     blockedDateRepository.getAll(),
-    prisma.user.findMany({
+    db.user.findMany({
       where: { role: UserRole.STAFF },
       select: {
         id: true,
@@ -30,9 +32,15 @@ export default async function AppSettingsPage() {
         email: true,
         phone: true,
         role: true,
+        customRoleId: true,
+        customRole: { select: { id: true, name: true } },
         createdAt: true,
       },
       orderBy: { username: "asc" },
+    }),
+    db.role.findMany({
+      include: { _count: { select: { users: true } } },
+      orderBy: { createdAt: "asc" },
     }),
   ])
 
@@ -48,9 +56,20 @@ export default async function AppSettingsPage() {
     updatedAt: c.updatedAt.toISOString(),
   }))
 
-  const serializedStaff: StaffMember[] = staffRaw.map((s) => ({
+  const serializedStaff: StaffMember[] = staffRaw.map((s: any) => ({
     ...s,
     createdAt: s.createdAt.toISOString(),
+  }))
+
+  const serializedRoles = rolesRaw.map((r: any) => ({
+    id: r.id,
+    name: r.name,
+    description: r.description,
+    permissions: r.permissions,
+    isSystem: r.isSystem,
+    userCount: r._count.users,
+    createdAt: r.createdAt.toISOString(),
+    updatedAt: r.updatedAt.toISOString(),
   }))
 
   return (
@@ -62,6 +81,7 @@ export default async function AppSettingsPage() {
         initialBusinessHours={businessHours}
         initialBlockedDates={blockedDates}
         initialStaff={serializedStaff}
+        initialRoles={serializedRoles}
       />
     </div>
   )

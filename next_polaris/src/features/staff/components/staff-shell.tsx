@@ -1,19 +1,27 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Scissors, Phone, Mail, Copy, Eye, EyeOff, Users } from "lucide-react"
+import { Plus, Scissors, Phone, Mail, Copy, Eye, EyeOff, Users, Shield } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
-import { useGetStaff, useCreateStaff } from "../client/use-staff"
+import { useGetStaff, useCreateStaff, useUpdateStaffRole } from "../client/use-staff"
 import { StaffMember } from "../types"
+import { RoleWithCount } from "@/features/roles/types"
 import { toast } from "sonner"
 
-export default function StaffShell({ initialStaff }: { initialStaff: StaffMember[] }) {
+export default function StaffShell({
+  initialStaff,
+  availableRoles = [],
+}: {
+  initialStaff: StaffMember[]
+  availableRoles?: RoleWithCount[]
+}) {
   const { data: staff = initialStaff } = useGetStaff()
   const createMutation = useCreateStaff()
+  const updateRoleMutation = useUpdateStaffRole()
 
   const [addOpen, setAddOpen] = useState(false)
   const [createdResult, setCreatedResult] = useState<{ staff: StaffMember; tempPassword: string } | null>(null)
@@ -124,6 +132,31 @@ export default function StaffShell({ initialStaff }: { initialStaff: StaffMember
                       <Phone className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                       <span>{member.phone}</span>
                     </div>
+                  )}
+                </div>
+
+                {/* Role assignment */}
+                <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
+                  <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                  {availableRoles.length === 0 ? (
+                    <span className="text-xs text-gray-400 italic">No roles created yet</span>
+                  ) : (
+                    <select
+                      className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
+                      value={member.customRoleId ?? ""}
+                      disabled={updateRoleMutation.isPending}
+                      onChange={(e) =>
+                        updateRoleMutation.mutate({
+                          id: member.id,
+                          customRoleId: e.target.value || null,
+                        })
+                      }
+                    >
+                      <option value="">— No role —</option>
+                      {availableRoles.map((r) => (
+                        <option key={r.id} value={r.id}>{r.name}</option>
+                      ))}
+                    </select>
                   )}
                 </div>
 

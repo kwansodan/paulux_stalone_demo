@@ -20,7 +20,7 @@ export default async function DashboardPage({
 }: {
   searchParams: Promise<{ from?: string; to?: string }>
 }) {
-  await requireRole([UserRole.ADMIN])
+  await requireRole([UserRole.ADMIN], "dashboard.view")
 
   const { from: fromParam, to: toParam } = await searchParams
 

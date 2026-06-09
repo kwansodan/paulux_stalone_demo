@@ -41,13 +41,15 @@ class AuthRepository {
   async validateSession(sessionToken: string) {
     const sessionId = hashToken(sessionToken);
 
-    const result = await prisma.session.findUnique({
-      where: {
-        id: sessionId
-      },
+    const result = await (prisma as any).session.findUnique({
+      where: { id: sessionId },
       include: {
-        user: true
-      }
+        user: {
+          include: {
+            customRole: { select: { id: true, name: true, permissions: true } },
+          },
+        },
+      },
     })
 
     if (!result) {

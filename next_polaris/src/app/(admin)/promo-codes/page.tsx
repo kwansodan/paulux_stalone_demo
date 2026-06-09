@@ -6,7 +6,7 @@ import { UserRole } from "@generated/prisma/client"
 export const dynamic = "force-dynamic"
 
 export default async function PromoCodesPage() {
-  await requireRole([UserRole.ADMIN])
+  await requireRole([UserRole.ADMIN], "promo_codes.view")
 
   const codes = await prisma.promoCode.findMany({
     orderBy: { createdAt: "desc" },

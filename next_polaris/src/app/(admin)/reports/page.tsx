@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic"
 
+import { requireRole } from "@/app/_auth/require-role"
 import BookingMetrics from "@/features/booking/components/booking-metrics"
 import BookingsTable from "@/features/booking/components/booking-table"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { BookingStatus } from "@generated/prisma/enums"
+import { UserRole } from "@generated/prisma/client"
 
 export default async function ReportsPage() {
+  await requireRole([UserRole.ADMIN], "reports.view")
   // initial fetch (no filters)
   const { bookings, count } = await bookingRepository.getAllBookings(
     {},

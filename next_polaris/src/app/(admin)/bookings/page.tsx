@@ -7,7 +7,7 @@ import { UserRole } from "@generated/prisma/enums"
 export const dynamic = 'force-dynamic'
 
 export default async function BookingsPage() {
-  const user = await requireRole([UserRole.ADMIN])
+  const user = await requireRole([UserRole.ADMIN], "bookings.view")
 
   const [services, products] = await Promise.all([
     serviceRepository.getAllServices({ isActive: true }),

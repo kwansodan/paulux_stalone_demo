@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 export const dynamic = 'force-dynamic'
 
 export default async function ProductsPage() {
-  await requireRole([UserRole.ADMIN])
+  await requireRole([UserRole.ADMIN], "products.view")
 
   const [products, categories] = await Promise.all([
     productRepository.getAllProducts({}),

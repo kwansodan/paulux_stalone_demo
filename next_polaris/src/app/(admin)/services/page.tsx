@@ -8,7 +8,7 @@ import React from 'react'
 export const dynamic = 'force-dynamic'
 
 export default async function ServicesPage() {
-  await requireRole([UserRole.ADMIN])
+  await requireRole([UserRole.ADMIN], "services.view")
 
   const [services, packages] = await Promise.all([
     serviceRepository.getAllServices({}),

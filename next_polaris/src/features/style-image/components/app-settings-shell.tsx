@@ -6,7 +6,7 @@ import axios from "axios"
 import {
   Plus, CircleX, PencilLine, GalleryHorizontal,
   ToggleLeft, ToggleRight, Loader2, Mail, Save,
-  Settings2, Layers, Timer, Users, CreditCard, Check, X,
+  Settings2, Layers, Timer, Users, CreditCard, Check, X, ShieldCheck,
 } from "lucide-react"
 import {
   useGetManualPaymentMethods,
@@ -33,8 +33,10 @@ import { SerializedServiceCategory } from "@/features/service/types"
 import BusinessHoursSection from "@/features/business-hour/componenents/business-hours-section"
 import BlockedDatesSection from "@/features/blocked-date/components/blocked-dates-section"
 import StaffShell from "@/features/staff/components/staff-shell"
+import RolesShell from "@/features/roles/components/roles-shell"
 import { BusinessHour, BlockedDate } from "@generated/prisma/client"
 import { StaffMember } from "@/features/staff/types"
+import { RoleWithCount } from "@/features/roles/types"
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Upload helper
@@ -501,7 +503,7 @@ function PaymentMethodsSection() {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-type SectionId = "general" | "gallery" | "categories" | "availability" | "staff" | "payment-methods"
+type SectionId = "general" | "gallery" | "categories" | "availability" | "staff" | "payment-methods" | "roles"
 
 const navItems: { id: SectionId; label: string; icon: React.ReactNode; description: string }[] = [
   {
@@ -535,6 +537,12 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; descripti
     description: "Stylists & team members",
   },
   {
+    id: "roles",
+    label: "Roles",
+    icon: <ShieldCheck className="w-4 h-4" />,
+    description: "Access control",
+  },
+  {
     id: "payment-methods",
     label: "Payment Methods",
     icon: <CreditCard className="w-4 h-4" />,
@@ -552,6 +560,7 @@ export default function AppSettingsShell({
   initialBusinessHours,
   initialBlockedDates,
   initialStaff,
+  initialRoles,
 }: {
   initialImages: StyleImage[]
   initialWalkinEmail: string
@@ -559,6 +568,7 @@ export default function AppSettingsShell({
   initialBusinessHours: BusinessHour[]
   initialBlockedDates: BlockedDate[]
   initialStaff: StaffMember[]
+  initialRoles: RoleWithCount[]
 }) {
   const [activeSection, setActiveSection] = useState<SectionId>("general")
 
@@ -655,7 +665,14 @@ export default function AppSettingsShell({
             <div className="space-y-1">
               <h2 className="text-lg font-semibold text-gray-900">Staff</h2>
               <p className="text-sm text-gray-500 pb-4">Manage your stylists and assign them to bookings.</p>
-              <StaffShell initialStaff={initialStaff} />
+              <StaffShell initialStaff={initialStaff} availableRoles={initialRoles} />
+            </div>
+          )}
+          {activeSection === "roles" && (
+            <div className="space-y-1">
+              <h2 className="text-lg font-semibold text-gray-900">Roles &amp; Permissions</h2>
+              <p className="text-sm text-gray-500 pb-4">Define what each role can access. Assign roles to staff from the Staff tab.</p>
+              <RolesShell initialRoles={initialRoles} />
             </div>
           )}
           {activeSection === "payment-methods" && (
