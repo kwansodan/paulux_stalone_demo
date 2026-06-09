@@ -54,11 +54,11 @@ export default async function DashboardPage({
         createdAt: { gte: fromDate, lt: toDateEnd },
       },
       select: {
+        id: true,
         amount: true,
         provider: true,
         rawPayload: true,
-        manualMethod: { select: { name: true } },
-      } as any,
+      },
     }),
     prisma.bookingService.findMany({
       where: {
@@ -96,12 +96,29 @@ export default async function DashboardPage({
   const completed = bookings.filter(b => b.status === "COMPLETED").length
   const activeCount = (count ?? bookings.length) - cancelled
 
+  // Fetch manual method names for the payments in the period
+  type MethodNameRow = { payment_id: string; method_name: string | null }
+  let manualMethodNames: MethodNameRow[] = []
+  try {
+    manualMethodNames = await prisma.$queryRaw<MethodNameRow[]>`
+      SELECT p.id AS payment_id, mpm.name AS method_name
+      FROM payments p
+      LEFT JOIN manual_payment_methods mpm ON p.manual_method_id = mpm.id
+      WHERE p.provider = 'MANUAL'
+        AND p.status = 'PAID'
+        AND p.created_at >= ${fromDate}
+        AND p.created_at < ${toDateEnd}
+    `
+  } catch { /* manual_payment_methods table may not exist in older deployments */ }
+
+  const manualNameById = new Map(manualMethodNames.map(r => [r.payment_id, r.method_name ?? "Cash"]))
+
   // Dynamic payment method breakdown
   const methodTotals = new Map<string, number>()
-  for (const p of receivedPayments as any[]) {
+  for (const p of receivedPayments) {
     const amount = Number(p.amount)
     if (p.provider === PaymentProvider.MANUAL) {
-      const name: string = p.manualMethod?.name ?? "Cash"
+      const name = manualNameById.get((p as any).id) ?? "Cash"
       methodTotals.set(name, (methodTotals.get(name) ?? 0) + amount)
     } else {
       const channel = (p.rawPayload as any)?.data?.channel ?? "mobile_money"
