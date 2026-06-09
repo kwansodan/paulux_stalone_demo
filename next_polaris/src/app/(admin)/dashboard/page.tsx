@@ -6,6 +6,7 @@ import MetricsGrid from "@/components/dashboard/dashboard-metric-grid"
 import ScheduleList from "@/components/dashboard/schedule-list"
 import RevenueBreakdown from "@/components/dashboard/revenue-breakdown"
 import DashboardExtendedStats from "@/components/dashboard/dashboard-extended-stats"
+import OutOfStockPanel from "@/components/dashboard/out-of-stock-panel"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
@@ -42,6 +43,8 @@ export default async function DashboardPage({
     promoCodes,
     partialCount,
     refundedCount,
+    outOfStockProducts,
+    allActiveProducts,
     preBookingResult,
   ] = await Promise.all([
     bookingRepository.getAllBookings(
@@ -78,6 +81,16 @@ export default async function DashboardPage({
     prisma.payment.count({
       where: { status: PaymentStatus.REFUNDED, createdAt: { gte: fromDate, lt: toDateEnd } },
     }),
+    // Out-of-stock and low-stock products (all-time, not date-filtered)
+    prisma.product.findMany({
+      where: { isActive: true, stockQuantity: { lte: 0 } } as any,
+      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true, category: { select: { name: true } } } as any,
+      orderBy: { name: "asc" },
+    }) as Promise<any[]>,
+    prisma.product.findMany({
+      where: { isActive: true, stockQuantity: { gt: 0 } } as any,
+      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true, category: { select: { name: true } } } as any,
+    }) as Promise<any[]>,
     // Payments received in the period for bookings scheduled AFTER the period (pre-payments)
     prisma.payment.aggregate({
       _sum: { amount: true },
@@ -156,6 +169,11 @@ export default async function DashboardPage({
 
   const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
 
+  // Products with stock > 0 but at or below threshold
+  const lowStockProducts = allActiveProducts.filter(
+    p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold
+  )
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full space-y-6">
 
@@ -180,6 +198,13 @@ export default async function DashboardPage({
         />
         <ScheduleList bookings={bookings} />
       </div>
+
+      {(outOfStockProducts.length > 0 || lowStockProducts.length > 0) && (
+        <OutOfStockPanel
+          outOfStock={outOfStockProducts}
+          lowStock={lowStockProducts}
+        />
+      )}
 
       <DashboardExtendedStats
         activePromos={activePromos}

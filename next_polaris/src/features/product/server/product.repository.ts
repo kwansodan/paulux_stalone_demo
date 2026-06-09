@@ -18,7 +18,7 @@ export class ProductRepository {
       createdAt: product.createdAt.toISOString(),
       updatedAt: product.updatedAt.toISOString(),
       category: product.category ?? null,
-    }))
+    })) as unknown as SerializedProduct[]
   }
 
   async findById(id: string) {
@@ -62,7 +62,8 @@ export class ProductRepository {
           isActive: upsertDTO.isActive,
           imageUrl: upsertDTO.imageUrl,
           categoryId: upsertDTO.categoryId ?? null,
-        },
+          lowStockThreshold: upsertDTO.lowStockThreshold ?? 5,
+        } as any,
         include: { category: true },
       })
     } else {
@@ -75,18 +76,20 @@ export class ProductRepository {
           isActive: upsertDTO.isActive,
           imageUrl: upsertDTO.imageUrl,
           categoryId: upsertDTO.categoryId ?? null,
-        },
+          lowStockThreshold: upsertDTO.lowStockThreshold ?? 5,
+        } as any,
         include: { category: true },
       })
     }
 
+    const u = upserted as any
     return {
-      ...upserted,
-      price: upserted.price.toString(),
-      createdAt: upserted.createdAt.toISOString(),
-      updatedAt: upserted.updatedAt.toISOString(),
-      category: upserted.category ?? null,
-    }
+      ...u,
+      price: u.price.toString(),
+      createdAt: u.createdAt.toISOString(),
+      updatedAt: u.updatedAt.toISOString(),
+      category: u.category ?? null,
+    } as unknown as SerializedProduct
   }
 }
 

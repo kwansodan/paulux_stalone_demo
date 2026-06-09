@@ -10,6 +10,12 @@ export const ProductInputSchema = z.object({
   isActive: z.boolean(),
   imageUrl: z.string().url().nullable().optional(),
   categoryId: z.string().uuid().nullable().optional(),
+  lowStockThreshold: z
+    .union([z.string(), z.number()])
+    .transform((val) => Number(val))
+    .refine((val) => !isNaN(val) && val >= 0 && Number.isInteger(val), "Threshold must be a whole number")
+    .optional()
+    .default(5),
 })
 
 export const ProductUpsertSchema = ProductInputSchema.extend({
@@ -21,6 +27,16 @@ export const ProductStatusSchema = z.object({
   isActive: z.boolean(),
 })
 
+export const StockMovementSchema = z.object({
+  type: z.enum(["IN", "OUT", "ADJUSTMENT"]),
+  quantity: z
+    .union([z.string(), z.number()])
+    .transform((val) => Number(val))
+    .refine((val) => !isNaN(val) && val > 0 && Number.isInteger(val), "Quantity must be a positive whole number"),
+  notes: z.string().max(500).optional(),
+})
+
+export type StockMovementInput = z.infer<typeof StockMovementSchema>
 export type ProductStatusInput = z.infer<typeof ProductStatusSchema>
 export type ProductFormInput = z.input<typeof ProductInputSchema>
 export type ProductInput = z.infer<typeof ProductInputSchema>

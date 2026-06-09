@@ -35,12 +35,23 @@ export type StylistAssignedEventArgs = {
   };
 };
 
+export type ProductLowStockEventArgs = {
+  data: {
+    productId: string;
+    productName: string;
+    currentStock: number;
+    threshold: number;
+    isOutOfStock: boolean;
+  };
+};
+
 type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
   "app/booking.booking-created": BookingCreatedEventArgs;
   "app/payment.payment-received": PaymentReceivedEventArgs;
   "app/booking.stylist-assigned": StylistAssignedEventArgs;
+  "app/product.low-stock": ProductLowStockEventArgs;
 };
 
 // Create a client to send and receive events
