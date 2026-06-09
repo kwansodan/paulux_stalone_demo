@@ -72,7 +72,8 @@ model User {
 
   sessions Session[]
   bookings         Booking[]
-  assignedBookings Booking[] @relation("BookingAssignedTo")
+  assignedBookings Booking[]        @relation("BookingAssignedTo")
+  assignedServices BookingService[] @relation("BookingServiceAssignedTo")
 
   @@map("users")
 }
@@ -283,7 +284,11 @@ model BookingService {
   durationAtBooking Int
   quantity          Int     @default(1)
 
+  assignedToId String? @db.Uuid
+  assignedTo   User?   @relation("BookingServiceAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+
   @@id([bookingId, serviceId])
+  @@index([assignedToId])
   @@map("booking_services")
 }
 

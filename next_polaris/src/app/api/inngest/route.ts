@@ -4,6 +4,7 @@ import { passwordResetEvent } from "@/features/auth/events/event-password-reset"
 import { bookingCancelledEvent } from "@/features/auth/events/event-booking-cancel";
 import { bookingCreatedEvent } from "@/features/booking/events/event-booking-created";
 import { paymentReceivedEvent } from "@/features/payment/events/event-payment-received";
+import { stylistAssignedEvent } from "@/features/booking/events/event-stylist-assigned";
 // import { NextRequest, NextResponse } from "next/server";
 
 // console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
@@ -19,6 +20,7 @@ export const { GET, POST, PUT } = serve({
     bookingCancelledEvent,
     bookingCreatedEvent,
     paymentReceivedEvent,
+    stylistAssignedEvent,
   ],
   // signingKey: process.env.INNGEST_SIGNING_KEY
 });

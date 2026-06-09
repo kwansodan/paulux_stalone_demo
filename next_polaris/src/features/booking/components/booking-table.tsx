@@ -63,27 +63,24 @@ export default function BookingsTable() {
       }
     },
     {
-      key: "stylist",
-      label: "Stylist",
-      render: (row: BookingWithServiceAndPayment) => (
-        <div className="flex items-center gap-1.5">
-          <Scissors className="w-3.5 h-3.5 text-fuchsia-400 flex-shrink-0" />
-          {row.assignedTo ? (
-            <span className="text-sm text-gray-800">{row.assignedTo.username}</span>
-          ) : (
-            <span className="text-sm text-gray-400 italic">Unassigned</span>
-          )}
-        </div>
-      )
-    },
-    {
       key: "services",
-      label: "Service(s)",
+      label: "Service(s) & Stylist",
       render: (row: BookingWithServiceAndPayment) => (
-        <div className="flex flex-col gap-0.5">
-          {row.services.map(s => (
-            <span key={s.serviceId} className="text-sm">{s.service.name}</span>
-          ))}
+        <div className="flex flex-col gap-1">
+          {row.services.map(bs => {
+            const stylist = (bs as any).assignedTo
+            return (
+              <div key={bs.serviceId} className="flex items-center gap-1.5">
+                <Scissors className="w-3 h-3 text-fuchsia-300 flex-shrink-0" />
+                <span className="text-sm text-gray-800">{bs.service.name}</span>
+                {stylist ? (
+                  <span className="text-xs text-fuchsia-600 font-medium">→ {stylist.username}</span>
+                ) : (
+                  <span className="text-xs text-gray-400 italic">unassigned</span>
+                )}
+              </div>
+            )
+          })}
         </div>
       )
     },

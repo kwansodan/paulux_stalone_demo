@@ -27,11 +27,20 @@ export type PaymentReceivedEventArgs = {
   };
 };
 
+export type StylistAssignedEventArgs = {
+  data: {
+    bookingId: string;
+    serviceId: string;
+    stylistId: string;
+  };
+};
+
 type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
   "app/booking.booking-created": BookingCreatedEventArgs;
   "app/payment.payment-received": PaymentReceivedEventArgs;
+  "app/booking.stylist-assigned": StylistAssignedEventArgs;
 };
 
 // Create a client to send and receive events

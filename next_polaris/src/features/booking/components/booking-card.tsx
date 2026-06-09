@@ -68,21 +68,25 @@ export default function BookingCard({ booking, user, services, onEdit, onCancel 
           <span className="px-0">|</span>
           <p className="font-medium text-sm text-gray-900">{booking.clientPhone}</p>
         </div>
-        <p className="text-sm text-gray-500">
-          {booking.services.map(s => s.service.name).join(", ")}
-        </p>
-        <p className="text-sm font-semibold text-fuchsia-700">
+        <div className="space-y-0.5 mt-0.5">
+          {booking.services.map(bs => {
+            const stylist = (bs as any).assignedTo
+            return (
+              <div key={bs.serviceId} className="flex items-center gap-1.5">
+                <Scissors className="w-3 h-3 text-fuchsia-300 flex-shrink-0" />
+                <span className="text-sm text-gray-600">{bs.service.name}</span>
+                {stylist ? (
+                  <span className="text-xs font-medium text-fuchsia-600 ml-1">→ {stylist.username}</span>
+                ) : (
+                  <span className="text-xs text-gray-400 italic ml-1">unassigned</span>
+                )}
+              </div>
+            )
+          })}
+        </div>
+        <p className="text-sm font-semibold text-fuchsia-700 mt-1">
           GHS {bookingTotal.toFixed(2)}
         </p>
-        {/* Stylist assignment display */}
-        <div className="flex items-center gap-1 mt-0.5">
-          <Scissors className="w-3 h-3 text-fuchsia-400" />
-          {booking.assignedTo ? (
-            <p className="text-xs text-fuchsia-600 font-medium">{booking.assignedTo.username}</p>
-          ) : (
-            <p className="text-xs text-gray-400 italic">Unassigned</p>
-          )}
-        </div>
         <p className="text-xs text-fuchsia-400">
           {booking.createdById ? "Created by admin" : "Created by client"}
         </p>

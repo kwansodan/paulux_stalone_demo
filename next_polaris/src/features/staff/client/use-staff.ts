@@ -49,3 +49,25 @@ export function useAssignStylist() {
     },
   })
 }
+
+type ServiceAssignment = { serviceId: string; stylistId: string | null }
+
+export function useAssignServiceStylists() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ bookingId, assignments }: { bookingId: string; assignments: ServiceAssignment[] }) => {
+      const res = await api.patch(`/bookings/${bookingId}/assign-services`, { assignments })
+      return res.data
+    },
+    onSuccess: (_data, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["reports-bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["booking", variables.bookingId] })
+      toast.success("Stylist assignments saved")
+    },
+    onError: (error: any) => {
+      const message = error?.response?.data?.message || "Failed to save stylist assignments"
+      toast.error(message)
+    },
+  })
+}
