@@ -5,6 +5,7 @@ import DashboardHeader from "@/components/dashboard/dashboard-header"
 import MetricsGrid from "@/components/dashboard/dashboard-metric-grid"
 import ScheduleList from "@/components/dashboard/schedule-list"
 import RevenueBreakdown from "@/components/dashboard/revenue-breakdown"
+import DashboardExtendedStats from "@/components/dashboard/dashboard-extended-stats"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
@@ -28,26 +29,37 @@ export default async function DashboardPage({
   const fromStr = fromParam && dateRegex.test(fromParam) ? fromParam : todayStr
   const toStr   = toParam   && dateRegex.test(toParam)   ? toParam   : todayStr
 
-  // Start of fromStr date, end of toStr date
   const fromDate = new Date(fromStr + "T00:00:00")
   const toDateEnd = new Date(toStr + "T00:00:00")
-  toDateEnd.setDate(toDateEnd.getDate() + 1) // exclusive upper bound
+  toDateEnd.setDate(toDateEnd.getDate() + 1)
 
-  const [{ bookings, count, revenue }, receivedPayments, bookedServices] = await Promise.all([
-    // Bookings where the service falls within the selected range
+  const now = new Date()
+
+  const [
+    { bookings, count, revenue },
+    receivedPayments,
+    bookedServices,
+    promoCodes,
+    partialCount,
+    refundedCount,
+    preBookingResult,
+  ] = await Promise.all([
     bookingRepository.getAllBookings(
       { bookingDate: { gte: fromStr, lte: toStr } },
       { includeCount: true, includeRevenue: true }
     ),
-    // Payments received within the selected range
     prisma.payment.findMany({
       where: {
         status: PaymentStatus.PAID,
         createdAt: { gte: fromDate, lt: toDateEnd },
       },
-      select: { amount: true, provider: true, rawPayload: true },
+      select: {
+        amount: true,
+        provider: true,
+        rawPayload: true,
+        manualMethod: { select: { name: true } },
+      } as any,
     }),
-    // New bookings created within the selected range (any future service date)
     prisma.bookingService.findMany({
       where: {
         booking: {
@@ -57,30 +69,48 @@ export default async function DashboardPage({
       },
       select: { priceAtBooking: true, quantity: true },
     }),
+    prisma.promoCode.findMany({
+      select: { isActive: true, expiresAt: true, maxUses: true, usedCount: true },
+    }),
+    prisma.payment.count({
+      where: { status: PaymentStatus.PARTIAL, createdAt: { gte: fromDate, lt: toDateEnd } },
+    }),
+    prisma.payment.count({
+      where: { status: PaymentStatus.REFUNDED, createdAt: { gte: fromDate, lt: toDateEnd } },
+    }),
+    // Payments received in the period for bookings scheduled AFTER the period (pre-payments)
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        status: PaymentStatus.PAID,
+        createdAt: { gte: fromDate, lt: toDateEnd },
+        booking: { bookingDate: { gt: toStr } },
+      },
+    }),
   ])
 
   // Metric counts
   const pending   = bookings.filter(b => b.status === "PENDING").length
   const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
   const cancelled = bookings.filter(b => b.status === "CANCELLED").length
+  const completed = bookings.filter(b => b.status === "COMPLETED").length
   const activeCount = (count ?? bookings.length) - cancelled
 
-  // Cash received breakdown by payment method
-  let cash = 0, momo = 0, card = 0
-
-  for (const p of receivedPayments) {
+  // Dynamic payment method breakdown
+  const methodTotals = new Map<string, number>()
+  for (const p of receivedPayments as any[]) {
     const amount = Number(p.amount)
     if (p.provider === PaymentProvider.MANUAL) {
-      cash += amount
+      const name: string = p.manualMethod?.name ?? "Cash"
+      methodTotals.set(name, (methodTotals.get(name) ?? 0) + amount)
     } else {
       const channel = (p.rawPayload as any)?.data?.channel ?? "mobile_money"
-      if (channel === "card") {
-        card += amount
-      } else {
-        momo += amount
-      }
+      const label = channel === "card" ? "Bank Card" : "Mobile Money"
+      methodTotals.set(label, (methodTotals.get(label) ?? 0) + amount)
     }
   }
+  const methodBreakdown = Array.from(methodTotals.entries()).map(([label, amount]) => ({ label, amount }))
+  const netReceived = methodBreakdown.reduce((s, m) => s + m.amount, 0)
 
   // Discounts applied on bookings in the range
   const discounts = bookings.reduce(
@@ -93,6 +123,21 @@ export default async function DashboardPage({
     (sum, s) => sum + Number(s.priceAtBooking) * (s.quantity ?? 1),
     0
   )
+
+  // Promo code stats (all-time)
+  const activePromos = promoCodes.filter(p =>
+    p.isActive &&
+    (p.expiresAt === null || p.expiresAt > now) &&
+    (p.maxUses === null || p.usedCount < p.maxUses)
+  ).length
+  const expiredPromos = promoCodes.filter(p =>
+    !p.isActive ||
+    (p.expiresAt !== null && p.expiresAt <= now) ||
+    (p.maxUses !== null && p.usedCount >= p.maxUses)
+  ).length
+  const totalPromoUses = promoCodes.reduce((sum, p) => sum + p.usedCount, 0)
+
+  const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
 
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full space-y-6">
@@ -109,14 +154,24 @@ export default async function DashboardPage({
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueBreakdown
-          cash={cash}
-          momo={momo}
-          card={card}
+          methodBreakdown={methodBreakdown}
           discounts={discounts}
           bookedTodayValue={bookedTodayValue}
+          netReceived={netReceived}
+          revenue={revenue ?? 0}
+          preBookingReceived={preBookingReceived}
         />
         <ScheduleList bookings={bookings} />
       </div>
+
+      <DashboardExtendedStats
+        activePromos={activePromos}
+        expiredPromos={expiredPromos}
+        totalPromoUses={totalPromoUses}
+        partialPayments={partialCount}
+        refundedPayments={refundedCount}
+        completedBookings={completed}
+      />
 
     </div>
   )
