@@ -107,11 +107,11 @@ export default async function DashboardPage({
     manualMethodNames = await prisma.$queryRaw<MethodNameRow[]>`
       SELECT p.id AS payment_id, mpm.name AS method_name
       FROM payments p
-      LEFT JOIN manual_payment_methods mpm ON p.manual_method_id = mpm.id
+      LEFT JOIN manual_payment_methods mpm ON p."manualMethodId" = mpm.id
       WHERE p.provider = 'MANUAL'
         AND p.status = 'PAID'
-        AND p.created_at >= ${fromDate}
-        AND p.created_at < ${toDateEnd}
+        AND p."createdAt" >= ${fromDate}
+        AND p."createdAt" < ${toDateEnd}
     `
   } catch { /* manual_payment_methods table may not exist in older deployments */ }
 
