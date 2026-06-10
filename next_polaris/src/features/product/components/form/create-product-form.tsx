@@ -33,6 +33,8 @@ export default function CreateProductForm({
       isActive: true,
       imageUrl: null,
       categoryId: null,
+      trackStock: false,
+      lowStockThreshold: 5,
     },
   })
 
@@ -161,6 +163,46 @@ export default function CreateProductForm({
                   onUnchecked={() => field.onChange(false)}
                 />
                 <Label className="text-sm font-normal text-foreground">Active</Label>
+              </div>
+            )}
+          />
+
+          {/* Stock tracking */}
+          <FormField
+            control={form.control}
+            name="trackStock"
+            render={({ field }) => (
+              <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 space-y-2">
+                <div className="flex gap-2.5 items-center">
+                  <ToggleSwitch
+                    checked={field.value ?? false}
+                    onChecked={() => field.onChange(true)}
+                    onUnchecked={() => field.onChange(false)}
+                  />
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Track inventory</Label>
+                    <p className="text-xs text-gray-400">Enable stock quantity tracking and low-stock alerts</p>
+                  </div>
+                </div>
+
+                {field.value && (
+                  <FormField
+                    control={form.control}
+                    name="lowStockThreshold"
+                    render={({ field: tf }) => (
+                      <div className="space-y-1 pt-1">
+                        <Label className="text-xs font-normal text-gray-600">Low stock alert threshold</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          className="h-9 bg-white shadow-none border-[#E2E8F0] rounded-lg text-sm"
+                          {...tf}
+                        />
+                        <p className="text-xs text-gray-400">Alert when stock falls to or below this number</p>
+                      </div>
+                    )}
+                  />
+                )}
               </div>
             )}
           />

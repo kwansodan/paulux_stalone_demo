@@ -16,6 +16,7 @@ export const ProductInputSchema = z.object({
     .refine((val) => !isNaN(val) && val >= 0 && Number.isInteger(val), "Threshold must be a whole number")
     .optional()
     .default(5),
+  trackStock: z.boolean().default(false),
 })
 
 export const ProductUpsertSchema = ProductInputSchema.extend({

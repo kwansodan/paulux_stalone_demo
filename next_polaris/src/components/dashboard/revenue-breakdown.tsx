@@ -5,7 +5,6 @@ type MethodRow = { label: string; amount: number }
 type Props = {
   methodBreakdown: MethodRow[]
   discounts: number
-  bookedTodayValue: number
   netReceived: number
   revenue: number
   preBookingReceived: number
@@ -54,7 +53,6 @@ function Row({
 export default function RevenueBreakdown({
   methodBreakdown,
   discounts,
-  bookedTodayValue,
   netReceived,
   revenue,
   preBookingReceived,
@@ -98,19 +96,6 @@ export default function RevenueBreakdown({
             GHS {netReceived.toFixed(2)}
           </span>
         </div>
-      </div>
-
-      {/* New bookings created in the period */}
-      <div className="border-t pt-5">
-        <h2 className="font-semibold text-base sm:text-lg mb-1">New Bookings</h2>
-        <p className="text-xs text-gray-400 mb-3">Value of bookings created in the selected period (any service date)</p>
-
-        <Row
-          icon={<CalendarPlus className="w-4 h-4" />}
-          label="New bookings value"
-          amount={bookedTodayValue}
-          colour="bg-violet-50 text-violet-600"
-        />
       </div>
 
       {/* Reconciliation */}

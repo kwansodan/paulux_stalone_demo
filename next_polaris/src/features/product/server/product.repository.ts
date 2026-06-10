@@ -63,6 +63,7 @@ export class ProductRepository {
           imageUrl: upsertDTO.imageUrl,
           categoryId: upsertDTO.categoryId ?? null,
           lowStockThreshold: upsertDTO.lowStockThreshold ?? 5,
+          trackStock: upsertDTO.trackStock ?? false,
         } as any,
         include: { category: true },
       })
@@ -77,6 +78,7 @@ export class ProductRepository {
           imageUrl: upsertDTO.imageUrl,
           categoryId: upsertDTO.categoryId ?? null,
           lowStockThreshold: upsertDTO.lowStockThreshold ?? 5,
+          trackStock: upsertDTO.trackStock ?? false,
         } as any,
         include: { category: true },
       })
@@ -90,6 +92,13 @@ export class ProductRepository {
       updatedAt: u.updatedAt.toISOString(),
       category: u.category ?? null,
     } as unknown as SerializedProduct
+  }
+
+  async batchUpdateStockTracking(ids: string[], trackStock: boolean) {
+    return (prisma as any).product.updateMany({
+      where: { id: { in: ids } },
+      data: { trackStock },
+    })
   }
 }
 

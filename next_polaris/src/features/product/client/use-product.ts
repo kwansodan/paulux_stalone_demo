@@ -70,6 +70,25 @@ export function useEditProduct() {
   })
 }
 
+export function useUpdateStockTracking() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ ids, trackStock }: { ids: string[]; trackStock: boolean }) =>
+      api.patch("/products/stock-tracking", { ids, trackStock }),
+    onSuccess: (_, { trackStock }) => {
+      queryClient.invalidateQueries({ queryKey: ["products"] })
+      toast.success(
+        trackStock
+          ? "Stock tracking enabled for selected products"
+          : "Stock tracking disabled for selected products"
+      )
+    },
+    onError: () => {
+      toast.error("Failed to update stock tracking")
+    },
+  })
+}
+
 export function useUpdateProductStatus() {
   const queryClient = useQueryClient()
   return useMutation({

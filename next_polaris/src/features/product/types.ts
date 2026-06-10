@@ -15,6 +15,7 @@ export type SerializedProduct = Omit<Product, 'price' | 'createdAt' | 'updatedAt
   // Added in schema update — present at runtime after db push
   stockQuantity: number
   lowStockThreshold: number
+  trackStock: boolean
 }
 
 export type StockMovement = {

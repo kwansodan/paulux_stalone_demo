@@ -2,11 +2,11 @@ export const dynamic = "force-dynamic"
 
 import { requireRole } from "@/app/_auth/require-role"
 import DashboardHeader from "@/components/dashboard/dashboard-header"
-import MetricsGrid from "@/components/dashboard/dashboard-metric-grid"
+import DashboardKpis from "@/components/dashboard/dashboard-kpis"
+import StockAlertBar from "@/components/dashboard/stock-alert-bar"
 import ScheduleList from "@/components/dashboard/schedule-list"
 import RevenueBreakdown from "@/components/dashboard/revenue-breakdown"
-import DashboardExtendedStats from "@/components/dashboard/dashboard-extended-stats"
-import OutOfStockPanel from "@/components/dashboard/out-of-stock-panel"
+import BookingStatusPanel from "@/components/dashboard/booking-status-panel"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
@@ -34,13 +34,9 @@ export default async function DashboardPage({
   const toDateEnd = new Date(toStr + "T00:00:00")
   toDateEnd.setDate(toDateEnd.getDate() + 1)
 
-  const now = new Date()
-
   const [
     { bookings, count, revenue },
     receivedPayments,
-    bookedServices,
-    promoCodes,
     partialCount,
     refundedCount,
     outOfStockProducts,
@@ -63,35 +59,21 @@ export default async function DashboardPage({
         rawPayload: true,
       },
     }),
-    prisma.bookingService.findMany({
-      where: {
-        booking: {
-          createdAt: { gte: fromDate, lt: toDateEnd },
-          status: { not: "CANCELLED" },
-        },
-      },
-      select: { priceAtBooking: true, quantity: true },
-    }),
-    prisma.promoCode.findMany({
-      select: { isActive: true, expiresAt: true, maxUses: true, usedCount: true },
-    }),
     prisma.payment.count({
       where: { status: PaymentStatus.PARTIAL, createdAt: { gte: fromDate, lt: toDateEnd } },
     }),
     prisma.payment.count({
       where: { status: PaymentStatus.REFUNDED, createdAt: { gte: fromDate, lt: toDateEnd } },
     }),
-    // Out-of-stock and low-stock products (all-time, not date-filtered)
     prisma.product.findMany({
-      where: { isActive: true, stockQuantity: { lte: 0 } } as any,
-      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true, category: { select: { name: true } } } as any,
+      where: { isActive: true, trackStock: true, stockQuantity: { lte: 0 } } as any,
+      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true } as any,
       orderBy: { name: "asc" },
     }) as Promise<any[]>,
     prisma.product.findMany({
-      where: { isActive: true, stockQuantity: { gt: 0 } } as any,
-      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true, category: { select: { name: true } } } as any,
+      where: { isActive: true, trackStock: true, stockQuantity: { gt: 0 } } as any,
+      select: { id: true, name: true, stockQuantity: true, lowStockThreshold: true } as any,
     }) as Promise<any[]>,
-    // Payments received in the period for bookings scheduled AFTER the period (pre-payments)
     prisma.payment.aggregate({
       _sum: { amount: true },
       where: {
@@ -102,14 +84,13 @@ export default async function DashboardPage({
     }),
   ])
 
-  // Metric counts
+  // Booking status counts
   const pending   = bookings.filter(b => b.status === "PENDING").length
   const confirmed = bookings.filter(b => b.status === "CONFIRMED").length
   const cancelled = bookings.filter(b => b.status === "CANCELLED").length
   const completed = bookings.filter(b => b.status === "COMPLETED").length
-  const activeCount = (count ?? bookings.length) - cancelled
 
-  // Fetch manual method names for the payments in the period
+  // Payment method breakdown
   type MethodNameRow = { payment_id: string; method_name: string | null }
   let manualMethodNames: MethodNameRow[] = []
   try {
@@ -126,7 +107,6 @@ export default async function DashboardPage({
 
   const manualNameById = new Map(manualMethodNames.map(r => [r.payment_id, r.method_name ?? "Cash"]))
 
-  // Dynamic payment method breakdown
   const methodTotals = new Map<string, number>()
   for (const p of receivedPayments) {
     const amount = Number(p.amount)
@@ -142,77 +122,59 @@ export default async function DashboardPage({
   const methodBreakdown = Array.from(methodTotals.entries()).map(([label, amount]) => ({ label, amount }))
   const netReceived = methodBreakdown.reduce((s, m) => s + m.amount, 0)
 
-  // Discounts applied on bookings in the range
   const discounts = bookings.reduce(
     (sum, b) => sum + (b.discountAmount ? Number(b.discountAmount) : 0),
     0
   )
 
-  // Value of new bookings created within the range
-  const bookedTodayValue = bookedServices.reduce(
-    (sum, s) => sum + Number(s.priceAtBooking) * (s.quantity ?? 1),
-    0
-  )
-
-  // Promo code stats (all-time)
-  const activePromos = promoCodes.filter(p =>
-    p.isActive &&
-    (p.expiresAt === null || p.expiresAt > now) &&
-    (p.maxUses === null || p.usedCount < p.maxUses)
-  ).length
-  const expiredPromos = promoCodes.filter(p =>
-    !p.isActive ||
-    (p.expiresAt !== null && p.expiresAt <= now) ||
-    (p.maxUses !== null && p.usedCount >= p.maxUses)
-  ).length
-  const totalPromoUses = promoCodes.reduce((sum, p) => sum + p.usedCount, 0)
-
   const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
+  const periodRevenue = revenue ?? 0
+  const cashForPeriod = netReceived - preBookingReceived
+  const outstanding = Math.max(0, periodRevenue - cashForPeriod)
 
-  // Products with stock > 0 but at or below threshold
   const lowStockProducts = allActiveProducts.filter(
     p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold
   )
 
   return (
-    <div className="p-6 bg-gray-50 min-h-screen w-full space-y-6">
+    <div className="p-4 sm:p-6 bg-gray-50 min-h-screen w-full space-y-5">
 
       <DashboardHeader />
 
-      <MetricsGrid
-        todaysCount={activeCount}
-        pending={pending}
-        confirmed={confirmed}
-        cancelled={cancelled}
-        revenue={revenue ?? 0}
+      <StockAlertBar
+        outOfStockCount={outOfStockProducts.length}
+        lowStockCount={lowStockProducts.length}
       />
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <RevenueBreakdown
-          methodBreakdown={methodBreakdown}
-          discounts={discounts}
-          bookedTodayValue={bookedTodayValue}
-          netReceived={netReceived}
-          revenue={revenue ?? 0}
-          preBookingReceived={preBookingReceived}
-        />
-        <ScheduleList bookings={bookings} />
+      <DashboardKpis
+        bookingsCount={count ?? bookings.length}
+        revenue={periodRevenue}
+        netCollected={netReceived}
+        outstanding={outstanding}
+      />
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
+        <div className="lg:col-span-3">
+          <ScheduleList bookings={bookings} />
+        </div>
+        <div className="lg:col-span-2">
+          <BookingStatusPanel
+            pending={pending}
+            confirmed={confirmed}
+            completed={completed}
+            cancelled={cancelled}
+            partialPayments={partialCount}
+            refundedPayments={refundedCount}
+          />
+        </div>
       </div>
 
-      {(outOfStockProducts.length > 0 || lowStockProducts.length > 0) && (
-        <OutOfStockPanel
-          outOfStock={outOfStockProducts}
-          lowStock={lowStockProducts}
-        />
-      )}
-
-      <DashboardExtendedStats
-        activePromos={activePromos}
-        expiredPromos={expiredPromos}
-        totalPromoUses={totalPromoUses}
-        partialPayments={partialCount}
-        refundedPayments={refundedCount}
-        completedBookings={completed}
+      <RevenueBreakdown
+        methodBreakdown={methodBreakdown}
+        discounts={discounts}
+        netReceived={netReceived}
+        revenue={periodRevenue}
+        preBookingReceived={preBookingReceived}
       />
 
     </div>

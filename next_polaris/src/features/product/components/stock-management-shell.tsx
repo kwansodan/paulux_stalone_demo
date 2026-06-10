@@ -29,7 +29,8 @@ export default function StockManagementShell({ initialProducts }: Props) {
   const [movementTarget, setMovementTarget] = useState<SerializedProduct | null>(null)
   const [historyTarget, setHistoryTarget] = useState<SerializedProduct | null>(null)
 
-  const sorted = [...products].sort((a, b) => {
+  const trackedProducts = products.filter(p => (p as any).trackStock)
+  const sorted = [...trackedProducts].sort((a, b) => {
     const order = { out: 0, low: 1, ok: 2 }
     return order[stockStatus(a)] - order[stockStatus(b)]
   })
@@ -37,7 +38,7 @@ export default function StockManagementShell({ initialProducts }: Props) {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-500">
-        Track inventory levels for each product. Receive SMS and email alerts when stock is low or out.
+        Track inventory levels for products with stock tracking enabled. To add products here, enable &quot;Track inventory&quot; on the product in the Products tab.
       </p>
 
       <div className="bg-white rounded-xl border overflow-hidden">
@@ -110,8 +111,9 @@ export default function StockManagementShell({ initialProducts }: Props) {
             })}
             {sorted.length === 0 && (
               <tr>
-                <td colSpan={6} className="px-4 py-10 text-center text-gray-400">
-                  No products found.
+                <td colSpan={6} className="px-4 py-10 text-center">
+                  <p className="text-gray-500 font-medium text-sm">No tracked products</p>
+                  <p className="text-gray-400 text-xs mt-1">Enable &quot;Track inventory&quot; on a product to manage its stock here.</p>
                 </td>
               </tr>
             )}
