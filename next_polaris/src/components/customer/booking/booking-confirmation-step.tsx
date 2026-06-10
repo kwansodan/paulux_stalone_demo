@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Scissors, Calendar, Clock, Loader2, Tag, X, CheckCircle2 } from "lucide-react"
+import { Scissors, Calendar, Clock, Loader2, Tag, X, CheckCircle2, Gift } from "lucide-react"
 import { useState } from "react"
 import { BookingFormData } from "./customer-booking-form"
 import { formatDate, formatTime } from "@/features/booking/utils/helpers"
@@ -37,6 +37,16 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
     discountValue: number
   } | null>(null)
 
+  // Gift card state
+  const [giftCardInput, setGiftCardInput] = useState("")
+  const [giftCardLoading, setGiftCardLoading] = useState(false)
+  const [giftCardError, setGiftCardError] = useState<string | null>(null)
+  const [appliedGiftCard, setAppliedGiftCard] = useState<{
+    giftCardId: string
+    code: string
+    balance: number
+  } | null>(null)
+
   // Package price overrides individual service sum
   const baseTotal = pkg
     ? Number(pkg.price)
@@ -44,11 +54,16 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const discountAmount = appliedPromo?.discountAmount ?? 0
   const totalPrice = Math.max(0, baseTotal - discountAmount)
 
+  const giftCardAmount = appliedGiftCard ? Math.min(appliedGiftCard.balance, totalPrice) : 0
+  const amountDueAfterGiftCard = Math.max(0, totalPrice - giftCardAmount)
+
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
   const depositPayment = pkg
     ? Number(pkg.minDepositFixed)
     : (formData.minDepositFixed ?? services.reduce((sum, s) => sum + Number(s.minDepositFixed), 0))
-  const hasDepositRequirement = depositPayment > 0 && depositPayment < totalPrice
+  // A gift card settles against the full price, so once one is applied we no longer
+  // offer the "pay deposit" option — it'd be ambiguous which amount the gift card covers.
+  const hasDepositRequirement = depositPayment > 0 && depositPayment < totalPrice && !appliedGiftCard
 
   const [paymentOption, setPaymentOption] = useState<"deposit" | "full">(
     hasDepositRequirement ? "deposit" : "full"
@@ -89,6 +104,40 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
     setPromoError(null)
   }
 
+  const handleApplyGiftCard = async () => {
+    if (!giftCardInput.trim()) return
+    setGiftCardLoading(true)
+    setGiftCardError(null)
+    try {
+      const res = await fetch("/api/gift-cards/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: giftCardInput.trim() }),
+      })
+      const data = await res.json()
+      if (data.valid) {
+        setAppliedGiftCard({
+          giftCardId: data.giftCardId,
+          code: data.code,
+          balance: data.balance,
+        })
+        setGiftCardInput("")
+        setPaymentOption("full")
+      } else {
+        setGiftCardError(data.message || "Invalid gift card code")
+      }
+    } catch {
+      setGiftCardError("Failed to validate gift card. Please try again.")
+    } finally {
+      setGiftCardLoading(false)
+    }
+  }
+
+  const handleRemoveGiftCard = () => {
+    setAppliedGiftCard(null)
+    setGiftCardError(null)
+  }
+
   const createBookingMutation = useCreateBooking()
 
   const handleProceedToPayment = async () => {
@@ -121,16 +170,44 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       const booking = await createBookingMutation.mutateAsync(payload)
       console.log("Booking created:", booking.id)
 
-      // Step 2: Initialize unified payment
+      // Step 2: Redeem any applied gift card against this booking
+      let amountDue = amount
+      if (appliedGiftCard) {
+        const redeemResponse = await fetch('/api/gift-cards/redeem', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            code: appliedGiftCard.code,
+            bookingId: booking.id,
+            amount: giftCardAmount,
+          }),
+        })
+
+        if (!redeemResponse.ok) {
+          const errorData = await redeemResponse.json()
+          throw new Error(errorData.message || 'Failed to redeem gift card')
+        }
+
+        const redeemData = await redeemResponse.json()
+        amountDue = Math.max(0, amount - redeemData.data.amountApplied)
+      }
+
       // Include a flag so the summary page knows we came directly from payment
       const callbackUrl = `${window.location.origin}/customer/booking/summary/${booking.id}?from=payment`
 
+      // Step 3: If the gift card covered the full amount, no further payment is needed
+      if (amountDue <= 0) {
+        router.push(`/customer/booking/summary/${booking.id}`)
+        return
+      }
+
+      // Step 4: Initialize unified payment for the remaining balance
       const paymentResponse = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: formData.email,
-          amount: amount,
+          amount: amountDue,
           bookingReference: booking.bookingReference,
           bookingId: booking.id,
           transactionType: 'initial',
@@ -147,10 +224,10 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
       const paymentData = await paymentResponse.json()
       console.log("Payment initialized:", paymentData.invoiceNumber)
 
-      // Note: The unified API creates the payment record (via generic invoicing and callbacks), 
+      // Note: The unified API creates the payment record (via generic invoicing and callbacks),
       // but if we need a direct redirect, the unified API returns paymentData.paymentUrl
 
-      // Step 3: Redirect to payment page
+      // Step 5: Redirect to payment page
       if (paymentData.paymentUrl) {
         window.location.href = paymentData.paymentUrl
       } else {
@@ -285,6 +362,54 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           )}
         </div>
 
+        {/* Gift Card */}
+        <div className="space-y-2">
+          {!appliedGiftCard ? (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <Gift className="w-4 h-4 text-fuchsia-500" />
+                Gift Card
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter gift card code"
+                  value={giftCardInput}
+                  onChange={(e) => { setGiftCardInput(e.target.value.toUpperCase()); setGiftCardError(null) }}
+                  onKeyDown={(e) => e.key === "Enter" && handleApplyGiftCard()}
+                  className="rounded-xl border-gray-200 uppercase placeholder:normal-case"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleApplyGiftCard}
+                  disabled={giftCardLoading || !giftCardInput.trim()}
+                  className="rounded-xl border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-50 px-5 flex-shrink-0"
+                >
+                  {giftCardLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Apply"}
+                </Button>
+              </div>
+              {giftCardError && (
+                <p className="text-xs text-red-500 flex items-center gap-1">{giftCardError}</p>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold text-green-700">{appliedGiftCard.code}</p>
+                  <p className="text-xs text-green-600">
+                    GHS {giftCardAmount.toFixed(2)} applied · Balance GHS {appliedGiftCard.balance.toFixed(2)}
+                  </p>
+                </div>
+              </div>
+              <button onClick={handleRemoveGiftCard} className="p-1 text-gray-400 hover:text-red-500 transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+          )}
+        </div>
+
         {/* Payment Options */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">Choose payment option</h3>
@@ -293,21 +418,34 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
             <div className="flex items-center justify-between mb-1">
               <span className="text-sm font-medium">Total Service Cost</span>
             </div>
-            {appliedPromo && (
+            {(appliedPromo || appliedGiftCard) && (
               <div className="space-y-0.5">
-                <div className="flex items-center justify-between text-sm text-gray-500">
-                  <span>Subtotal</span>
-                  <span>GHS {baseTotal.toFixed(2)}</span>
-                </div>
-                <div className="flex items-center justify-between text-sm text-green-600">
-                  <span>Discount ({appliedPromo.code})</span>
-                  <span>- GHS {appliedPromo.discountAmount.toFixed(2)}</span>
-                </div>
+                {appliedPromo && (
+                  <>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <span>Subtotal</span>
+                      <span>GHS {baseTotal.toFixed(2)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm text-green-600">
+                      <span>Discount ({appliedPromo.code})</span>
+                      <span>- GHS {appliedPromo.discountAmount.toFixed(2)}</span>
+                    </div>
+                  </>
+                )}
+                {appliedGiftCard && (
+                  <div className="flex items-center justify-between text-sm text-green-600">
+                    <span>Gift Card ({appliedGiftCard.code})</span>
+                    <span>- GHS {giftCardAmount.toFixed(2)}</span>
+                  </div>
+                )}
               </div>
             )}
             <span className="text-xl font-bold text-fuchsia-600">
-              GHS {totalPrice.toFixed(2)}
+              GHS {(appliedGiftCard ? amountDueAfterGiftCard : totalPrice).toFixed(2)}
             </span>
+            {appliedGiftCard && amountDueAfterGiftCard <= 0 && (
+              <p className="text-xs text-green-600">Fully covered by your gift card — no payment needed!</p>
+            )}
           </div>
 
           {/* Pay Deposit */}
@@ -387,7 +525,7 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
                   Complete payment now and skip checkout at the salon
                 </p>
                 <span className="text-xl font-bold text-fuchsia-600">
-                  GHS {totalPrice.toFixed(2)}
+                  GHS {amountDueAfterGiftCard.toFixed(2)}
                 </span>
               </div>
             </div>
@@ -555,7 +693,11 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
           disabled={!termsAccepted || createBookingMutation.isPending || isProcessing}
           className="flex-1 h-14 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-full text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {createBookingMutation.isPending || isProcessing ? "Processing..." : "Proceed to payment"}
+          {createBookingMutation.isPending || isProcessing
+            ? "Processing..."
+            : amountDueAfterGiftCard <= 0
+              ? "Confirm booking"
+              : "Proceed to payment"}
         </Button>
       </div>
     </div>

@@ -54,7 +54,13 @@ export class BookingRepository {
           bookingTime: payload.bookingTime,
           status: payload.status,
           paymentStatus: payload.paymentStatus ?? PaymentStatus.PENDING,
-          createdById: payload.createdById ?? null
+          createdById: payload.createdById ?? null,
+          // Only touch promo code fields if a promo was applied during this edit —
+          // avoids clobbering an existing promo when the edit form doesn't surface one.
+          ...(payload.promoCodeId !== undefined && {
+            promoCodeId: payload.promoCodeId,
+            discountAmount: payload.discountAmount ?? null,
+          }),
         }
       })
 

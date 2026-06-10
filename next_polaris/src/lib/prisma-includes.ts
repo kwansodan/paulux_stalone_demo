@@ -20,6 +20,13 @@ const _base = {
       phone: true,
     },
   },
+  promoCode: {
+    select: {
+      code: true,
+      discountType: true,
+      discountValue: true,
+    },
+  },
 } satisfies Prisma.BookingInclude
 
 /**

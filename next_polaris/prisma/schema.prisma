@@ -98,6 +98,7 @@ model User {
   assignedBookings Booking[]             @relation("BookingAssignedTo")
   assignedServices BookingService[]      @relation("BookingServiceAssignedTo")
   stockMovements   ProductStockMovement[]
+  giftCardRedemptions GiftCardRedemption[]
 
   @@map("users")
 }
@@ -183,6 +184,26 @@ enum DiscountType {
 enum BookingType {
   SCHEDULED
   WALKIN
+}
+
+enum GiftCardStatus {
+  PENDING_PAYMENT
+  ACTIVE
+  PARTIALLY_REDEEMED
+  REDEEMED
+  EXPIRED
+  CANCELLED
+}
+
+enum GiftCardDeliveryMethod {
+  SMS
+  EMAIL
+  BOTH
+}
+
+enum GiftCardItemType {
+  SERVICE
+  PRODUCT
 }
 
 model PromoCode {
@@ -289,6 +310,7 @@ model Booking {
   payments          Payment[]          @relation("BookingPayments")
   invoices          Invoice[]          @relation("BookingInvoices")
   paymentAuditLogs  PaymentAuditLog[]  @relation("BookingPaymentAuditLogs")
+  giftCardRedemptions GiftCardRedemption[] @relation("BookingGiftCardRedemptions")
 
   @@index([createdById])
   @@index([assignedToId])
@@ -491,4 +513,84 @@ model SystemSetting {
   updatedAt DateTime @updatedAt
 
   @@map("system_settings")
+}
+
+model GiftCard {
+  id   String @id @default(uuid()) @db.Uuid
+  code String @unique // redemption code shown to recipient, e.g. GFT-XXXXXXXX
+
+  // Sender (purchaser) details
+  senderName  String
+  senderEmail String
+  senderPhone String
+
+  // Recipient details
+  recipientName  String
+  recipientEmail String?
+  recipientPhone String?
+  message        String? // personal message from sender to recipient
+
+  deliveryMethod GiftCardDeliveryMethod @default(EMAIL)
+  deliveredAt    DateTime?
+
+  totalAmount Decimal           @db.Decimal(10, 2)
+  balance     Decimal           @db.Decimal(10, 2)
+  currency    SupportedCurrency @default(GHS)
+
+  status    GiftCardStatus @default(PENDING_PAYMENT)
+  expiresAt DateTime?
+
+  // Purchase payment
+  paymentStatus   PaymentStatus    @default(PENDING)
+  paymentProvider PaymentProvider?
+  paymentRef      String?
+
+  items       GiftCardItem[]
+  redemptions GiftCardRedemption[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([paymentRef])
+  @@map("gift_cards")
+}
+
+model GiftCardItem {
+  id         String   @id @default(uuid()) @db.Uuid
+  giftCardId String   @db.Uuid
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  itemType GiftCardItemType
+  // Snapshot references — not FK relations, so deleting a service/product later
+  // doesn't affect historical gift cards.
+  serviceId String? @db.Uuid
+  productId String? @db.Uuid
+
+  name      String // snapshot of service/product name
+  unitPrice Decimal @db.Decimal(10, 2)
+  quantity  Int     @default(1)
+
+  @@index([giftCardId])
+  @@map("gift_card_items")
+}
+
+model GiftCardRedemption {
+  id         String   @id @default(uuid()) @db.Uuid
+  giftCardId String   @db.Uuid
+  giftCard   GiftCard @relation(fields: [giftCardId], references: [id], onDelete: Cascade)
+
+  bookingId String?  @db.Uuid
+  booking   Booking? @relation("BookingGiftCardRedemptions", fields: [bookingId], references: [id], onDelete: SetNull)
+
+  amountApplied Decimal @db.Decimal(10, 2)
+
+  redeemedById String? @db.Uuid
+  redeemedBy   User?   @relation(fields: [redeemedById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([giftCardId])
+  @@index([bookingId])
+  @@map("gift_card_redemptions")
 }

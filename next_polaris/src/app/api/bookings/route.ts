@@ -287,13 +287,19 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // On edit, only touch promo code fields if the request actually supplied one —
+    // otherwise leave any existing promo on the booking untouched.
+    const promoFields =
+      !validatedBody.id || validatedBody.promoCodeId
+        ? { promoCodeId: verifiedPromoCodeId, discountAmount: verifiedDiscountAmount }
+        : {}
+
     const createdBooking = await bookingRepository.upsertBooking({
       ...validatedBody,
       serviceIds: resolvedServiceEntries,
       packageId: packageId ?? null,
       termsAcceptedAt: validatedBody.termsAccepted ? new Date() : null,
-      promoCodeId: verifiedPromoCodeId,
-      discountAmount: verifiedDiscountAmount,
+      ...promoFields,
       bookingType: validatedBody.bookingType ?? "SCHEDULED",
       // Walk-ins are immediately confirmed
       ...(isWalkIn && { status: "CONFIRMED" }),

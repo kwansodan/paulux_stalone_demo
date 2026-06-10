@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils"
 import { SOCIAL_ICONS } from "../landing/landing-footer"
 import "./mobile-menu.css"
 import Link from "next/link"
-import { customerBookingPath, customerServicesPath, homePath } from "@/app/paths"
+import { customerBookingPath, customerServicesPath, giftCardsPath, homePath } from "@/app/paths"
 import Image from 'next/image'
 
 export default function MobileMenu({
@@ -56,6 +56,7 @@ export default function MobileMenu({
           <nav className="mt-16 flex flex-col">
             <MenuItem label="Services" href={customerServicesPath()} onClose={() => onOpenChange(false)} />
             <MenuItem label="Book now" href={customerBookingPath()} onClose={() => onOpenChange(false)}/>
+            <MenuItem label="Gift cards" href={giftCardsPath()} onClose={() => onOpenChange(false)}/>
           </nav>
 
           {/* Socials */}

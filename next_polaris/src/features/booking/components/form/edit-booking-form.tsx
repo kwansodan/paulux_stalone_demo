@@ -3,7 +3,7 @@
 import { useState, useMemo } from "react"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
-import { useMutation } from "@tanstack/react-query"
+import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { BookingInput, BookingInputSchema } from "@/features/booking/utils/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -23,7 +23,10 @@ import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
 import { BookingWithService } from "../../types"
-import { ShoppingBag, Minus, Plus } from "lucide-react"
+import { calculateBookingTotal } from "../../utils/helpers"
+import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
+import { PaymentStatus } from "@/features/payment/types"
+import { ShoppingBag, Minus, Plus, Tag, CheckCircle2, Gift } from "lucide-react"
 
 export default function EditBookingForm({
   booking,
@@ -63,6 +66,139 @@ export default function EditBookingForm({
   const serviceIds = serviceEntries.map(e => e.id)
   const productEntries = form.watch("productIds") || []
   const userId = form.watch("createdById") || user.id
+
+  const selectedServices = useMemo(
+    () => services?.filter((service) => serviceIds.includes(service.id)),
+    [serviceIds, services]
+  )
+  const selectedProducts = useMemo(
+    () => products
+      .filter(p => productEntries.some(e => e.id === p.id))
+      .map(p => ({ ...p, quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1 })),
+    [productEntries, products]
+  )
+
+  // Promo code — only relevant for bookings that didn't have one applied at creation
+  const existingPromo = booking.promoCodeId && (booking as any).promoCode
+    ? {
+        code: (booking as any).promoCode.code as string,
+        discountAmount: Number(booking.discountAmount ?? 0),
+      }
+    : null
+
+  const [promoInput, setPromoInput] = useState("")
+  const [promoLoading, setPromoLoading] = useState(false)
+  const [promoError, setPromoError] = useState<string | null>(null)
+  const [appliedPromo, setAppliedPromo] = useState<{
+    promoCodeId: string
+    code: string
+    discountAmount: number
+    discountType: string
+    discountValue: number
+  } | null>(null)
+
+  const handleApplyPromo = async () => {
+    if (!promoInput.trim()) return
+    const servicesTotal = selectedServices.reduce((sum, s) => {
+      const qty = serviceEntries.find((e) => e.id === s.id)?.quantity ?? 1
+      return sum + Number(s.price) * qty
+    }, 0)
+    const productsTotal = selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)
+    const baseTotal = servicesTotal + productsTotal
+    setPromoLoading(true)
+    setPromoError(null)
+    try {
+      const res = await fetch("/api/promo-codes/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoInput.trim(), bookingTotal: baseTotal }),
+      })
+      const resData = await res.json()
+      if (resData.valid) {
+        setAppliedPromo({
+          promoCodeId: resData.promoCodeId,
+          code: promoInput.trim().toUpperCase(),
+          discountAmount: resData.discountAmount,
+          discountType: resData.discountType,
+          discountValue: resData.discountValue,
+        })
+        form.setValue("promoCodeId", resData.promoCodeId)
+        form.setValue("discountAmount", resData.discountAmount)
+        setPromoInput("")
+      } else {
+        setPromoError(resData.message || "Invalid promo code")
+      }
+    } catch {
+      setPromoError("Failed to validate promo code. Please try again.")
+    } finally {
+      setPromoLoading(false)
+    }
+  }
+
+  const handleRemovePromo = () => {
+    setAppliedPromo(null)
+    setPromoError(null)
+    form.setValue("promoCodeId", undefined)
+    form.setValue("discountAmount", undefined)
+  }
+
+  // Gift card redemption — applies a gift card's balance directly against this booking's
+  // outstanding amount. Unlike promo codes, this is a side-effecting action (it updates the
+  // gift card balance and records a payment), so it's executed immediately rather than on save.
+  const queryClient = useQueryClient()
+  const [giftCardInput, setGiftCardInput] = useState("")
+  const [giftCardLoading, setGiftCardLoading] = useState(false)
+  const [giftCardError, setGiftCardError] = useState<string | null>(null)
+  const [giftCardResult, setGiftCardResult] = useState<{ code: string; amountApplied: number } | null>(null)
+
+  const bookingTotal = calculateBookingTotal(booking as any)
+  const paidPayments = booking.payments?.filter((p: any) => p.status === "PAID") || []
+  const totalPaid = paidPayments.reduce((sum: number, p: any) => sum + Number(p.amount), 0)
+  const remainingBalance = Math.max(0, bookingTotal - totalPaid)
+  const currentPaymentStatus = calculatePaymentStatus(booking as any)
+
+  const handleRedeemGiftCard = async () => {
+    if (!giftCardInput.trim()) return
+    setGiftCardLoading(true)
+    setGiftCardError(null)
+    try {
+      const validateRes = await fetch("/api/gift-cards/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: giftCardInput.trim() }),
+      })
+      const validateData = await validateRes.json()
+      if (!validateData.valid) {
+        setGiftCardError(validateData.message || "Invalid gift card code")
+        return
+      }
+
+      const redeemRes = await fetch("/api/gift-cards/redeem", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: validateData.code,
+          bookingId: booking.id,
+          amount: validateData.balance,
+        }),
+      })
+      const redeemData = await redeemRes.json()
+      if (!redeemRes.ok || !redeemData.success) {
+        setGiftCardError(redeemData.message || "Failed to redeem gift card")
+        return
+      }
+
+      setGiftCardResult({ code: validateData.code, amountApplied: redeemData.data.amountApplied })
+      setGiftCardInput("")
+      toast.success(`Applied GHS ${Number(redeemData.data.amountApplied).toFixed(2)} from gift card ${validateData.code}`)
+      queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      queryClient.invalidateQueries({ queryKey: ["booking", booking.id] })
+    } catch {
+      setGiftCardError("Failed to redeem gift card. Please try again.")
+    } finally {
+      setGiftCardLoading(false)
+    }
+  }
 
   const { data, isLoading, error } = useAvailableSlots(date, serviceIds.length > 0 ? serviceIds : undefined, userId)
   const slots = data?.slots ?? []
@@ -387,6 +523,148 @@ export default function EditBookingForm({
                 )
               }}
             />
+          )}
+
+          {/* Booking summary + promo code */}
+          {selectedServices && selectedServices.length > 0 && (() => {
+            const servicesTotal = selectedServices.reduce((sum, s) => {
+              const qty = serviceEntries.find((e) => e.id === s.id)?.quantity ?? 1
+              return sum + Number(s.price) * qty
+            }, 0)
+            const productsTotal = selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)
+            const baseTotal = servicesTotal + productsTotal
+            const discountAmt = existingPromo?.discountAmount ?? appliedPromo?.discountAmount ?? 0
+            const finalTotal = Math.max(0, baseTotal - discountAmt)
+            return (
+              <div className="space-y-3">
+                <div className="bg-fuchsia-50 p-4 rounded-lg border border-fuchsia-600 space-y-2">
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="text-gray-600">Services:</span>
+                    <span className="font-medium">GHS {servicesTotal.toFixed(2)}</span>
+                  </div>
+                  {selectedProducts.length > 0 && (
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-600">Products:</span>
+                      <span className="font-medium">GHS {productsTotal.toFixed(2)}</span>
+                    </div>
+                  )}
+                  {(existingPromo || appliedPromo) && (
+                    <div className="flex justify-between items-center text-sm text-green-600">
+                      <span>Discount ({(existingPromo ?? appliedPromo)!.code}):</span>
+                      <span>- GHS {discountAmt.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between items-center text-sm border-t border-fuchsia-200 pt-2">
+                    <span className="font-medium">Total:</span>
+                    <span className="font-bold text-lg">GHS {finalTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                {/* Promo Code — only editable if no promo was applied at creation */}
+                {existingPromo ? (
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <div>
+                        <p className="text-sm font-semibold text-green-700">{existingPromo.code}</p>
+                        <p className="text-xs text-green-600">
+                          Applied at booking creation — saves GHS {existingPromo.discountAmount.toFixed(2)}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {!appliedPromo ? (
+                      <div className="space-y-2">
+                        <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                          <Tag className="w-4 h-4 text-fuchsia-500" />
+                          Promo Code <span className="text-gray-400 text-xs font-normal">(optional)</span>
+                        </label>
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Enter code"
+                            value={promoInput}
+                            onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null) }}
+                            onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleApplyPromo())}
+                            className="h-10 bg-white border-[#E2E8F0] rounded-lg uppercase placeholder:normal-case shadow-none"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={handleApplyPromo}
+                            disabled={promoLoading || !promoInput.trim()}
+                            className="rounded-lg border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-50 px-4 flex-shrink-0"
+                          >
+                            {promoLoading ? "..." : "Apply"}
+                          </Button>
+                        </div>
+                        {promoError && <p className="text-xs text-red-500">{promoError}</p>}
+                      </div>
+                    ) : (
+                      <div className="flex items-center justify-between p-3 rounded-xl bg-green-50 border border-green-200">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                          <div>
+                            <p className="text-sm font-semibold text-green-700">{appliedPromo.code}</p>
+                            <p className="text-xs text-green-600">
+                              Saves GHS {appliedPromo.discountAmount.toFixed(2)}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleRemovePromo}
+                          className="text-xs text-gray-500 hover:text-red-500 underline"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
+
+          {/* Gift Card Redemption — apply a customer's gift card balance toward the outstanding amount */}
+          {currentPaymentStatus !== PaymentStatus.PAID && remainingBalance > 0 && (
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700 flex items-center gap-1.5">
+                <Gift className="w-4 h-4 text-fuchsia-500" />
+                Redeem Gift Card <span className="text-gray-400 text-xs font-normal">(optional)</span>
+              </label>
+              <p className="text-xs text-gray-500">
+                Outstanding balance: GHS {remainingBalance.toFixed(2)}
+              </p>
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Enter gift card code"
+                  value={giftCardInput}
+                  onChange={(e) => { setGiftCardInput(e.target.value.toUpperCase()); setGiftCardError(null) }}
+                  onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleRedeemGiftCard())}
+                  className="h-10 bg-white border-[#E2E8F0] rounded-lg uppercase placeholder:normal-case shadow-none"
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleRedeemGiftCard}
+                  disabled={giftCardLoading || !giftCardInput.trim()}
+                  className="rounded-lg border-fuchsia-200 text-fuchsia-600 hover:bg-fuchsia-50 px-4 flex-shrink-0"
+                >
+                  {giftCardLoading ? "..." : "Redeem"}
+                </Button>
+              </div>
+              {giftCardError && <p className="text-xs text-red-500">{giftCardError}</p>}
+              {giftCardResult && (
+                <div className="flex items-center gap-2 p-3 rounded-xl bg-green-50 border border-green-200">
+                  <CheckCircle2 className="w-4 h-4 text-green-600 flex-shrink-0" />
+                  <p className="text-xs text-green-600">
+                    Applied GHS {giftCardResult.amountApplied.toFixed(2)} from gift card {giftCardResult.code}
+                  </p>
+                </div>
+              )}
+            </div>
           )}
 
           {/* Booking Date */}

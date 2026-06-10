@@ -8,6 +8,7 @@ type Props = {
   netReceived: number
   revenue: number
   preBookingReceived: number
+  previouslyCollected: number
 }
 
 const METHOD_STYLES: Record<string, { colour: string; icon: React.ReactNode }> = {
@@ -56,10 +57,14 @@ export default function RevenueBreakdown({
   netReceived,
   revenue,
   preBookingReceived,
+  previouslyCollected,
 }: Props) {
-  // Cash received that applies to period services = total received minus pre-payments for future bookings
-  const cashForPeriod = netReceived - preBookingReceived
-  const outstanding = Math.max(0, revenue - cashForPeriod)
+  // Outstanding = revenue due in period, minus cash that applies to it
+  // (received this period for this period's bookings, plus anything received earlier for these bookings)
+  const outstanding = Math.max(
+    0,
+    revenue - netReceived + preBookingReceived - previouslyCollected
+  )
 
   return (
     <div className="bg-white rounded-xl border p-4 sm:p-5 space-y-5">
@@ -113,14 +118,22 @@ export default function RevenueBreakdown({
         />
         <Row
           icon={<ArrowRightLeft className="w-4 h-4" />}
-          label="Net received"
+          label="Net received (today)"
           amount={netReceived}
           colour="bg-sky-50 text-sky-600"
         />
+        {previouslyCollected > 0 && (
+          <Row
+            icon={<CalendarPlus className="w-4 h-4" />}
+            label="Collected previously (for these bookings)"
+            amount={previouslyCollected}
+            colour="bg-violet-50 text-violet-600"
+          />
+        )}
         {preBookingReceived > 0 && (
           <Row
             icon={<CalendarPlus className="w-4 h-4" />}
-            label="Pre-payments (future bookings)"
+            label="Collected today (for future bookings)"
             amount={preBookingReceived}
             colour="bg-purple-50 text-purple-600"
           />

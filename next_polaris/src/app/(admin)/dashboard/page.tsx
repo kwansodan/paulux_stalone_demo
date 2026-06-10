@@ -42,6 +42,7 @@ export default async function DashboardPage({
     outOfStockProducts,
     allActiveProducts,
     preBookingResult,
+    previouslyCollectedResult,
   ] = await Promise.all([
     bookingRepository.getAllBookings(
       { bookingDate: { gte: fromStr, lte: toStr } },
@@ -80,6 +81,15 @@ export default async function DashboardPage({
         status: PaymentStatus.PAID,
         createdAt: { gte: fromDate, lt: toDateEnd },
         booking: { bookingDate: { gt: toStr } },
+      },
+    }),
+    // Payments received before this period for bookings due within this period
+    prisma.payment.aggregate({
+      _sum: { amount: true },
+      where: {
+        status: PaymentStatus.PAID,
+        createdAt: { lt: fromDate },
+        booking: { bookingDate: { gte: fromStr, lte: toStr } },
       },
     }),
   ])
@@ -128,9 +138,14 @@ export default async function DashboardPage({
   )
 
   const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
+  const previouslyCollected = Number(previouslyCollectedResult._sum.amount ?? 0)
   const periodRevenue = revenue ?? 0
-  const cashForPeriod = netReceived - preBookingReceived
-  const outstanding = Math.max(0, periodRevenue - cashForPeriod)
+  // Outstanding = revenue due in period, minus cash that applies to it
+  // (received this period for this period's bookings, plus anything received earlier for these bookings)
+  const outstanding = Math.max(
+    0,
+    periodRevenue - netReceived + preBookingReceived - previouslyCollected
+  )
 
   const lowStockProducts = allActiveProducts.filter(
     p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold
@@ -175,6 +190,7 @@ export default async function DashboardPage({
         netReceived={netReceived}
         revenue={periodRevenue}
         preBookingReceived={preBookingReceived}
+        previouslyCollected={previouslyCollected}
       />
 
     </div>
