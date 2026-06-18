@@ -4,6 +4,8 @@ export const PERMISSIONS = {
   PAYMENTS_VIEW:    { key: "payments.view",     label: "Payments",             area: "Core" },
   SERVICES_VIEW:    { key: "services.view",     label: "Services",             area: "Catalog" },
   PRODUCTS_VIEW:    { key: "products.view",     label: "Products",             area: "Catalog" },
+  MATERIALS_VIEW:   { key: "materials.view",    label: "Materials",            area: "Catalog" },
+  MATERIALS_MANAGE: { key: "materials.manage",  label: "Manage Materials",     area: "Catalog" },
   REPORTS_VIEW:     { key: "reports.view",      label: "Reports",              area: "Analytics" },
   PROMO_CODES_VIEW: { key: "promo_codes.view",  label: "Promo Codes",          area: "Marketing" },
   GIFT_CARDS_VIEW:   { key: "gift_cards.view",   label: "Gift Cards",          area: "Marketing" },

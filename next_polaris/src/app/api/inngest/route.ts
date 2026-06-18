@@ -6,6 +6,7 @@ import { bookingCreatedEvent } from "@/features/booking/events/event-booking-cre
 import { paymentReceivedEvent } from "@/features/payment/events/event-payment-received";
 import { stylistAssignedEvent } from "@/features/booking/events/event-stylist-assigned";
 import { productLowStockEvent } from "@/features/product/events/event-product-low-stock";
+import { materialLowStockEvent } from "@/features/material/events/event-material-low-stock";
 // import { NextRequest, NextResponse } from "next/server";
 
 // console.log("EVENT KEY:", process.env.INNGEST_EVENT_KEY);
@@ -23,6 +24,7 @@ export const { GET, POST, PUT } = serve({
     paymentReceivedEvent,
     stylistAssignedEvent,
     productLowStockEvent,
+    materialLowStockEvent,
   ],
   // signingKey: process.env.INNGEST_SIGNING_KEY
 });

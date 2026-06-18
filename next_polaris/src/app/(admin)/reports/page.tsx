@@ -4,6 +4,9 @@ import { requireRole } from "@/app/_auth/require-role"
 import BookingMetrics from "@/features/booking/components/booking-metrics"
 import BookingsTable from "@/features/booking/components/booking-table"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
+import { materialRepository } from "@/features/material/server/material.repository"
+import MaterialCostSummary from "@/features/material/components/material-cost-summary"
+import { SectionUsageReport } from "@/features/material/types"
 import { BookingStatus } from "@generated/prisma/enums"
 import { UserRole } from "@generated/prisma/client"
 
@@ -22,9 +25,22 @@ export default async function ReportsPage() {
     completed: bookings.filter(b => b.status === "COMPLETED").length,
   }
 
+  // Current-month material cost by section. Guarded so the Reports page still
+  // renders if the materials tables aren't migrated yet.
+  const now = new Date()
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
+  let materialReport: SectionUsageReport | null = null
+  try {
+    materialReport = await materialRepository.getUsageBySection(monthStart, now)
+  } catch {
+    materialReport = null
+  }
+  const periodLabel = now.toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+
   return (
     <div className="space-y-6 p-6">
       <BookingMetrics initialMetrics={metrics} />
+      <MaterialCostSummary report={materialReport} periodLabel={periodLabel} />
       <BookingsTable />
     </div>
   )

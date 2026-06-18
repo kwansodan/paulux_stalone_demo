@@ -99,6 +99,7 @@ model User {
   assignedServices BookingService[]      @relation("BookingServiceAssignedTo")
   stockMovements   ProductStockMovement[]
   giftCardRedemptions GiftCardRedemption[]
+  materialMovements   MaterialMovement[]
 
   @@map("users")
 }
@@ -593,4 +594,90 @@ model GiftCardRedemption {
   @@index([giftCardId])
   @@index([bookingId])
   @@map("gift_card_redemptions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Materials / consumables — internal supplies issued to business sections
+// (Nails, Barber, Hair, …) and tracked for cost accounting. Distinct from
+// Product (which is sold). Reuses StockMovementType (IN/OUT/ADJUSTMENT).
+// ─────────────────────────────────────────────────────────────────────────────
+
+// A cost centre that consumes materials. Seeded from service categories but
+// kept independent so e.g. "Barber" can exist without being a bookable service.
+model Section {
+  id        String  @id @default(uuid()) @db.Uuid
+  name      String  @unique
+  isActive  Boolean @default(true)
+  sortOrder Int     @default(0)
+
+  movements MaterialMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("sections")
+}
+
+model MaterialCategory {
+  id   String @id @default(uuid()) @db.Uuid
+  name String @unique
+
+  materials Material[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("material_categories")
+}
+
+model Material {
+  id          String            @id @default(uuid()) @db.Uuid
+  name        String
+  description String?
+  unit        String // unit of measure: ml, g, pcs, bottle, pack
+  unitCost    Decimal           @db.Decimal(10, 2) // current cost per unit
+  currency    SupportedCurrency @default(GHS)
+
+  stockQuantity     Decimal @default(0) @db.Decimal(12, 2)
+  lowStockThreshold Decimal @default(0) @db.Decimal(12, 2)
+  trackStock        Boolean @default(true)
+  isActive          Boolean @default(true)
+
+  categoryId String?           @db.Uuid
+  category   MaterialCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  movements MaterialMovement[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([categoryId])
+  @@map("materials")
+}
+
+model MaterialMovement {
+  id         String            @id @default(uuid()) @db.Uuid
+  materialId String            @db.Uuid
+  material   Material          @relation(fields: [materialId], references: [id], onDelete: Cascade)
+  type       StockMovementType // IN = restock/purchase, OUT = issued to section, ADJUSTMENT
+  quantity   Decimal           @db.Decimal(12, 2)
+
+  // Required for OUT (issuance) movements; null for restock/adjustment.
+  sectionId String?  @db.Uuid
+  section   Section? @relation(fields: [sectionId], references: [id], onDelete: SetNull)
+
+  // Snapshot of unit cost at the moment of the movement, so period cost
+  // reports remain accurate even when the material's unitCost changes later.
+  unitCostAtMovement Decimal @db.Decimal(10, 2)
+
+  notes       String?
+  createdById String? @db.Uuid
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([materialId])
+  @@index([sectionId])
+  @@index([createdAt])
+  @@map("material_movements")
 }

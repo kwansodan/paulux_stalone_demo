@@ -1,4 +1,4 @@
-import { appSettingsPath, bookingsPath, dashboardPath, giftCardOrdersPath, paymentsPath, productsPath, promoCodesPath, reportsPath, servicesPath } from "@/app/paths";
+import { appSettingsPath, bookingsPath, dashboardPath, giftCardOrdersPath, materialsPath, paymentsPath, productsPath, promoCodesPath, reportsPath, servicesPath } from "@/app/paths";
 import { NavItem } from "./types";
 import {
   Home,
@@ -10,6 +10,7 @@ import {
   Tag,
   ShoppingBag,
   Gift,
+  Boxes,
 } from 'lucide-react';
 
 
@@ -44,6 +45,12 @@ export const navItems: NavItem[] = [
     icon: <ShoppingBag />,
     href: productsPath(),
     permission: "products.view",
+  },
+  {
+    title: "Materials",
+    icon: <Boxes />,
+    href: materialsPath(),
+    permission: "materials.view",
   },
   {
     title: "Reports",
