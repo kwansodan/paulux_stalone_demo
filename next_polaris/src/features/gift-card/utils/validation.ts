@@ -1,10 +1,9 @@
 import { z } from "zod"
 
-export const GiftCardItemInputSchema = z.object({
-  itemType: z.enum(["SERVICE", "PRODUCT"]),
-  id: z.string().uuid("Invalid item id"),
-  quantity: z.number().int().min(1).default(1),
-})
+// Gift cards are stored-value: the purchaser chooses an amount that the
+// recipient can later spend on any service(s), in full or in part.
+export const MIN_GIFT_CARD_AMOUNT = 10
+export const MAX_GIFT_CARD_AMOUNT = 100000
 
 export const CreateGiftCardSchema = z
   .object({
@@ -16,7 +15,11 @@ export const CreateGiftCardSchema = z
     recipientPhone: z.string().min(7, "Invalid phone number").max(20).optional().or(z.literal("")),
     message: z.string().max(500, "Message is too long").optional().or(z.literal("")),
     deliveryMethod: z.enum(["SMS", "EMAIL", "BOTH"]),
-    items: z.array(GiftCardItemInputSchema).min(1, "Add at least one service or product to your gift"),
+    amount: z
+      .number({ error: "Please enter a gift amount" })
+      .positive("Gift amount must be greater than zero")
+      .min(MIN_GIFT_CARD_AMOUNT, `Minimum gift card amount is GHS ${MIN_GIFT_CARD_AMOUNT}`)
+      .max(MAX_GIFT_CARD_AMOUNT, `Maximum gift card amount is GHS ${MAX_GIFT_CARD_AMOUNT.toLocaleString()}`),
     callbackUrl: z.string().optional(),
   })
   .refine(

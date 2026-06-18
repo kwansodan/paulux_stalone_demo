@@ -35,12 +35,6 @@ export type SerializedGiftCard = Omit<
   redemptions?: SerializedGiftCardRedemption[]
 }
 
-export interface GiftCardItemInput {
-  itemType: GiftCardItemTypeValue
-  id: string
-  quantity: number
-}
-
 export interface CreateGiftCardPayload {
   senderName: string
   senderEmail: string
@@ -50,7 +44,7 @@ export interface CreateGiftCardPayload {
   recipientPhone?: string
   message?: string
   deliveryMethod: GiftCardDeliveryMethodType
-  items: GiftCardItemInput[]
+  amount: number
   callbackUrl?: string
 }
 

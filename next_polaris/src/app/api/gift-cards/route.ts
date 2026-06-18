@@ -4,7 +4,6 @@ import { CreateGiftCardSchema } from "@/features/gift-card/utils/validation"
 import { giftCardRepository } from "@/features/gift-card/server/gift-card.repository"
 import { generateGiftCardPaymentReference } from "@/features/gift-card/utils/helpers"
 import { initializeTransaction } from "@/lib/paystack"
-import { prisma } from "@/lib/prisma"
 import { PaymentProvider } from "@generated/prisma/client"
 import { requireRoleApi } from "@/app/_auth/require-role-api"
 
@@ -45,56 +44,9 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const validated = CreateGiftCardSchema.parse(body)
 
-    const serviceIds = validated.items.filter((i) => i.itemType === "SERVICE").map((i) => i.id)
-    const productIds = validated.items.filter((i) => i.itemType === "PRODUCT").map((i) => i.id)
-
-    const [services, products] = await Promise.all([
-      serviceIds.length
-        ? prisma.service.findMany({ where: { id: { in: serviceIds }, isActive: true } })
-        : Promise.resolve([]),
-      productIds.length
-        ? prisma.product.findMany({ where: { id: { in: productIds }, isActive: true } })
-        : Promise.resolve([]),
-    ])
-
-    if (services.length !== serviceIds.length || products.length !== productIds.length) {
-      return NextResponse.json(
-        { success: false, message: "One or more selected items is no longer available" },
-        { status: 409 }
-      )
-    }
-
-    const items = validated.items.map((i) => {
-      if (i.itemType === "SERVICE") {
-        const svc = services.find((s) => s.id === i.id)!
-        return {
-          itemType: "SERVICE" as const,
-          serviceId: svc.id,
-          productId: null,
-          name: svc.name,
-          unitPrice: Number(svc.price),
-          quantity: i.quantity,
-        }
-      }
-      const prod = products.find((p) => p.id === i.id)!
-      return {
-        itemType: "PRODUCT" as const,
-        serviceId: null,
-        productId: prod.id,
-        name: prod.name,
-        unitPrice: Number(prod.price),
-        quantity: i.quantity,
-      }
-    })
-
-    const totalAmount = items.reduce((sum, i) => sum + i.unitPrice * i.quantity, 0)
-
-    if (totalAmount <= 0) {
-      return NextResponse.json(
-        { success: false, message: "Gift amount must be greater than zero" },
-        { status: 400 }
-      )
-    }
+    // Stored-value gift card: the purchaser sets the amount directly; it is not
+    // tied to any service or product. The recipient spends the balance later.
+    const totalAmount = Math.round(validated.amount * 100) / 100
 
     const reference = generateGiftCardPaymentReference()
 
@@ -108,7 +60,6 @@ export async function POST(request: NextRequest) {
       message: validated.message || null,
       deliveryMethod: validated.deliveryMethod,
       totalAmount,
-      items,
       paymentProvider: PaymentProvider.PRIMARY_PAYSTACK,
       paymentRef: reference,
     })
@@ -119,7 +70,9 @@ export async function POST(request: NextRequest) {
       reference,
       validated.callbackUrl,
       "GHS",
-      ["mobile_money", "card"],
+      // Mobile money only — bank cards are intentionally NOT an accepted
+      // payment channel for gift card purchases.
+      ["mobile_money"],
       PaymentProvider.PRIMARY_PAYSTACK,
       validated.senderPhone
     )

@@ -11,7 +11,7 @@ interface GiftCardRecipientEmailProps {
   message?: string | null
   code: string
   amount: string
-  itemSummary: string
+  itemSummary?: string
   redeemUrl: string
 }
 
@@ -68,12 +68,14 @@ const GiftCardRecipientEmail = ({
                   <Text className="text-gray-900 text-base font-semibold m-0">GHS {amount}</Text>
                 </Column>
               </Row>
-              <Row>
-                <Column>
-                  <Text className="text-gray-500 text-xs font-medium m-0">Includes</Text>
-                  <Text className="text-gray-900 text-base font-semibold m-0">{itemSummary}</Text>
-                </Column>
-              </Row>
+              {itemSummary ? (
+                <Row>
+                  <Column>
+                    <Text className="text-gray-500 text-xs font-medium m-0">Includes</Text>
+                    <Text className="text-gray-900 text-base font-semibold m-0">{itemSummary}</Text>
+                  </Column>
+                </Row>
+              ) : null}
             </Section>
 
             <Hr className="border-gray-200 mb-6" />
@@ -81,7 +83,9 @@ const GiftCardRecipientEmail = ({
             {/* CTA */}
             <Section className="mb-8">
               <Text className="text-gray-600 text-sm mb-4">
-                Use your gift code at checkout when booking a service or product with us.
+                Use your gift code at checkout when booking any service with us, or
+                show it at the salon. You can use the full value at once or spend it
+                across multiple visits.
               </Text>
               <Button
                 href={redeemUrl}

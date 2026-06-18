@@ -10,6 +10,7 @@ import { SerializedGiftCard } from "../types"
  */
 export async function deliverGiftCard(giftCard: SerializedGiftCard) {
   const redeemUrl = `${getBaseUrl()}/customer/booking?giftCard=${giftCard.code}`
+  // Legacy item-based cards carry a snapshot; stored-value cards have none.
   const itemSummary = giftCard.items
     .map((i) => `${i.name}${i.quantity > 1 ? ` x${i.quantity}` : ""}`)
     .join(", ")
@@ -29,7 +30,7 @@ export async function deliverGiftCard(giftCard: SerializedGiftCard) {
         message: giftCard.message,
         code: giftCard.code,
         amount,
-        itemSummary,
+        itemSummary: itemSummary || undefined,
         redeemUrl,
       }).catch((err) => console.error("Failed to send gift card email:", err))
     )
@@ -42,7 +43,7 @@ export async function deliverGiftCard(giftCard: SerializedGiftCard) {
     tasks.push(
       sendSMS({
         recipients: [giftCard.recipientPhone],
-        message: `${giftCard.senderName} sent you a gift from Polaris Beauty Lounge worth GHS ${amount} (${itemSummary}). Redeem code: ${giftCard.code}. Book now: ${redeemUrl}`,
+        message: `${giftCard.senderName} sent you a gift from Polaris Beauty Lounge worth GHS ${amount}${itemSummary ? ` (${itemSummary})` : ""}. Redeem code: ${giftCard.code}. Book now: ${redeemUrl}`,
       }).catch((err) => console.error("Failed to send gift card SMS:", err))
     )
   }

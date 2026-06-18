@@ -156,15 +156,17 @@ export default function GiftCardOrdersShell({ initialGiftCards }: GiftCardOrders
                     </div>
                   </div>
 
-                  {/* Items */}
-                  <div className="pt-2 border-t border-gray-100 space-y-1">
-                    {gc.items.map((item) => (
-                      <div key={item.id} className="flex justify-between text-xs text-gray-600">
-                        <span className="truncate pr-2">{item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}</span>
-                        <span className="flex-shrink-0">GHS {(Number(item.unitPrice) * item.quantity).toFixed(2)}</span>
-                      </div>
-                    ))}
-                  </div>
+                  {/* Items — only legacy item-based gift cards carry these */}
+                  {gc.items.length > 0 && (
+                    <div className="pt-2 border-t border-gray-100 space-y-1">
+                      {gc.items.map((item) => (
+                        <div key={item.id} className="flex justify-between text-xs text-gray-600">
+                          <span className="truncate pr-2">{item.name} {item.quantity > 1 ? `x${item.quantity}` : ""}</span>
+                          <span className="flex-shrink-0">GHS {(Number(item.unitPrice) * item.quantity).toFixed(2)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Balance */}
                   <div className="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">

@@ -52,7 +52,9 @@ export interface CreateGiftCardData {
   message?: string | null
   deliveryMethod: GiftCardDeliveryMethod
   totalAmount: number
-  items: CreateGiftCardItemData[]
+  // Optional purchase-time snapshot. Stored-value cards (custom amount, not
+  // tied to specific services/products) are created without items.
+  items?: CreateGiftCardItemData[]
   paymentProvider: PaymentProvider
   paymentRef: string
 }
@@ -76,16 +78,20 @@ export class GiftCardRepository {
         paymentStatus: PaymentStatus.PENDING,
         paymentProvider: data.paymentProvider,
         paymentRef: data.paymentRef,
-        items: {
-          create: data.items.map((item) => ({
-            itemType: item.itemType,
-            serviceId: item.serviceId ?? null,
-            productId: item.productId ?? null,
-            name: item.name,
-            unitPrice: item.unitPrice,
-            quantity: item.quantity,
-          })),
-        },
+        ...(data.items && data.items.length > 0
+          ? {
+              items: {
+                create: data.items.map((item) => ({
+                  itemType: item.itemType,
+                  serviceId: item.serviceId ?? null,
+                  productId: item.productId ?? null,
+                  name: item.name,
+                  unitPrice: item.unitPrice,
+                  quantity: item.quantity,
+                })),
+              },
+            }
+          : {}),
       },
       include: { items: true },
     })

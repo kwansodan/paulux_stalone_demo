@@ -17,7 +17,7 @@ export const sendGiftCardRecipientEmail = async ({
   message?: string | null
   code: string
   amount: string
-  itemSummary: string
+  itemSummary?: string
   redeemUrl: string
 }) => {
   return await resend.emails.send({
