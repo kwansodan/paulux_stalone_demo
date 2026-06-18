@@ -16,6 +16,7 @@ export default function robots(): MetadataRoute.Robots {
           "/bookings",
           "/payments",
           "/products",
+          "/materials",
           "/reports",
           // NOTE: `/services` (admin list) is deliberately NOT disallowed here
           // because public service detail pages live at `/services/<slug>`.

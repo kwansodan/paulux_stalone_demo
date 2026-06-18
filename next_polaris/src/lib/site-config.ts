@@ -15,7 +15,7 @@ export const siteConfig = {
   shortName: "Polaris",
   // Short, human description used as the default meta description.
   description:
-    "Polaris Beauty Lounge is a premium beauty and wellness salon in Accra, Ghana. Book hair, nails, skincare, lashes and spa treatments online.",
+    "Polaris Beauty Lounge is a premium unisex salon in Accra, Ghana. Book hair, nails, skincare, lashes and spa treatments online.",
   tagline: "Where Beauty Meets Serenity",
   // Canonical origin. Override per-environment with NEXT_PUBLIC_SITE_URL.
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://polarisbeautylounge.com",
@@ -59,6 +59,7 @@ export const siteConfig = {
   // Primary keyword themes — used for the meta keywords hint and as a
   // reference for future per-service landing pages (Phase 2).
   keywords: [
+    "unisex salon Accra",
     "beauty salon Accra",
     "spa Accra",
     "hair salon Accra",

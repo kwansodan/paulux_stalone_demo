@@ -4,6 +4,11 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 import { serviceSlug } from "@/features/service/utils/slug"
 import { serviceDetailPath } from "@/app/paths"
 
+// Render at request time against the live database. Without this, Next
+// statically generates the sitemap at build time (when the DB is unreachable),
+// so the per-service URLs are silently dropped and never recover.
+export const dynamic = "force-dynamic"
+
 /**
  * Public, indexable routes. Admin (`/dashboard`, `/bookings`, …) and
  * auth/transactional routes are intentionally excluded and also blocked in

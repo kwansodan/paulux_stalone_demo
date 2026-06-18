@@ -34,6 +34,7 @@ export function buildLocalBusinessSchema(): Record<string, unknown> {
     description: siteConfig.description,
     url: siteConfig.url,
     image: absoluteUrl(siteConfig.ogImage),
+    logo: absoluteUrl("/images/polarisicon.png"),
     telephone: siteConfig.contact.phones[0],
     email: siteConfig.contact.email,
     priceRange: siteConfig.priceRange,

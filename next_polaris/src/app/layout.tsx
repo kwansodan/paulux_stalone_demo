@@ -19,7 +19,7 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata: Metadata = {
   metadataBase: new URL(siteConfig.url),
   title: {
-    default: `${siteConfig.name} — Beauty & Wellness Salon in Accra`,
+    default: `${siteConfig.name} — Unisex Salon in Accra`,
     template: `%s | ${siteConfig.name}`,
   },
   description: siteConfig.description,
@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     siteName: siteConfig.name,
-    title: `${siteConfig.name} — Beauty & Wellness Salon in Accra`,
+    title: `${siteConfig.name} — Unisex Salon in Accra`,
     description: siteConfig.description,
     url: siteConfig.url,
     locale: siteConfig.locale,
@@ -46,7 +46,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: `${siteConfig.name} — Beauty & Wellness Salon in Accra`,
+    title: `${siteConfig.name} — Unisex Salon in Accra`,
     description: siteConfig.description,
     images: [siteConfig.ogImage],
   },
