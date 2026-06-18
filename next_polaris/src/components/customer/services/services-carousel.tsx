@@ -1,9 +1,9 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import ServiceCard from "./service-card"
 import { SerializedService } from "@/features/service/types"
 import SearchBar from "./SearchBar"
+import CollapsibleServices from "./collapsible-services"
 
 export default function ServicesCarousel({ services }: { services: SerializedService[] }) {
   const [searchTerm, setSearchTerm] = useState("")
@@ -75,29 +75,15 @@ export default function ServicesCarousel({ services }: { services: SerializedSer
 
       {filteredServices.length === 0 ? (
         <div className="py-12 text-center text-gray-400 text-sm">No services found</div>
-      ) : grouped ? (
-        /* All tab — grouped by category */
-        <div className="space-y-6">
-          {grouped.map((group) => (
-            <div key={group.name}>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                {group.name}
-              </p>
-              <div className="bg-white rounded-2xl border border-gray-100 px-4">
-                {group.services.map((service) => (
-                  <ServiceCard key={service.id} service={service} />
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
       ) : (
-        /* Single category or search — flat list */
-        <div className="bg-white rounded-2xl border border-gray-100 px-4">
-          {filteredServices.map((service) => (
-            <ServiceCard key={service.id} service={service} />
-          ))}
-        </div>
+        <CollapsibleServices
+          key={`${activeCategory ?? "all"}-${searchTerm}`}
+          groups={
+            grouped
+              ? grouped.map((g) => ({ name: g.name, services: g.services }))
+              : [{ name: null, services: filteredServices }]
+          }
+        />
       )}
     </div>
   )

@@ -5,8 +5,8 @@ import Image from "next/image"
 import Link from "next/link"
 import { SerializedService } from "../../../features/service/types"
 import { SerializedPackage } from "../../../features/package/types"
-import ServiceCard from "./service-card"
 import SearchBar from "./SearchBar"
+import CollapsibleServices from "./collapsible-services"
 import { customerBookingPath } from "@/app/paths"
 import { ArrowRight, Package, Timer } from "lucide-react"
 
@@ -222,30 +222,14 @@ export default function ServicesGrid({
         </div>
       ) : filteredServices.length > 0 ? (
         <section>
-          {grouped ? (
-            /* All tab — grouped by category */
-            <div className="space-y-6">
-              {grouped.map((group) => (
-                <div key={group.name}>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-2 px-1">
-                    {group.name}
-                  </p>
-                  <div className="bg-white rounded-2xl border border-gray-100 px-4">
-                    {group.services.map((service) => (
-                      <ServiceCard key={service.id} service={service} />
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            /* Single category or search result — flat list */
-            <div className="bg-white rounded-2xl border border-gray-100 px-4">
-              {filteredServices.map((service) => (
-                <ServiceCard key={service.id} service={service} />
-              ))}
-            </div>
-          )}
+          <CollapsibleServices
+            key={`${activeCategory ?? "all"}-${searchTerm}`}
+            groups={
+              grouped
+                ? grouped.map((g) => ({ name: g.name, services: g.services }))
+                : [{ name: null, services: filteredServices }]
+            }
+          />
         </section>
       ) : null}
     </div>
