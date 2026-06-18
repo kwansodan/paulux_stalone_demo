@@ -2,7 +2,8 @@ import { inngest } from "@/lib/inngest";
 import { prisma } from "@/lib/prisma";
 import { sendPaymentReceivedEmail } from "../emails/send-payment-received-email";
 import { sendCustomerReceiptEmail } from "../emails/send-customer-receipt-email";
-import { UserRole, PaymentStatus, PaymentProvider } from "@generated/prisma/client";
+import { PaymentStatus, PaymentProvider } from "@generated/prisma/client";
+import { getPaymentNotificationRecipients } from "../server/payment-recipients";
 import { sendSMS } from "@/lib/arkesal";
 import { formatDate, formatTime } from "@/features/booking/utils/helpers";
 import { customerBookingSummaryPath } from "@/app/paths";
@@ -25,16 +26,14 @@ export const paymentReceivedEvent = inngest.createFunction(
             });
         });
 
-        // Fetch all admin users
-        const admins = await step.run("fetch-admins", async () => {
-            const users = await prisma.user.findMany({
-                where: { role: UserRole.ADMIN },
-                select: { email: true, username: true },
-            });
-            if (users.length === 0) {
-                console.log("No admin users found to notify for booking", bookingId);
+        // Resolve who should be notified: the configured payment-notification
+        // recipient list, or all admins if that list is empty (see helper).
+        const recipients = await step.run("fetch-recipients", async () => {
+            const list = await getPaymentNotificationRecipients();
+            if (list.length === 0) {
+                console.log("No payment-notification recipients found for booking", bookingId);
             }
-            return users;
+            return list;
         });
 
         const serviceNamesList = booking.services.map(s => s.service.name);
@@ -48,16 +47,16 @@ export const paymentReceivedEvent = inngest.createFunction(
                     ? "Mobile Money"
                     : "Online Payment";
 
-        // Send an email to each admin
-        const emailResults = await step.run("notify-admins", async () => {
-            if (admins.length === 0) {
+        // Send a notification email to each recipient
+        const emailResults = await step.run("notify-recipients", async () => {
+            if (recipients.length === 0) {
                 return { total: 0, sent: 0, failed: 0 };
             }
             const results = await Promise.allSettled(
-                admins.map((admin) =>
+                recipients.map((recipient) =>
                     sendPaymentReceivedEmail(
-                        admin.email,
-                        admin.username,
+                        recipient.email,
+                        recipient.name,
                         booking.clientName,
                         booking.bookingReference,
                         serviceNames,
@@ -72,10 +71,10 @@ export const paymentReceivedEvent = inngest.createFunction(
 
             const failed = results.filter((r) => r.status === "rejected");
             if (failed.length > 0) {
-                console.error(`Failed to send admin notification emails: ${failed.length} of ${admins.length}`);
+                console.error(`Failed to send payment notification emails: ${failed.length} of ${recipients.length}`);
             }
             return {
-                total: admins.length,
+                total: recipients.length,
                 sent: results.length - failed.length,
                 failed: failed.length
             };

@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
 import { api } from "@/lib/api"
@@ -135,7 +136,13 @@ function StyleImageUpload({
 // ─────────────────────────────────────────────────────────────────────────────
 // Section: General
 // ─────────────────────────────────────────────────────────────────────────────
-function GeneralSection({ initialWalkinEmail }: { initialWalkinEmail: string }) {
+function GeneralSection({
+  initialWalkinEmail,
+  initialPaymentEmails,
+}: {
+  initialWalkinEmail: string
+  initialPaymentEmails: string[]
+}) {
   const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
   const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
   const [saving, setSaving] = useState(false)
@@ -193,6 +200,79 @@ function GeneralSection({ initialWalkinEmail }: { initialWalkinEmail: string }) 
               )}
             </Button>
           </div>
+        </div>
+      </div>
+
+      <PaymentRecipientsCard initialPaymentEmails={initialPaymentEmails} />
+    </div>
+  )
+}
+
+// Recipients of "Payment Received" notification emails. Decoupled from admin
+// accounts: when this list is set, only these addresses are notified; when it
+// is empty, payments fall back to notifying all admins.
+function PaymentRecipientsCard({ initialPaymentEmails }: { initialPaymentEmails: string[] }) {
+  const [savedEmails, setSavedEmails] = useState<string[]>(initialPaymentEmails)
+  const [text, setText] = useState(initialPaymentEmails.join("\n"))
+  const [saving, setSaving] = useState(false)
+
+  const usingFallback = savedEmails.length === 0
+  const dirty = text.trim() !== savedEmails.join("\n").trim()
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const res = await api.patch("/settings/payment-emails", { value: text })
+      const emails: string[] = res.data.data.emails
+      setSavedEmails(emails)
+      setText(emails.join("\n"))
+      toast.success(res.data.message || "Payment recipients updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update recipients")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 mt-4">
+      <div className="flex flex-col gap-4 px-6 py-5">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-gray-900">Payment notification recipients</p>
+          </div>
+          <p className="text-xs text-gray-500 pl-6">
+            Email addresses that receive a notification for every payment. One per line.
+            Leave blank to notify all admin accounts.
+          </p>
+          <p className="text-xs text-gray-400 pl-6 pt-1">
+            {usingFallback
+              ? "Currently: no list set — notifying all admin accounts."
+              : `Currently notifying ${savedEmails.length} address${savedEmails.length === 1 ? "" : "es"}.`}
+          </p>
+        </div>
+
+        <Textarea
+          className="bg-white border-[#E2E8F0] rounded-lg shadow-none font-mono text-sm"
+          rows={4}
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder={"billing@polarisbeautylounge.com\nowner@polarisbeautylounge.com"}
+        />
+
+        <div className="flex justify-end">
+          <Button
+            className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
+            disabled={saving || !dirty}
+            onClick={handleSave}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <><Save className="w-4 h-4 mr-1.5" />Save</>
+            )}
+          </Button>
         </div>
       </div>
     </div>
@@ -556,6 +636,7 @@ const navItems: { id: SectionId; label: string; icon: React.ReactNode; descripti
 export default function AppSettingsShell({
   initialImages,
   initialWalkinEmail,
+  initialPaymentEmails,
   initialCategories,
   initialBusinessHours,
   initialBlockedDates,
@@ -564,6 +645,7 @@ export default function AppSettingsShell({
 }: {
   initialImages: StyleImage[]
   initialWalkinEmail: string
+  initialPaymentEmails: string[]
   initialCategories: SerializedServiceCategory[]
   initialBusinessHours: BusinessHour[]
   initialBlockedDates: BlockedDate[]
@@ -639,7 +721,7 @@ export default function AppSettingsShell({
           </div>
 
           {activeSection === "general" && (
-            <GeneralSection initialWalkinEmail={initialWalkinEmail} />
+            <GeneralSection initialWalkinEmail={initialWalkinEmail} initialPaymentEmails={initialPaymentEmails} />
           )}
           {activeSection === "gallery" && (
             <HeroGallerySection initialImages={initialImages} />
