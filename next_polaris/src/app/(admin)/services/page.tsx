@@ -4,8 +4,15 @@ import { serviceRepository } from '@/features/service/server/service.repository'
 import { UserRole } from '@generated/prisma/client'
 import { prisma } from '@/lib/prisma'
 import React from 'react'
+import type { Metadata } from 'next'
 
 export const dynamic = 'force-dynamic'
+
+// Admin list lives at /services; public service pages are /services/<slug>.
+// Keep this internal page out of search indexes.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+}
 
 export default async function ServicesPage() {
   await requireRole([UserRole.ADMIN], "services.view")

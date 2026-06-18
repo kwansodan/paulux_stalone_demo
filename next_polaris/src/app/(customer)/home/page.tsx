@@ -4,7 +4,12 @@ import LandingHero from "@/components/landing/landing-hero"
 import LandingCTA from "@/components/landing/landing-cta"
 import ServicesCarousel from "@/components/customer/services/services-carousel"
 import { prisma } from "@/lib/prisma"
+import { JsonLd, buildLocalBusinessSchema, buildWebSiteSchema } from "@/components/seo/json-ld"
 
+// Rendered dynamically (SSR) so the build never needs DB access — important
+// for the standalone/Docker build, where the database isn't reachable at build
+// time. SSR pages are fully crawlable; SEO is unaffected. Runtime data caching
+// can be layered on later (e.g. unstable_cache) if TTFB needs tuning.
 export const dynamic = 'force-dynamic'
 
 export default async function HomePage() {
@@ -20,6 +25,9 @@ export default async function HomePage() {
   return (
     <main className="flex flex-col bg-white">
 
+      <JsonLd schema={buildLocalBusinessSchema()} />
+      <JsonLd schema={buildWebSiteSchema()} />
+
       <LandingHero slideImages={styleImages} />
 
       <section className="px-4 py-16 space-y-12">
@@ -34,9 +42,9 @@ export default async function HomePage() {
             </span>
           </div>
           <div className="text-center mb-10">
-            <p className="font-family-seasons font-light text-[48px] leading-12 tracking-[-3%] text-center">
+            <h2 className="font-family-seasons font-light text-[48px] leading-12 tracking-[-3%] text-center">
               Treatments Designed for you
-            </p>
+            </h2>
             <p className="text-gray-500 text-sm mt-3 max-w-md mx-auto">
               Choose from our curated selection of premium beauty and wellness treatments.
             </p>

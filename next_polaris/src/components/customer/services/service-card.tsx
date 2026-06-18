@@ -1,6 +1,7 @@
-import { customerBookingPath } from "@/app/paths";
+import { customerBookingPath, serviceDetailPath } from "@/app/paths";
 import { SerializedService } from "@/features/service/types"
 import { formatDurationShort } from "@/features/service/utils/helpers"
+import { serviceSlug } from "@/features/service/utils/slug"
 import { ArrowRight, Timer } from "lucide-react";
 import Link from "next/link";
 
@@ -11,7 +12,12 @@ export default function ServiceCard({ service }: { service: SerializedService })
     <div className="flex items-center justify-between py-3.5 border-b border-gray-100 last:border-b-0 hover:bg-gray-50/60 transition-colors -mx-4 px-4">
       {/* Left — name, duration + price together, deposit badge */}
       <div className="flex-1 min-w-0 pr-6">
-        <p className="font-semibold text-gray-900 text-sm leading-snug">{service.name}</p>
+        <Link
+          href={serviceDetailPath(serviceSlug(service))}
+          className="font-semibold text-gray-900 text-sm leading-snug hover:text-fuchsia-700 transition-colors"
+        >
+          {service.name}
+        </Link>
 
         <div className="flex items-center gap-1.5 mt-1">
           <Timer className="w-3 h-3 text-gray-400 flex-shrink-0" />

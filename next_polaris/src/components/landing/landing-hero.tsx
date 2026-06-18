@@ -46,8 +46,8 @@ export default function LandingHero({ slideImages = [] }: LandingHeroProps) {
                   src={img.url}
                   alt={img.caption ?? "Hero background"}
                   fill
+                  sizes="100vw"
                   className="object-cover"
-                  unoptimized
                   priority={i === 0}
                 />
               </div>
