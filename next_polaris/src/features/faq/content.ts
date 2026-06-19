@@ -39,12 +39,12 @@ export const faqs: Array<{ question: string; answer: string }> = [
   },
   {
     question: "What are your opening hours?",
-    answer: siteConfig.openingHours
-      .map(
-        (spec) =>
-          `${spec.days.join(", ")}: ${spec.opens}–${spec.closes}`,
-      )
-      .join(". "),
+    answer:
+      "We are closed on Mondays. " +
+      siteConfig.openingHours
+        .map((spec) => `${spec.days.join(", ")}: ${spec.opens}–${spec.closes}`)
+        .join(". ") +
+      ".",
   },
   {
     question: "Do you sell gift cards?",

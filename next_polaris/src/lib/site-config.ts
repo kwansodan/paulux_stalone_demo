@@ -40,12 +40,11 @@ export const siteConfig = {
     longitude: -0.2312859,
   },
 
-  // Opening hours — PLACEHOLDER. Confirm real hours with the client before
-  // relying on these for the LocalBusiness schema (wrong hours hurt trust
-  // signals and can trigger structured-data mismatches).
+  // Real opening hours (confirmed by client 2026-06-19). Monday is closed and
+  // intentionally omitted — search engines read an absent day as closed.
   openingHours: [
-    { days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], opens: "09:00", closes: "19:00" },
-    { days: ["Sunday"], opens: "12:00", closes: "17:00" },
+    { days: ["Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"], opens: "09:00", closes: "20:00" },
+    { days: ["Sunday"], opens: "13:00", closes: "20:00" },
   ],
 
   // Profiles used for the schema `sameAs` array — this is how AI/search
