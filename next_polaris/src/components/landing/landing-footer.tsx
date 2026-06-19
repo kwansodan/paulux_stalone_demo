@@ -94,7 +94,7 @@ export default function LandingFooter() {
           <div className="space-y-2 text-white/70">
             <p className="text-white/70 flex gap-2 items-center">
               <Phone size={16} className="text-white" />
-              <span>+233 24 070 2107</span> <span>|</span> <span>+233 50 485 1482</span>
+              <span>+233 50 485 1482</span>
             </p>
             <p className="text-white/70 flex gap-2 items-center">
               <Mail size={16} className="text-white" />

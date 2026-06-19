@@ -26,7 +26,10 @@ export const siteConfig = {
 
   contact: {
     email: "polarisbeautylounge@gmail.com",
-    phones: ["+233240702107", "+233504851482"],
+    // Primary business number first — it feeds the LocalBusiness `telephone`
+    // in the structured data. Keep this consistent with the footer and Google
+    // Business Profile (NAP consistency).
+    phones: ["+233504851482", "+233240702107"],
     whatsapp: "+233504851482",
   },
 
