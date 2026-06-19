@@ -1,6 +1,6 @@
 export const signInPath = () => "/login"
 export const signUpPath = () => "/sign-up"
-export const homePath = () => "/home"
+export const homePath = () => "/"
 export const customerServicesPath = () => "/customer/services"
 export const serviceDetailPath = (slug: string) => `/services/${slug}`
 export const faqPath = () => "/faq"

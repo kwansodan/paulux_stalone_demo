@@ -16,7 +16,7 @@ export default function FaqPage() {
       <JsonLd schema={buildFaqSchema(faqs)} />
       <JsonLd
         schema={buildBreadcrumbSchema([
-          { name: "Home", path: "/home" },
+          { name: "Home", path: "/" },
           { name: "FAQ", path: faqPath() },
         ])}
       />

@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: true,
   },
+  // The homepage now lives at `/`. Permanently redirect the old `/home` URL so
+  // existing links, bookmarks and any directory/GBP entries keep working and
+  // their ranking signals consolidate onto the root.
+  async redirects() {
+    return [
+      { source: "/home", destination: "/", permanent: true },
+    ]
+  },
   images: {
     // Image optimization enabled for better LCP / Core Web Vitals.
     // Requires the Next image optimizer (sharp) at runtime — verify images

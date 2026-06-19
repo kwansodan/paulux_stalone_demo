@@ -8,7 +8,7 @@ export default function ServicesHeader() {
   return (
     <div className="bg-white border-b">
       <div className="flex items-center gap-3 px-4 py-4">
-        <Link href="/home">
+        <Link href="/">
           <Button variant="ghost" size="icon" className="bg-gray-50 rounded-full p-4">
             <ArrowLeft className="h-5 w-5" />
           </Button>

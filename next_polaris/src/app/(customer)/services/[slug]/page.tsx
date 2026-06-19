@@ -83,7 +83,7 @@ export default async function ServiceDetailPage(
       <JsonLd schema={buildServiceSchema(service)} />
       <JsonLd
         schema={buildBreadcrumbSchema([
-          { name: "Home", path: "/home" },
+          { name: "Home", path: "/" },
           { name: "Services", path: customerServicesPath() },
           { name: service.name, path: serviceDetailPath(slug) },
         ])}
@@ -92,7 +92,7 @@ export default async function ServiceDetailPage(
       {/* Breadcrumb (visible) */}
       <nav aria-label="Breadcrumb" className="text-xs text-gray-500 mb-6">
         <ol className="flex items-center gap-1.5">
-          <li><Link href="/home" className="hover:text-gray-900">Home</Link></li>
+          <li><Link href="/" className="hover:text-gray-900">Home</Link></li>
           <li aria-hidden>/</li>
           <li><Link href={customerServicesPath()} className="hover:text-gray-900">Services</Link></li>
           <li aria-hidden>/</li>
