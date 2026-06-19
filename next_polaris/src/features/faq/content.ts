@@ -11,7 +11,7 @@ import { siteConfig } from "@/lib/site-config"
 export const faqs: Array<{ question: string; answer: string }> = [
   {
     question: `Where is ${siteConfig.name} located?`,
-    answer: `${siteConfig.name} is located at ${siteConfig.address.street}, ${siteConfig.address.locality}, Ghana. You can reach us on ${siteConfig.contact.phones[0]} or message us on WhatsApp.`,
+    answer: `${siteConfig.name} is located at ${siteConfig.address.street}, ${siteConfig.address.locality}, Ghana. You can reach us on 0504851482 or message us on WhatsApp.`,
   },
   {
     question: "How do I book an appointment?",
@@ -52,16 +52,16 @@ export const faqs: Array<{ question: string; answer: string }> = [
   },
   {
     question: `What services does ${siteConfig.name} offer?`,
-    answer: `${siteConfig.name} is a full-service unisex salon in ${siteConfig.address.locality} offering braids, hair styling, ladies', men's and kids' haircuts, hair care, nails and pedicures, lash extensions, facials, waxing and massage. You can browse the full menu and book any service online.`,
+    answer: `${siteConfig.name} is a full-service unisex salon in ${siteConfig.address.locality} offering braids, hair styling, ladies' and kids' haircuts, a barber shop, hair care, wigs and wig installation, nail salon services, eyelash extensions, facials, waxing, massage and spa treatments. You can browse the full menu and book any service online.`,
   },
   {
     question: `Is ${siteConfig.name} a unisex salon?`,
     answer: `Yes. ${siteConfig.name} is a unisex salon — we welcome women, men and children, with dedicated services for each, from braids and nails to men's grooming and kids' haircuts.`,
   },
   {
-    question: "Do you offer men's haircuts and grooming?",
+    question: "Do you have a barber shop for men and children?",
     answer:
-      "Yes. Men's haircuts and grooming are part of our unisex service menu. You can book a men's haircut online and choose a time that suits you.",
+      "Yes. Our barber shop offers professional haircuts, fades, beard grooming, line-ups, and grooming services for men and boys.",
   },
   {
     question: "Do you do children's haircuts?",
@@ -74,14 +74,34 @@ export const faqs: Array<{ question: string; answer: string }> = [
       "Yes — braiding is one of our specialities, including box braids, passion twists, cornrows and bonestraight braids. Each style is listed individually online with its price and estimated duration, so you can book exactly the look you want.",
   },
   {
-    question: "Do you do nails and pedicures?",
+    question: "Do you offer nail salon services?",
     answer:
-      "Yes. We offer manicures, pedicures and nail care. Browse our Nails & Pedicure services online to see the options and book a slot.",
+      "Yes. Our nail salon provides manicures, pedicures, acrylic nails, gel nails, nail extensions, nail art, and luxury nail care treatments.",
   },
   {
-    question: "Do you offer lash extensions, facials and waxing?",
+    question: "Do you offer eyelash extension services?",
     answer:
-      "Yes. Alongside hair and nails, we offer lash extensions, facials, waxing and massage. Each is listed under its category on our services page and can be booked online.",
+      "Yes. Our eyelash salon specializes in classic lashes, hybrid lashes, volume lashes, lash refills, and other lash enhancement services.",
+  },
+  {
+    question: "What massage services do you provide?",
+    answer:
+      "Our massage spa offers relaxing and therapeutic massage treatments designed to reduce stress, relieve muscle tension, and promote overall wellness. We offer deep tissue massage, aromatherapy, hot stone massage and Swedish massage.",
+  },
+  {
+    question: "Do you provide waxing and hair removal services?",
+    answer:
+      "Yes. We offer professional waxing and hair removal services for the face and body, helping clients achieve smooth and long-lasting results.",
+  },
+  {
+    question: "Do you sell wigs and provide wig installation services?",
+    answer:
+      "Yes. We offer quality wigs, wig customization, frontal installations, closure installations, wig revamping, and professional wig styling services.",
+  },
+  {
+    question: "Do you have professional spa services?",
+    answer:
+      "Yes. Our spa services include relaxing massages, facials, body treatments, and wellness therapies designed to help you look and feel your best.",
   },
   {
     question: "Do you accept walk-ins, or do I need to book?",
@@ -109,6 +129,6 @@ export const faqs: Array<{ question: string; answer: string }> = [
   },
   {
     question: `How can I contact ${siteConfig.name}?`,
-    answer: `You can call us on ${siteConfig.contact.phones[0]} or ${siteConfig.contact.phones[1]}, message us on WhatsApp, or email ${siteConfig.contact.email}. We're also on Instagram, Facebook and TikTok as @polarisbeautylounge.`,
+    answer: `You can call or WhatsApp us on 0504851482, or email ${siteConfig.contact.email}. We're also on Instagram, Facebook and TikTok as @polarisbeautylounge.`,
   },
 ]
