@@ -18,16 +18,18 @@ import AssignStylistModal from "./form/assign-stylist-modal"
 import RecordPaymentModal from "./form/record-payment-modal"
 import EditServicesModal from "./form/edit-services-modal"
 import { SerializedService } from "@/features/service/types"
+import { SerializedProduct } from "@/features/product/types"
 
 type BookingCardProps = {
   booking: BookingWithService
   user: User
   services: SerializedService[]
+  products: SerializedProduct[]
   onEdit: (bookingId: string) => void
   onCancel: (bookingId: string) => void
 }
 
-export default function BookingCard({ booking, user, services, onEdit, onCancel }: BookingCardProps) {
+export default function BookingCard({ booking, user, services, products, onEdit, onCancel }: BookingCardProps) {
   const [chargeModalOpen, setChargeModalOpen] = useState(false)
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false)
@@ -184,6 +186,7 @@ export default function BookingCard({ booking, user, services, onEdit, onCancel 
       <EditServicesModal
         booking={booking}
         services={services}
+        products={products}
         open={editServicesOpen}
         onClose={() => setEditServicesOpen(false)}
       />
