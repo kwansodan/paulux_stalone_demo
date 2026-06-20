@@ -3,6 +3,7 @@ import StepIndicator from "@/components/customer/booking/step-indicator";
 import { BOOKING_STEPS } from "@/constants";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { BookingWithServiceAndPayment } from "@/features/booking/types";
+import { paymentService } from "@/features/payment/server/payment.service";
 
 export const dynamic = 'force-dynamic'
 
@@ -11,14 +12,25 @@ export default async function BookingSummaryPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>
-  searchParams: Promise<{ reference?: string }>
+  searchParams: Promise<{ reference?: string; trxref?: string }>
 }) {
   const awaitedParams = await params;
   const awaitedSearchParams = await searchParams;
   const bookingId = awaitedParams.id;
-  const reference = awaitedSearchParams.reference;
+  const reference = awaitedSearchParams.reference || awaitedSearchParams.trxref;
 
-  const booking = await bookingRepository.findById(bookingId)
+  let booking = await bookingRepository.findById(bookingId)
+
+  // Returning from Paystack — re-verify directly with Paystack in case the webhook was
+  // missed or delayed, so the booking's payment status doesn't stay stale.
+  if (reference && booking && booking.paymentStatus !== 'PAID') {
+    try {
+      await paymentService.verifyAndSyncTransaction(reference)
+      booking = await bookingRepository.findById(bookingId)
+    } catch (error) {
+      console.error('Failed to verify payment on summary page load:', error)
+    }
+  }
 
   const serializedBooking = {
     ...booking,

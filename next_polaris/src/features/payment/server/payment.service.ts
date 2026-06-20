@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { calculatePaymentStatus } from "../utils/helpers";
 import { PaymentProvider, Prisma } from "@generated/prisma/client";
-import { initiateRefund as initiatePaystackRefund } from "@/lib/paystack";
+import { initiateRefund as initiatePaystackRefund, verifyTransaction } from "@/lib/paystack";
 import { inngest } from "@/lib/inngest";
 import { bookingInclude } from "@/lib/prisma-includes";
 
@@ -168,6 +168,48 @@ export class PaymentService {
         });
 
         return { success: true, invoice: updatedInvoice, booking, payment };
+    }
+
+    /**
+     * Re-verifies a transaction directly with Paystack and records the payment if it
+     * succeeded but hasn't been captured yet (e.g. the webhook was missed or delayed).
+     * Safe to call repeatedly — processSuccessfulPayment/confirmInvoicePayment are idempotent.
+     */
+    async verifyAndSyncTransaction(reference: string) {
+        let provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK;
+
+        const existingPayment = await prisma.payment.findFirst({ where: { providerRef: reference } });
+        if (existingPayment) {
+            provider = existingPayment.provider as PaymentProvider;
+        } else {
+            const invoice = await prisma.invoice.findUnique({ where: { invoiceNumber: reference } });
+            if (invoice?.gateway) provider = invoice.gateway as PaymentProvider;
+        }
+
+        const verificationResponse = await verifyTransaction(reference, provider);
+        if (!verificationResponse.status) {
+            return { success: false, message: 'Transaction verification failed' };
+        }
+
+        const { data } = verificationResponse;
+
+        if (data.status === 'success') {
+            const payment = await prisma.payment.findUnique({
+                where: { provider_providerRef: { provider, providerRef: reference } },
+            });
+
+            if (payment && payment.status !== 'PAID') {
+                await this.processSuccessfulPayment(reference, data as unknown as Prisma.InputJsonValue, provider);
+            } else if (!payment) {
+                const invoice = await prisma.invoice.findUnique({ where: { invoiceNumber: reference } });
+                if (invoice && invoice.status !== 'PAID') {
+                    const actualAmount = data.amount ? data.amount / 100 : undefined;
+                    await this.confirmInvoicePayment(invoice.id, reference, data as unknown as Prisma.InputJsonValue, actualAmount);
+                }
+            }
+        }
+
+        return { success: true, paystackStatus: data.status, provider };
     }
 
     /**

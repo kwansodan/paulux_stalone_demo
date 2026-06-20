@@ -12,15 +12,17 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'Missing signature' }, { status: 401 });
         }
 
-        const body = await req.json();
+        const rawBody = await req.text();
 
-        // Verify signature against PRIMARY_PAYSTACK
-        const isValid = verifyPaystackSignature(signature, body, PaymentProvider.PRIMARY_PAYSTACK);
+        // Verify signature against PRIMARY_PAYSTACK — must hash the raw bytes Paystack signed
+        const isValid = verifyPaystackSignature(signature, rawBody, PaymentProvider.PRIMARY_PAYSTACK);
 
         if (!isValid) {
             console.error('Invalid PRIMARY Paystack webhook signature');
             return NextResponse.json({ message: 'Invalid signature' }, { status: 401 });
         }
+
+        const body = JSON.parse(rawBody);
 
         const event = body.event;
         const data = body.data;

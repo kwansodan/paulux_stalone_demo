@@ -246,12 +246,14 @@ export async function verifyTransaction(
 /**
  * Verify Paystack webhook signature
  * @param signature X-Paystack-Signature header
- * @param body Raw request body
+ * @param rawBody Raw request body bytes, exactly as received (must not be parsed/re-serialized —
+ *  Paystack signs the literal bytes it sent, and re-stringifying a parsed JSON object is not
+ *  guaranteed to byte-match the original payload)
  * @param provider The Paystack account to verify against
  */
 export function verifyPaystackSignature(
     signature: string,
-    body: unknown,
+    rawBody: string,
     provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK
 ): boolean {
     const secretKey = getSecretKey(provider);
@@ -259,7 +261,7 @@ export function verifyPaystackSignature(
 
     const hash = crypto
         .createHmac('sha512', secretKey)
-        .update(JSON.stringify(body))
+        .update(rawBody)
         .digest('hex');
 
     return hash === signature;

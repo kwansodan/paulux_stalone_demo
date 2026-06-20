@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyTransaction } from '@/lib/paystack';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/features/payment/server/payment.service';
-import { PaymentProvider, Prisma } from '@generated/prisma/client';
 
 export async function GET(
     req: NextRequest,
@@ -19,46 +17,20 @@ export async function GET(
             );
         }
 
-        // 1. Identify which provider this reference belongs to
-        // We can check the Payment table or Invoice table
-        let provider: PaymentProvider = PaymentProvider.PRIMARY_PAYSTACK; // Default
+        // Re-verify with Paystack and capture the payment if it succeeded but wasn't recorded yet
+        // (e.g. webhook missed/delayed)
+        const syncResult = await paymentService.verifyAndSyncTransaction(reference);
 
-        const existingPayment = await prisma.payment.findFirst({
-            where: { providerRef: reference }
-        });
-
-        if (existingPayment) {
-            provider = existingPayment.provider as PaymentProvider;
-        } else {
-            // Check invoice if payment doesn't exist yet
-            const invoice = await prisma.invoice.findUnique({
-                where: { invoiceNumber: reference }
-            });
-            if (invoice?.gateway) {
-                provider = invoice.gateway as PaymentProvider;
-            }
-        }
-
-        // 2. Verify transaction with Paystack (using identified provider)
-        const verificationResponse = await verifyTransaction(reference, provider);
-
-        if (!verificationResponse.status) {
+        if (!syncResult.success) {
             return NextResponse.json(
-                { message: 'Transaction verification failed', data: verificationResponse },
+                { message: syncResult.message || 'Transaction verification failed' },
                 { status: 400 }
             );
         }
 
-        const { data } = verificationResponse;
-
-        // 3. Find the payment record in our database
-        const payment = await prisma.payment.findUnique({
-            where: {
-                provider_providerRef: {
-                    provider: provider,
-                    providerRef: reference,
-                },
-            },
+        // Find the payment record in our database (post-sync) for the response payload
+        const payment = await prisma.payment.findFirst({
+            where: { providerRef: reference },
             include: {
                 booking: {
                     include: {
@@ -72,38 +44,11 @@ export async function GET(
             },
         });
 
-        // Update payment status if it differs from Paystack
-        if (data.status === 'success') {
-            try {
-                if (payment && payment.status !== 'PAID') {
-                    const result = await paymentService.processSuccessfulPayment(reference, data as Prisma.InputJsonValue, provider);
-                    if (!result.success) {
-                        console.error(`Service failed to process payment: ${result.message}`);
-                    }
-                } else if (!payment) {
-                    const invoice = await prisma.invoice.findUnique({
-                        where: { invoiceNumber: reference }
-                    });
-                    if (invoice && invoice.status !== 'PAID') {
-                        const actualAmount = data.amount ? data.amount / 100 : undefined;
-                        await paymentService.confirmInvoicePayment(
-                            invoice.id,
-                            reference,
-                            data as Prisma.InputJsonValue,
-                            actualAmount
-                        );
-                    }
-                }
-            } catch (error) {
-                console.error('Error processing payment in verify endpoint:', error);
-            }
-        }
-
         return NextResponse.json({
             success: true,
             message: 'Transaction verified successfully',
             data: {
-                paystack: data,
+                paystackStatus: syncResult.paystackStatus,
                 payment: payment ? {
                     id: payment.id,
                     status: payment.status,
