@@ -4,9 +4,9 @@ import { useMemo, useState } from "react"
 import BookingsFilters from "./bookings-filters"
 import { BookingFilters, BookingWithServiceAndPayment } from "../types"
 import { DataTable } from "@/components/data-table"
-import { useBookings, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
+import { useBookings, useChargeCustomer, useMarkAsPaid, useRecheckPayment } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
-import { Banknote, Scissors } from "lucide-react"
+import { Banknote, Scissors, RefreshCw } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import { calculateBookingTotal } from "../utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
@@ -29,6 +29,7 @@ export default function BookingsTable() {
   const [recordPaymentBooking, setRecordPaymentBooking] = useState<BookingWithServiceAndPayment | null>(null)
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
+  const recheckPayment = useRecheckPayment()
 
   const apiFilters = useMemo(() => {
     return Object.entries(filters).reduce((acc, [key, value]) => {
@@ -172,6 +173,22 @@ export default function BookingsTable() {
                 onClick={() => setChargeBooking(row)}
               >
                 Charge
+              </Button>
+            )}
+
+            {/* Recheck with Paystack — for when a customer paid online but it didn't reflect
+                (e.g. webhook missed, or they got stuck on Paystack's success page) */}
+            {isActive && isUnpaidOrPartial && !isWalkIn && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100"
+                disabled={recheckPayment.isPending}
+                onClick={() => recheckPayment.mutate(row.id)}
+                title="Re-check this booking's payment status directly with Paystack"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 mr-1 ${recheckPayment.isPending && recheckPayment.variables === row.id ? "animate-spin" : ""}`} />
+                Recheck
               </Button>
             )}
           </div>
