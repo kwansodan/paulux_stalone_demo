@@ -3,6 +3,7 @@ import { inngest } from "@/lib/inngest";
 import { passwordResetEvent } from "@/features/auth/events/event-password-reset";
 import { bookingCancelledEvent } from "@/features/auth/events/event-booking-cancel";
 import { bookingCreatedEvent } from "@/features/booking/events/event-booking-created";
+import { bookingUpdatedEvent } from "@/features/booking/events/event-booking-updated";
 import { paymentReceivedEvent } from "@/features/payment/events/event-payment-received";
 import { stylistAssignedEvent } from "@/features/booking/events/event-stylist-assigned";
 import { productLowStockEvent } from "@/features/product/events/event-product-low-stock";
@@ -21,6 +22,7 @@ export const { GET, POST, PUT } = serve({
     passwordResetEvent,
     bookingCancelledEvent,
     bookingCreatedEvent,
+    bookingUpdatedEvent,
     paymentReceivedEvent,
     stylistAssignedEvent,
     productLowStockEvent,

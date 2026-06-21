@@ -90,21 +90,22 @@ export async function POST(request: NextRequest) {
     const validatedBody = BookingSchema.parse(body)
 
     let isWalkIn = validatedBody.bookingType === "WALKIN"
+    const isEditing = !!validatedBody.id
 
-    // If updating, retrieve the existing booking to ensure we use the correct bookingType
-    if (validatedBody.id) {
+    // If updating, retrieve the existing booking to ensure we use the correct bookingType,
+    // and keep a snapshot of its prior services/products/date/time so we can tell the
+    // customer what actually changed (rather than re-sending a "booking received" message).
+    let previousBooking: Awaited<ReturnType<typeof bookingRepository.findById>> = null
+    if (isEditing) {
       const auth = await requireRoleApi(['ADMIN'])
       if (!auth.ok) return auth.response
 
-      const existingBooking = await prisma.booking.findUnique({
-        where: { id: validatedBody.id },
-        select: { bookingType: true }
-      })
-      if (!existingBooking) {
+      previousBooking = await bookingRepository.findById(validatedBody.id!)
+      if (!previousBooking) {
         return NextResponse.json({ success: false, error: 'Booking not found' }, { status: 404 })
       }
-      isWalkIn = existingBooking.bookingType === "WALKIN"
-      validatedBody.bookingType = existingBooking.bookingType
+      isWalkIn = previousBooking.bookingType === "WALKIN"
+      validatedBody.bookingType = previousBooking.bookingType
     } else if (isWalkIn) {
       // Walk-in bookings are admin-only
       const auth = await requireRoleApi(['ADMIN'])
@@ -306,10 +307,31 @@ export async function POST(request: NextRequest) {
       ...(isWalkIn && { status: "CONFIRMED" }),
     })
 
-    await inngest.send({
-      name: "app/booking.booking-created",
-      data: { bookingId: createdBooking.id }
-    }).catch(err => console.error("Failed to send booking-created event:", err))
+    if (!isEditing) {
+      await inngest.send({
+        name: "app/booking.booking-created",
+        data: { bookingId: createdBooking.id }
+      }).catch(err => console.error("Failed to send booking-created event:", err))
+    } else if (previousBooking) {
+      await inngest.send({
+        name: "app/booking.booking-updated",
+        data: {
+          bookingId: createdBooking.id,
+          previousServices: previousBooking.services.map(s => ({
+            id: s.serviceId,
+            name: s.service.name,
+            quantity: (s as any).quantity ?? 1,
+          })),
+          previousProducts: (previousBooking.products ?? []).map(p => ({
+            id: p.productId,
+            name: p.product.name,
+            quantity: p.quantity ?? 1,
+          })),
+          previousBookingDate: previousBooking.bookingDate,
+          previousBookingTime: previousBooking.bookingTime,
+        }
+      }).catch(err => console.error("Failed to send booking-updated event:", err))
+    }
 
     return NextResponse.json({ success: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {

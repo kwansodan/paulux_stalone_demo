@@ -12,6 +12,16 @@ export type BookingCreatedEventArgs = {
   }
 }
 
+export type BookingUpdatedEventArgs = {
+  data: {
+    bookingId: string;
+    previousServices: { id: string; name: string; quantity: number }[];
+    previousProducts: { id: string; name: string; quantity: number }[];
+    previousBookingDate: string;
+    previousBookingTime: string;
+  }
+}
+
 export type PasswordResetEventArgs = {
   data: {
     userId: string;
@@ -60,6 +70,7 @@ type Events = {
   "app/password.password-reset": PasswordResetEventArgs;
   "app/booking.booking-cancel": BookingCancelEventArgs;
   "app/booking.booking-created": BookingCreatedEventArgs;
+  "app/booking.booking-updated": BookingUpdatedEventArgs;
   "app/payment.payment-received": PaymentReceivedEventArgs;
   "app/booking.stylist-assigned": StylistAssignedEventArgs;
   "app/product.low-stock": ProductLowStockEventArgs;
