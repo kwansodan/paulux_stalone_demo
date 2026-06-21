@@ -74,6 +74,16 @@ export function useBookings(filters: Partial<BookingFilters>) {
 }
 
 
+export function useBookingCalendarCounts(from: string, to: string) {
+  return useQuery({
+    queryKey: ["booking-calendar-counts", from, to],
+    queryFn: async () => {
+      const res = await api.get("/bookings/calendar-counts", { params: { from, to } })
+      return res.data.data as Record<string, number>
+    },
+  })
+}
+
 export function useBookingMetrics(initial: IBookingMetrics) {
   return useQuery({
     queryKey: ["booking-metrics"],

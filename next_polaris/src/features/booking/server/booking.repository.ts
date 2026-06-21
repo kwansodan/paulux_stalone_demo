@@ -182,6 +182,26 @@ export class BookingRepository {
   }
 
 
+  /**
+   * Returns a { "YYYY-MM-DD": count } map of active (non-cancelled) bookings per day,
+   * for rendering calendar density hints. Inclusive of both bounds.
+   */
+  async getBookingCountsByDateRange(from: string, to: string): Promise<Record<string, number>> {
+    const grouped = await prisma.booking.groupBy({
+      by: ['bookingDate'],
+      where: {
+        bookingDate: { gte: from, lte: to },
+        status: { not: BookingStatus.CANCELLED },
+      },
+      _count: { _all: true },
+    })
+
+    return grouped.reduce((acc, row) => {
+      acc[row.bookingDate] = row._count._all
+      return acc
+    }, {} as Record<string, number>)
+  }
+
   async findById(id: string) {
     const result = await prisma.booking.findUnique({
       where: { id },
