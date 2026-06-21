@@ -141,8 +141,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Auto-fill walk-in date/time (today + current time)
-    if (isWalkIn) {
+    // Auto-fill walk-in date/time (today + current time) — only on creation.
+    // On edits, the walk-in's original date/time should be left as-is.
+    if (isWalkIn && !validatedBody.id) {
       const now = new Date()
       validatedBody.bookingDate = now.toISOString().split('T')[0]
       const hh = String(now.getHours()).padStart(2, '0')
