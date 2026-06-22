@@ -52,7 +52,7 @@ const WalkinWelcomeEmail = ({
             {/* Services */}
             <Section className="mb-6">
               <Text className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">
-                Today you&apos;ll be enjoying
+                Your service(s) today include
               </Text>
               {serviceNames.map((name, i) => (
                 <Text key={i} className="text-fuchsia-700 text-lg font-semibold mb-1">
@@ -79,7 +79,7 @@ const WalkinWelcomeEmail = ({
                 Reach out to us on Instagram and we&apos;ll get back to you right away.
               </Text>
               <Text className="text-fuchsia-600 font-semibold text-base mb-0">
-                📸 @polarisbeautylounge
+                📸 instagram.com/polarisbeautylounge
               </Text>
             </Section>
 
