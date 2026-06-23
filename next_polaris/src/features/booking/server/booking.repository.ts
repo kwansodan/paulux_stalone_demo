@@ -64,17 +64,27 @@ export class BookingRepository {
         }
       })
 
+      // Snapshot what was already on the booking before we touch it — edits should only
+      // affect the price of items actually being added, not re-price everything else at
+      // today's catalog price. Stylist assignments must also survive the edit.
+      const existingBookingServices = await prisma.bookingService.findMany({ where: { bookingId: payload.id } })
+      const existingBookingProducts = await prisma.bookingProduct.findMany({ where: { bookingId: payload.id } })
+
       // Update services (delete and recreate)
       if (serviceIds.length > 0) {
         await prisma.bookingService.deleteMany({ where: { bookingId: payload.id } });
         await prisma.bookingService.createMany({
-          data: services.map(s => ({
-            bookingId: payload.id as string,
-            serviceId: s.id,
-            priceAtBooking: s.price,
-            durationAtBooking: s.durationMinutes,
-            quantity: serviceEntries.find(e => e.id === s.id)?.quantity ?? 1,
-          }))
+          data: services.map(s => {
+            const existingRow = existingBookingServices.find(e => e.serviceId === s.id)
+            return {
+              bookingId: payload.id as string,
+              serviceId: s.id,
+              priceAtBooking: existingRow?.priceAtBooking ?? s.price,
+              durationAtBooking: existingRow?.durationAtBooking ?? s.durationMinutes,
+              quantity: serviceEntries.find(e => e.id === s.id)?.quantity ?? 1,
+              assignedToId: existingRow?.assignedToId ?? null,
+            }
+          })
         });
       }
 
@@ -82,12 +92,15 @@ export class BookingRepository {
       await prisma.bookingProduct.deleteMany({ where: { bookingId: payload.id } });
       if (products.length > 0) {
         await prisma.bookingProduct.createMany({
-          data: products.map(p => ({
-            bookingId: payload.id as string,
-            productId: p.id,
-            priceAtBooking: p.price,
-            quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1,
-          }))
+          data: products.map(p => {
+            const existingRow = existingBookingProducts.find(e => e.productId === p.id)
+            return {
+              bookingId: payload.id as string,
+              productId: p.id,
+              priceAtBooking: existingRow?.priceAtBooking ?? p.price,
+              quantity: productEntries.find(e => e.id === p.id)?.quantity ?? 1,
+            }
+          })
         });
       }
 

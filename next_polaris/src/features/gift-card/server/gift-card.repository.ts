@@ -159,41 +159,55 @@ export class GiftCardRepository {
   /**
    * Apply (redeem) a portion of a gift card's balance toward a booking.
    * Returns the updated gift card and the amount actually applied.
+   *
+   * Uses an optimistic compare-and-swap on `balance` (rather than read-then-write) so that
+   * two concurrent redemptions of the same card can't both read the same starting balance
+   * and over-debit it. If another redemption races ahead of us, we retry against the
+   * fresh balance.
    */
   async redeem(id: string, bookingId: string | null, amount: number, redeemedById?: string | null) {
-    return prisma.$transaction(async (tx) => {
-      const giftCard = await tx.giftCard.findUnique({ where: { id } })
-      if (!giftCard) throw new Error("Gift card not found")
+    const MAX_ATTEMPTS = 5
 
-      const currentBalance = Number(giftCard.balance)
-      const amountApplied = Math.min(amount, currentBalance)
-      const newBalance = Math.max(0, currentBalance - amountApplied)
+    for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+      const result = await prisma.$transaction(async (tx) => {
+        const giftCard = await tx.giftCard.findUnique({ where: { id } })
+        if (!giftCard) throw new Error("Gift card not found")
 
-      const newStatus =
-        newBalance <= 0
-          ? GiftCardStatus.REDEEMED
-          : GiftCardStatus.PARTIALLY_REDEEMED
+        const currentBalance = Number(giftCard.balance)
+        const amountApplied = Math.min(amount, currentBalance)
+        const newBalance = Math.max(0, currentBalance - amountApplied)
 
-      const updated = await tx.giftCard.update({
-        where: { id },
-        data: {
-          balance: newBalance,
-          status: newStatus,
-        },
-        include: { items: true },
+        const newStatus =
+          newBalance <= 0
+            ? GiftCardStatus.REDEEMED
+            : GiftCardStatus.PARTIALLY_REDEEMED
+
+        // Compare-and-swap: only commit if the balance hasn't moved since we read it.
+        const { count } = await tx.giftCard.updateMany({
+          where: { id, balance: giftCard.balance },
+          data: { balance: newBalance, status: newStatus },
+        })
+
+        if (count === 0) return null // lost the race — caller retries
+
+        const updated = await tx.giftCard.findUniqueOrThrow({ where: { id }, include: { items: true } })
+
+        await tx.giftCardRedemption.create({
+          data: {
+            giftCardId: id,
+            bookingId,
+            amountApplied,
+            redeemedById: redeemedById ?? null,
+          },
+        })
+
+        return { giftCard: serializeGiftCard(updated), amountApplied }
       })
 
-      await tx.giftCardRedemption.create({
-        data: {
-          giftCardId: id,
-          bookingId,
-          amountApplied,
-          redeemedById: redeemedById ?? null,
-        },
-      })
+      if (result) return result
+    }
 
-      return { giftCard: serializeGiftCard(updated), amountApplied }
-    })
+    throw new Error("Failed to redeem gift card after multiple attempts — please try again")
   }
 }
 
