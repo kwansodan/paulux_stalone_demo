@@ -9,7 +9,9 @@ import { calculateBookingTotal } from "../utils/helpers";
 
 export class BookingRepository {
 
-  async upsertBooking(payload: any): Promise<Booking> {
+  async upsertBooking(payload: any, client?: Prisma.TransactionClient): Promise<Booking> {
+    const db = client ?? prisma
+
     // Normalise service entries — accept both legacy string[] and new { id, quantity }[]
     const serviceEntries: { id: string; quantity: number }[] = (
       payload.serviceIds || (payload.serviceId ? [payload.serviceId] : [])
@@ -25,17 +27,17 @@ export class BookingRepository {
     const productIds = productEntries.map(p => p.id);
 
     // Fetch all services to get price and duration snapshots
-    const services = await prisma.service.findMany({
+    const services = await db.service.findMany({
       where: { id: { in: serviceIds } }
     });
 
     // Fetch all products to get price snapshot
     const products = productIds.length > 0
-      ? await prisma.product.findMany({ where: { id: { in: productIds } } })
+      ? await db.product.findMany({ where: { id: { in: productIds } } })
       : [];
 
     if (payload.id) {
-      const existing = await prisma.booking.findUnique({
+      const existing = await db.booking.findUnique({
         where: { id: payload.id }
       })
 
@@ -44,7 +46,7 @@ export class BookingRepository {
       }
 
       // Update basic fields
-      await prisma.booking.update({
+      await db.booking.update({
         where: { id: payload.id },
         data: {
           clientName: payload.clientName,
@@ -67,13 +69,13 @@ export class BookingRepository {
       // Snapshot what was already on the booking before we touch it — edits should only
       // affect the price of items actually being added, not re-price everything else at
       // today's catalog price. Stylist assignments must also survive the edit.
-      const existingBookingServices = await prisma.bookingService.findMany({ where: { bookingId: payload.id } })
-      const existingBookingProducts = await prisma.bookingProduct.findMany({ where: { bookingId: payload.id } })
+      const existingBookingServices = await db.bookingService.findMany({ where: { bookingId: payload.id } })
+      const existingBookingProducts = await db.bookingProduct.findMany({ where: { bookingId: payload.id } })
 
       // Update services (delete and recreate)
       if (serviceIds.length > 0) {
-        await prisma.bookingService.deleteMany({ where: { bookingId: payload.id } });
-        await prisma.bookingService.createMany({
+        await db.bookingService.deleteMany({ where: { bookingId: payload.id } });
+        await db.bookingService.createMany({
           data: services.map(s => {
             const existingRow = existingBookingServices.find(e => e.serviceId === s.id)
             return {
@@ -89,9 +91,9 @@ export class BookingRepository {
       }
 
       // Update products (delete and recreate)
-      await prisma.bookingProduct.deleteMany({ where: { bookingId: payload.id } });
+      await db.bookingProduct.deleteMany({ where: { bookingId: payload.id } });
       if (products.length > 0) {
-        await prisma.bookingProduct.createMany({
+        await db.bookingProduct.createMany({
           data: products.map(p => {
             const existingRow = existingBookingProducts.find(e => e.productId === p.id)
             return {
@@ -105,13 +107,13 @@ export class BookingRepository {
       }
 
       // Return the full canonical shape
-      return prisma.booking.findUniqueOrThrow({
+      return db.booking.findUniqueOrThrow({
         where: { id: payload.id },
         include: bookingInclude,
       }) as unknown as Booking;
     }
 
-    let booking = await prisma.booking.create({
+    let booking = await db.booking.create({
       data: {
         bookingReference: generateBookingReference(),
         clientName: payload.clientName,
@@ -153,7 +155,7 @@ export class BookingRepository {
       try {
         const eventId = await createCalendarEvent(booking);
         if (eventId) {
-          booking = await prisma.booking.update({
+          booking = await db.booking.update({
             where: { id: booking.id },
             data: { googleEventId: eventId },
             include: bookingInclude,
@@ -239,11 +241,13 @@ export class BookingRepository {
     durationMinutes: number,
     excludeBookingId?: string,
     serviceIds?: string[],
+    client?: Prisma.TransactionClient,
   ): Promise<boolean> {
+    const db = client ?? prisma
     const dateString = date.toISOString().split('T')[0]
     const dayOfWeek = date.getUTCDay()
 
-    const businessHour = await prisma.businessHour.findUnique({
+    const businessHour = await db.businessHour.findUnique({
       where: { dayOfWeek },
       select: { maxConcurrentBookings: true }
     })
@@ -260,7 +264,7 @@ export class BookingRepository {
     }
 
     // Fetch all existing bookings for this date (minimal include — only for slot calc)
-    const existingBookings = await prisma.booking.findMany({
+    const existingBookings = await db.booking.findMany({
       where: baseWhere,
       include: { services: true },
     });
@@ -284,7 +288,7 @@ export class BookingRepository {
 
     // --- Per-category capacity check ---
     if (serviceIds && serviceIds.length > 0) {
-      const requestedServices = await prisma.service.findMany({
+      const requestedServices = await db.service.findMany({
         where: { id: { in: serviceIds } },
         include: { category: true },
       });
@@ -297,7 +301,7 @@ export class BookingRepository {
       }
 
       for (const [categoryId, category] of categoryMap) {
-        const categoryBookings = await prisma.booking.findMany({
+        const categoryBookings = await db.booking.findMany({
           where: {
             ...baseWhere,
             services: { some: { service: { categoryId } } },

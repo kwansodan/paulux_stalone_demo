@@ -13,6 +13,12 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { inngest } from "@/lib/inngest";
 
+class SlotUnavailableError extends Error {
+  constructor() {
+    super("Booking already exists for slot (overlap detected)")
+  }
+}
+
 
 
 
@@ -280,12 +286,6 @@ export async function POST(request: NextRequest) {
 
         verifiedPromoCodeId = promo.id
         verifiedDiscountAmount = computedDiscount
-
-        // Increment usedCount atomically
-        await prisma.promoCode.update({
-          where: { id: promo.id },
-          data: { usedCount: { increment: 1 } },
-        })
       }
     }
 
@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
         ? { promoCodeId: verifiedPromoCodeId, discountAmount: verifiedDiscountAmount }
         : {}
 
-    const createdBooking = await bookingRepository.upsertBooking({
+    const bookingPayload = {
       ...validatedBody,
       serviceIds: resolvedServiceEntries,
       packageId: packageId ?? null,
@@ -305,7 +305,42 @@ export async function POST(request: NextRequest) {
       bookingType: validatedBody.bookingType ?? "SCHEDULED",
       // Walk-ins are immediately confirmed
       ...(isWalkIn && { status: "CONFIRMED" }),
-    })
+    }
+
+    // Walk-ins don't contend for slot capacity, so they can be created directly.
+    // Scheduled bookings re-check availability one more time inside a transaction that
+    // holds a per-date advisory lock — the earlier isAvailable check above is only a fast
+    // fail; without this second, lock-guarded check, two concurrent requests for the same
+    // near-capacity slot could both pass the first check and both get created.
+    const createdBooking = isWalkIn
+      ? await bookingRepository.upsertBooking(bookingPayload)
+      : await prisma.$transaction(async (tx) => {
+          await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${validatedBody.bookingDate}))`
+
+          const stillAvailable = await bookingRepository.isSlotAvailable(
+            new Date(validatedBody.bookingDate!),
+            validatedBody.bookingTime!,
+            totalDuration,
+            validatedBody.id,
+            serviceIds,
+            tx,
+          )
+
+          if (!stillAvailable) {
+            throw new SlotUnavailableError()
+          }
+
+          return bookingRepository.upsertBooking(bookingPayload, tx)
+        })
+
+    // Only consume a promo use once the booking has actually been persisted —
+    // incrementing beforehand would burn a redemption slot on a request that ultimately fails.
+    if (verifiedPromoCodeId) {
+      await prisma.promoCode.update({
+        where: { id: verifiedPromoCodeId },
+        data: { usedCount: { increment: 1 } },
+      }).catch(err => console.error("Failed to increment promo code usedCount:", err))
+    }
 
     if (!isEditing) {
       await inngest.send({
@@ -336,6 +371,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true, message: "Successfully created booking!", data: createdBooking }, { status: 200 })
   } catch (error: any) {
     if (error instanceof NextResponse) return error
+    if (error instanceof SlotUnavailableError) {
+      return NextResponse.json(
+        { success: false, error: error.message },
+        { status: 409 }
+      )
+    }
     console.error("Error creating booking: ", error)
     if (error instanceof Prisma.PrismaClientValidationError) {
       return NextResponse.json(
