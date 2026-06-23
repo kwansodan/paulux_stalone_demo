@@ -177,8 +177,10 @@ export default function BookingsTable() {
             )}
 
             {/* Recheck with Paystack — for when a customer paid online but it didn't reflect
-                (e.g. webhook missed, or they got stuck on Paystack's success page) */}
-            {isActive && isUnpaidOrPartial && !isWalkIn && (
+                (e.g. webhook missed, or they got stuck on Paystack's success page).
+                Walk-ins can also have a pending online payment (e.g. via the Charge button),
+                so this isn't restricted to scheduled bookings. */}
+            {isActive && isUnpaidOrPartial && (
               <Button
                 size="sm"
                 variant="outline"
