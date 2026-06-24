@@ -16,9 +16,10 @@ import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 type Props = {
   formData: BookingFormData
   onBack: () => void
+  globalMinDeposit: number | null
 }
 
-export default function BookingConfirmationStep({ formData, onBack }: Props) {
+export default function BookingConfirmationStep({ formData, onBack, globalMinDeposit }: Props) {
   const router = useRouter()
   const services = formData.selectedServices
   const pkg = formData.selectedPackage
@@ -58,9 +59,12 @@ export default function BookingConfirmationStep({ formData, onBack }: Props) {
   const amountDueAfterGiftCard = Math.max(0, totalPrice - giftCardAmount)
 
   const totalDuration = services.reduce((sum, s) => sum + s.durationMinutes, 0)
-  const depositPayment = pkg
-    ? Number(pkg.minDepositFixed)
-    : (formData.minDepositFixed ?? services.reduce((sum, s) => sum + Number(s.minDepositFixed), 0))
+  // A global override (set by an admin) replaces the per-service/package minimum deposit entirely.
+  const depositPayment = globalMinDeposit != null
+    ? globalMinDeposit
+    : pkg
+      ? Number(pkg.minDepositFixed)
+      : (formData.minDepositFixed ?? services.reduce((sum, s) => sum + Number(s.minDepositFixed), 0))
   // A gift card settles against the full price, so once one is applied we no longer
   // offer the "pay deposit" option — it'd be ambiguous which amount the gift card covers.
   const hasDepositRequirement = depositPayment > 0 && depositPayment < totalPrice && !appliedGiftCard

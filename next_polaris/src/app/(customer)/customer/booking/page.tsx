@@ -1,6 +1,7 @@
 import CustomerBookingForm from "@/components/customer/booking/customer-booking-form";
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { prisma } from "@/lib/prisma";
+import { getGlobalMinDeposit } from "@/features/payment/server/deposit-settings";
 
 export const dynamic = 'force-dynamic'
 
@@ -11,13 +12,14 @@ export default async function CustomerBookingPage({
 }) {
   const params = await searchParams
 
-  const [services, packages] = await Promise.all([
+  const [services, packages, globalMinDeposit] = await Promise.all([
     serviceRepository.getAllServices({}),
     prisma.servicePackage.findMany({
       where: { isActive: true },
       include: { services: { include: { service: true } } },
       orderBy: { createdAt: "asc" },
     }),
+    getGlobalMinDeposit(),
   ])
 
   const serializedPackages = packages.map((pkg) => ({
@@ -45,6 +47,7 @@ export default async function CustomerBookingPage({
         packages={serializedPackages}
         preSelectedServiceId={params.serviceId || null}
         preSelectedPackageId={params.packageId || null}
+        globalMinDeposit={globalMinDeposit}
       />
     </div>
   )

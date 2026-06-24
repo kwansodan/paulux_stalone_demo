@@ -6,6 +6,7 @@ import { businessHourRepository } from "@/features/business-hour/server/business
 import { blockedDateRepository } from "@/features/blocked-date/server/blockedDate.repository"
 import { StaffMember } from "@/features/staff/types"
 import { PAYMENT_EMAILS_KEY, parseEmailList } from "@/features/payment/server/payment-recipients"
+import { GLOBAL_MIN_DEPOSIT_KEY } from "@/features/payment/server/deposit-settings"
 
 export const dynamic = "force-dynamic"
 
@@ -16,10 +17,11 @@ export default async function AppSettingsPage() {
 
   const db = prisma as any
 
-  const [images, walkinSetting, paymentEmailsSetting, categories, businessHours, blockedDates, staffRaw, rolesRaw] = await Promise.all([
+  const [images, walkinSetting, paymentEmailsSetting, globalDepositSetting, categories, businessHours, blockedDates, staffRaw, rolesRaw] = await Promise.all([
     prisma.styleImage.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.systemSetting.findUnique({ where: { key: "walkin_email" } }),
     prisma.systemSetting.findUnique({ where: { key: PAYMENT_EMAILS_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: GLOBAL_MIN_DEPOSIT_KEY } }),
     prisma.serviceCategory.findMany({
       include: { _count: { select: { services: true } } },
       orderBy: { createdAt: "asc" },
@@ -74,12 +76,19 @@ export default async function AppSettingsPage() {
     updatedAt: r.updatedAt.toISOString(),
   }))
 
+  const globalDepositAmount = globalDepositSetting?.value ? Number(globalDepositSetting.value) : null
+  const initialGlobalMinDeposit =
+    globalDepositAmount != null && Number.isFinite(globalDepositAmount) && globalDepositAmount > 0
+      ? globalDepositAmount
+      : null
+
   return (
     <div className="p-6 bg-gray-50 min-h-screen w-full">
       <AppSettingsShell
         initialImages={serializedImages}
         initialWalkinEmail={walkinSetting?.value ?? WALKIN_EMAIL_DEFAULT}
         initialPaymentEmails={parseEmailList(paymentEmailsSetting?.value)}
+        initialGlobalMinDeposit={initialGlobalMinDeposit}
         initialCategories={serializedCategories}
         initialBusinessHours={businessHours}
         initialBlockedDates={blockedDates}

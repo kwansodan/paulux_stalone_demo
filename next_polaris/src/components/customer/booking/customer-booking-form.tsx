@@ -46,11 +46,13 @@ export default function CustomerBookingForm({
   packages,
   preSelectedServiceId,
   preSelectedPackageId,
+  globalMinDeposit,
 }: {
   services: SerializedService[]
   packages: SerializedPackage[]
   preSelectedServiceId: string | null
   preSelectedPackageId: string | null
+  globalMinDeposit: number | null
 }) {
   const router = useRouter()
   const [currentStep, setCurrentStep] = useState(1)
@@ -198,6 +200,7 @@ export default function CustomerBookingForm({
             <BookingConfirmationStep
               formData={formData}
               onBack={prevStep}
+              globalMinDeposit={globalMinDeposit}
             />
           )}
         </div>

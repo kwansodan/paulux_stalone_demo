@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { paymentProcessingService } from '@/features/payment/server/payment-processing.service';
+import { bookingRepository } from '@/features/booking/server/booking.repository';
+import { calculateBookingTotal } from '@/features/booking/utils/helpers';
+import { getRequiredDeposit } from '@/features/payment/server/deposit-settings';
+import { PaymentStatus } from '@generated/prisma/client';
 
 export async function POST(req: NextRequest) {
     try {
@@ -11,6 +15,35 @@ export async function POST(req: NextRequest) {
                 { message: 'Missing required fields: bookingId, email, amount, bookingReference' },
                 { status: 400 }
             );
+        }
+
+        const requestedAmount = Number(amount)
+
+        // Only the customer-facing first payment is allowed to be a partial deposit —
+        // enforce the minimum here so the deposit requirement (global override or
+        // per-service/package) can't be bypassed by sending a smaller `amount` directly.
+        if ((transactionType ?? 'initial') === 'initial') {
+            const booking = await bookingRepository.findById(bookingId)
+            if (!booking) {
+                return NextResponse.json({ message: 'Booking not found' }, { status: 404 })
+            }
+
+            const totalPrice = calculateBookingTotal(booking)
+            const paidPayments = booking.payments?.filter((p) => p.status === PaymentStatus.PAID) || []
+            const totalPaid = paidPayments.reduce((sum, p) => sum + Number(p.amount), 0)
+            const remainingBalance = Math.max(0, totalPrice - totalPaid)
+
+            const requiredDeposit = await getRequiredDeposit(booking)
+            const minimumAllowed = requiredDeposit > 0 && requiredDeposit < remainingBalance
+                ? requiredDeposit
+                : remainingBalance
+
+            if (requestedAmount < minimumAllowed) {
+                return NextResponse.json(
+                    { message: `Amount must be at least the required deposit of GHS ${minimumAllowed.toFixed(2)}` },
+                    { status: 400 }
+                );
+            }
         }
 
         // Initialize payment via unified processing service

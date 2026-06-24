@@ -139,9 +139,11 @@ function StyleImageUpload({
 function GeneralSection({
   initialWalkinEmail,
   initialPaymentEmails,
+  initialGlobalMinDeposit,
 }: {
   initialWalkinEmail: string
   initialPaymentEmails: string[]
+  initialGlobalMinDeposit: number | null
 }) {
   const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
   const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
@@ -204,6 +206,97 @@ function GeneralSection({
       </div>
 
       <PaymentRecipientsCard initialPaymentEmails={initialPaymentEmails} />
+      <GlobalDepositCard initialAmount={initialGlobalMinDeposit} />
+    </div>
+  )
+}
+
+// Global deposit override (customer site). When enabled, this single flat
+// amount replaces every per-service/package minimum deposit for the
+// customer-facing booking flow — see /api/settings/deposit.
+function GlobalDepositCard({ initialAmount }: { initialAmount: number | null }) {
+  const [savedAmount, setSavedAmount] = useState<number | null>(initialAmount)
+  const [enabled, setEnabled] = useState(initialAmount != null)
+  const [amountInput, setAmountInput] = useState(initialAmount != null ? String(initialAmount) : "")
+  const [saving, setSaving] = useState(false)
+
+  const dirty = enabled
+    ? amountInput.trim() !== (savedAmount != null ? String(savedAmount) : "")
+    : savedAmount != null
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const amount = enabled ? Number(amountInput) : null
+      if (enabled && (!Number.isFinite(amount) || (amount as number) < 0)) {
+        toast.error("Enter a valid, non-negative amount")
+        return
+      }
+      const res = await api.patch("/settings/deposit", { amount })
+      setSavedAmount(res.data.data.amount)
+      setEnabled(res.data.data.enabled)
+      toast.success(res.data.message || "Deposit setting updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update deposit setting")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 mt-4">
+      <div className="flex flex-col gap-4 px-6 py-5">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-gray-900">Global deposit override</p>
+          </div>
+          <p className="text-xs text-gray-500 pl-6">
+            When enabled, this flat amount replaces every service&apos;s/package&apos;s individual
+            minimum deposit on the customer booking site.
+          </p>
+          <p className="text-xs text-gray-400 pl-6 pt-1">
+            {savedAmount != null
+              ? `Currently active — GHS ${savedAmount.toFixed(2)} required as a deposit on every booking.`
+              : "Currently disabled — each service/package uses its own minimum deposit."}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-3 pl-6">
+          <button
+            type="button"
+            onClick={() => setEnabled((v) => !v)}
+            className="text-fuchsia-600"
+            aria-label="Toggle global deposit override"
+          >
+            {enabled ? <ToggleRight className="w-8 h-8" /> : <ToggleLeft className="w-8 h-8 text-gray-300" />}
+          </button>
+          <Input
+            type="number"
+            min={0}
+            step="0.01"
+            disabled={!enabled}
+            className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none w-40"
+            value={amountInput}
+            onChange={(e) => setAmountInput(e.target.value)}
+            placeholder="Amount (GHS)"
+          />
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
+            disabled={saving || !dirty || (enabled && amountInput.trim() === "")}
+            onClick={handleSave}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <><Save className="w-4 h-4 mr-1.5" />Save</>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -637,6 +730,7 @@ export default function AppSettingsShell({
   initialImages,
   initialWalkinEmail,
   initialPaymentEmails,
+  initialGlobalMinDeposit,
   initialCategories,
   initialBusinessHours,
   initialBlockedDates,
@@ -646,6 +740,7 @@ export default function AppSettingsShell({
   initialImages: StyleImage[]
   initialWalkinEmail: string
   initialPaymentEmails: string[]
+  initialGlobalMinDeposit: number | null
   initialCategories: SerializedServiceCategory[]
   initialBusinessHours: BusinessHour[]
   initialBlockedDates: BlockedDate[]
@@ -721,7 +816,11 @@ export default function AppSettingsShell({
           </div>
 
           {activeSection === "general" && (
-            <GeneralSection initialWalkinEmail={initialWalkinEmail} initialPaymentEmails={initialPaymentEmails} />
+            <GeneralSection
+              initialWalkinEmail={initialWalkinEmail}
+              initialPaymentEmails={initialPaymentEmails}
+              initialGlobalMinDeposit={initialGlobalMinDeposit}
+            />
           )}
           {activeSection === "gallery" && (
             <HeroGallerySection initialImages={initialImages} />
