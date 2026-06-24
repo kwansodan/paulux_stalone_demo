@@ -1,5 +1,4 @@
 import { requireRoleApi } from "@/app/_auth/require-role-api";
-import { authRepository } from "@/features/auth/server/auth.repository";
 import { blockedDateRepository } from "@/features/blocked-date/server/blockedDate.repository";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
 import { isPastSlot } from "@/features/booking/utils/helpers";
@@ -7,7 +6,7 @@ import { BookingSchema } from "@/features/booking/utils/validation";
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { serviceRepository } from "@/features/service/server/service.repository";
 import { isTime24HoursInAdvance, isTimeWithinRange } from "@/utils/helpers";
-import { BookingStatus, PaymentStatus, Prisma, UserRole } from "@generated/prisma/client";
+import { BookingStatus, PaymentStatus, Prisma } from "@generated/prisma/client";
 import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
@@ -112,24 +111,23 @@ export async function POST(request: NextRequest) {
       }
       isWalkIn = previousBooking.bookingType === "WALKIN"
       validatedBody.bookingType = previousBooking.bookingType
+      // Don't trust a client-supplied createdById — use the actual authenticated admin.
+      if (validatedBody.createdById) {
+        validatedBody.createdById = auth.user.id
+      }
     } else if (isWalkIn) {
       // Walk-in bookings are admin-only
       const auth = await requireRoleApi(['ADMIN'])
       if (!auth.ok) return auth.response
-      if (!validatedBody.createdById) {
-        return NextResponse.json(
-          { success: false, error: 'Walk-in bookings require a createdById (admin only)' },
-          { status: 400 })
-      }
-    }
-
-    if (validatedBody.createdById) {
-      const existingUser = await authRepository.findUserById(validatedBody.createdById)
-      if (!existingUser || existingUser.role !== UserRole.ADMIN) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid createdById provided' },
-          { status: 409 })
-      }
+      // Don't trust a client-supplied createdById — use the actual authenticated admin.
+      validatedBody.createdById = auth.user.id
+    } else if (validatedBody.createdById) {
+      // A scheduled booking attributed to an admin (booked on a customer's behalf) must
+      // itself be made by an authenticated admin — otherwise anyone who knows/guesses an
+      // admin's UUID could spoof "Booked by: Admin" attribution on their own booking.
+      const auth = await requireRoleApi(['ADMIN'])
+      if (!auth.ok) return auth.response
+      validatedBody.createdById = auth.user.id
     }
 
     // For scheduled bookings, require date and time

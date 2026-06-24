@@ -2,13 +2,17 @@
 import { prisma } from "@/lib/prisma"
 import { LoginSchema } from "@/features/auth/utils/validation"
 import { generateSessionToken } from "@/utils/crypto"
-import { comparePassword } from "@/utils/helpers"
+import { comparePassword, DUMMY_PASSWORD_HASH } from "@/utils/helpers"
 import { type NextRequest, NextResponse } from "next/server"
 import { authRepository } from "@/features/auth/server/auth.repository"
 import { SESSION_COOKIE_NAME } from "@/constants"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = checkRateLimit(request, "login", 10, 15 * 60 * 1000)
+    if (rateLimited) return rateLimited
+
     const { email, password } = await request.json()
 
     if (!email || !password) {
@@ -23,12 +27,10 @@ export async function POST(request: NextRequest) {
       }
     })
 
-    if (!user) {
-      return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
-    }
-
-    const validPassword = await comparePassword(validatedData.password, user.passwordHash);
-    if (!validPassword) {
+    // Always run a bcrypt compare with the same cost factor, even when the user
+    // doesn't exist, so response timing doesn't reveal whether an email is registered.
+    const validPassword = await comparePassword(validatedData.password, user?.passwordHash ?? DUMMY_PASSWORD_HASH);
+    if (!user || !validPassword) {
       return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
     }
 

@@ -1,4 +1,11 @@
 polarisbeautylounge.com {
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+        Strict-Transport-Security "max-age=63072000; includeSubDomains"
+    }
+
     reverse_proxy polaris_app:3000
 
     # Proxy MinIO for public access (GET, PUT, OPTIONS)

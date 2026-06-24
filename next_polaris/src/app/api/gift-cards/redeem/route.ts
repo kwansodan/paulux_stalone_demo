@@ -10,9 +10,13 @@ import { bookingInclude } from "@/lib/prisma-includes"
 import { createCalendarEvent } from "@/lib/google-calendar"
 import { inngest } from "@/lib/inngest"
 import { PaymentProvider, PaymentStatus } from "@generated/prisma/client"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = checkRateLimit(request, "gift-card-redeem", 10, 10 * 60 * 1000)
+    if (rateLimited) return rateLimited
+
     const body = await request.json()
     const { code, bookingId, amount } = RedeemGiftCardSchema.parse(body)
 

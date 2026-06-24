@@ -1,14 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import { minioClient, BUCKET_NAME, getFileUrl, toPublicUrl } from "@/lib/minio";
 import { randomUUID } from "crypto";
+import { requireRoleApi } from "@/app/_auth/require-role-api";
+
+// SVG/HTML/script-bearing types are excluded — they can carry executable
+// content and would enable stored XSS once served from the public bucket URL.
+const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/gif", "image/webp"]);
 
 export async function POST(request: NextRequest) {
     try {
+        const auth = await requireRoleApi(["ADMIN"]);
+        if (!auth.ok) return auth.response;
+
         const { filename, fileType } = await request.json();
 
         if (!filename || !fileType) {
             return NextResponse.json(
                 { error: "filename and fileType are required" },
+                { status: 400 }
+            );
+        }
+
+        if (!ALLOWED_TYPES.has(fileType)) {
+            return NextResponse.json(
+                { error: "Only PNG, JPEG, GIF or WEBP images are allowed" },
                 { status: 400 }
             );
         }
@@ -52,6 +67,7 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ success: true, uploadUrl, publicUrl, objectName });
     } catch (error: any) {
+        if (error instanceof NextResponse) return error
         console.error("Presign error:", error);
         return NextResponse.json(
             { error: "Failed to generate presigned URL", details: error.message },

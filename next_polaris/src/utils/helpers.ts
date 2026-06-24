@@ -16,6 +16,12 @@ export const comparePassword = async (
   return await bcrypt.compare(password, passwordHash);
 };
 
+// A fixed bcrypt hash (same cost factor as real password hashes) with no real
+// account behind it. Login compares against this when a user isn't found, so
+// the bcrypt.compare cost is paid either way and response time doesn't leak
+// whether an email is registered.
+export const DUMMY_PASSWORD_HASH = bcrypt.hashSync("dummy-password-for-timing-equalization", SALTROUNDS);
+
 
 export function generateBookingReference(): string {
   const datePart = new Date()

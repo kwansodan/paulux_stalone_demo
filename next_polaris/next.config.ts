@@ -19,6 +19,24 @@ const nextConfig: NextConfig = {
       { source: "/home", destination: "/", permanent: true },
     ]
   },
+  // frame-ancestors blocks clickjacking (embedding this site in a hostile iframe)
+  // without touching script/style/image sources, so it's safe to add without
+  // risking breakage of Paystack/Google Calendar/MinIO-hosted resources that a
+  // full CSP would need careful allowlisting for.
+  async headers() {
+    return [
+      {
+        source: "/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'self'" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains" },
+        ],
+      },
+    ]
+  },
   images: {
     // Image optimization enabled for better LCP / Core Web Vitals.
     // Requires the Next image optimizer (sharp) at runtime — verify images

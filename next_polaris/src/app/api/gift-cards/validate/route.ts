@@ -2,9 +2,13 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { ValidateGiftCardSchema } from "@/features/gift-card/utils/validation"
 import { giftCardRepository } from "@/features/gift-card/server/gift-card.repository"
+import { checkRateLimit } from "@/lib/rate-limit"
 
 export async function POST(request: NextRequest) {
   try {
+    const rateLimited = checkRateLimit(request, "gift-card-validate", 20, 10 * 60 * 1000)
+    if (rateLimited) return rateLimited
+
     const body = await request.json()
     const { code } = ValidateGiftCardSchema.parse(body)
 
