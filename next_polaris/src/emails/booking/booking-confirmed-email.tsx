@@ -42,11 +42,13 @@ const BookingConfirmedEmail = ({
             {/* Heading */}
             <Section className="mb-6">
               <Heading className="text-2xl font-bold text-gray-900 mb-2">
-                ✅ Booking Confirmed!
+                📋 Booking Request Received
               </Heading>
               <Text className="text-gray-600 text-base mb-0">
-                Hi {clientName}, your booking has been received and is being processed.
-                We look forward to seeing you!
+                Hi {clientName}, thank you for your booking request for {serviceNames} on {bookingDate} at {bookingTime} (Ref: {bookingReference}).
+              </Text>
+              <Text className="text-gray-600 text-base mb-0 mt-3">
+                To confirm your appointment, please complete your deposit payment using the link below.
               </Text>
             </Section>
 
@@ -77,13 +79,19 @@ const BookingConfirmedEmail = ({
             <Hr className="border-gray-200 mb-6" />
 
             {/* CTA */}
-            <Section className="mb-8">
+            <Section className="mb-6">
               <Button
                 href={bookingSummaryUrl}
                 className="bg-fuchsia-600 text-white font-medium px-8 py-3 rounded-md"
               >
-                View Booking Details
+                Pay Deposit Now
               </Button>
+            </Section>
+
+            <Section className="mb-8">
+              <Text className="text-gray-600 text-sm font-medium m-0">
+                Your booking will be confirmed once the deposit has been received.
+              </Text>
             </Section>
 
             {/* Footer */}

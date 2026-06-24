@@ -13,7 +13,7 @@ export const sendBookingConfirmedEmail = async (
   return await resend.emails.send({
     from: "no-reply@polarisbeautylounge.com",
     to: email,
-    subject: `Booking Confirmed – ${bookingReference}`,
+    subject: `Booking Request Received – ${bookingReference}`,
     react: (
       <BookingConfirmedEmail
         clientName={clientName}

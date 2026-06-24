@@ -69,7 +69,7 @@ export const bookingCreatedEvent = inngest.createFunction(
       smsResult = await step.run("send-confirmation-sms", async () => {
         const message = isWalkIn
           ? `Welcome to Polaris! 🌟 We're so glad you're here, ${booking.clientName}. Your service(s) today include ${serviceNamesJoined}. Sit back and relax — you're in great hands! Note: No-shows forfeit payment. Cancellations eligible for refund within policy. Full details: ${summaryUrl}. Instagram: ${INSTAGRAM_LINK}`
-          : `Hi ${booking.clientName}, your booking for ${serviceNamesJoined} on ${dateFormatted} at ${timeFormatted} has been received. Ref: ${booking.bookingReference}. View details: ${summaryUrl}`
+          : `Hi ${booking.clientName}, thank you for your booking request for ${serviceNamesJoined} on ${dateFormatted} at ${timeFormatted} (Ref: ${booking.bookingReference}).\n\nTo confirm your appointment, please complete your deposit payment using the link below:\n${summaryUrl}\n\nYour booking will be confirmed once the deposit has been received.`
 
         const result = await sendSMS({
           recipients: [booking.clientPhone!],

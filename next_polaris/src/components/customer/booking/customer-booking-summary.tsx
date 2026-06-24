@@ -19,6 +19,7 @@ export default function BookingSummary({ booking }: Props) {
   const summaryRef = useRef<HTMLDivElement>(null)
   // New state for verification
   const [isVerifying, setIsVerifying] = useState(false);
+  const [isPaying, setIsPaying] = useState(false);
   const searchParams = useSearchParams();
   const reference = searchParams.get('reference');
   const fromPayment = searchParams.get('from') === 'payment';
@@ -133,6 +134,28 @@ export default function BookingSummary({ booking }: Props) {
 
   const hasRefundablePayment = () => {
     return booking.payments?.some((p: any) => p.status === "PAID" && p.provider === "PAYSTACK")
+  }
+
+  // Walk-ins are confirmed at creation and paid in person — only scheduled,
+  // unpaid bookings get a self-service deposit link here.
+  const canPayDeposit = booking.bookingType === "SCHEDULED" && bookingPaymentStatus !== "PAID"
+
+  const handlePayDeposit = async () => {
+    setIsPaying(true)
+    try {
+      const response = await fetch(`/api/bookings/${booking.id}/pay-deposit`, { method: "POST" })
+      const data = await response.json()
+      if (response.ok && data.success && data.data?.paymentUrl) {
+        window.location.href = data.data.paymentUrl
+      } else {
+        toast.error(data.message || "Failed to start payment")
+        setIsPaying(false)
+      }
+    } catch (error) {
+      console.error("Failed to initialize deposit payment:", error)
+      toast.error("Failed to start payment. Please try again.")
+      setIsPaying(false)
+    }
   }
 
   return (
@@ -268,7 +291,20 @@ export default function BookingSummary({ booking }: Props) {
       {!fromPayment && (
         <div className="mt-6 space-y-4">
           <div className="rounded-3xl bg-pink-50 px-5 py-6 space-y-4">
-
+            {canPayDeposit && (
+              <>
+                <p className="text-sm text-gray-600 text-center">
+                  Your booking will be confirmed once the deposit has been received.
+                </p>
+                <Button
+                  className="w-full h-12 bg-fuchsia-600 hover:bg-fuchsia-700 text-white rounded-lg"
+                  disabled={isPaying}
+                  onClick={handlePayDeposit}
+                >
+                  {isPaying ? "Redirecting to payment..." : "Pay Deposit Now"}
+                </Button>
+              </>
+            )}
           </div>
 
           <div className="flex items-center justify-center gap-3 text-xs text-gray-500">
