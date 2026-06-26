@@ -291,6 +291,8 @@ model Booking {
 
   termsAcceptedAt DateTime?
 
+  feedbackRequestedAt DateTime?
+
   packageId String?         @db.Uuid
   package   ServicePackage? @relation(fields: [packageId], references: [id], onDelete: SetNull)
 

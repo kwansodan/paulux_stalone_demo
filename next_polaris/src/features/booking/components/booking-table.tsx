@@ -4,9 +4,9 @@ import { useMemo, useState } from "react"
 import BookingsFilters from "./bookings-filters"
 import { BookingFilters, BookingWithServiceAndPayment } from "../types"
 import { DataTable } from "@/components/data-table"
-import { useBookings, useChargeCustomer, useMarkAsPaid, useRecheckPayment } from "../client/hooks/use-booking"
+import { useBookings, useChargeCustomer, useMarkAsPaid, useRecheckPayment, useRequestFeedback } from "../client/hooks/use-booking"
 import { Button } from "@/components/ui/button"
-import { Banknote, Scissors, RefreshCw } from "lucide-react"
+import { Banknote, Scissors, RefreshCw, MessageSquareHeart } from "lucide-react"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import { calculateBookingTotal } from "../utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
@@ -30,6 +30,7 @@ export default function BookingsTable() {
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
   const recheckPayment = useRecheckPayment()
+  const requestFeedback = useRequestFeedback()
 
   const apiFilters = useMemo(() => {
     return Object.entries(filters).reduce((acc, [key, value]) => {
@@ -191,6 +192,27 @@ export default function BookingsTable() {
               >
                 <RefreshCw className={`w-3.5 h-3.5 mr-1 ${recheckPayment.isPending && recheckPayment.variables === row.id ? "animate-spin" : ""}`} />
                 Recheck
+              </Button>
+            )}
+
+            {/* Request Feedback — completed bookings only, deliberately manual since not
+                every completed booking was a good experience for the customer. */}
+            {row.status === "COMPLETED" && (row.clientEmail || row.clientPhone) && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 bg-pink-50 text-pink-700 border-pink-200 hover:bg-pink-100"
+                disabled={requestFeedback.isPending}
+                onClick={() => {
+                  const requestedAt = (row as any).feedbackRequestedAt
+                  const confirmed = requestedAt
+                    ? window.confirm(`Feedback was already requested on ${new Date(requestedAt).toLocaleDateString()}. Send again?`)
+                    : true
+                  if (confirmed) requestFeedback.mutate(row.id)
+                }}
+              >
+                <MessageSquareHeart className="w-3.5 h-3.5 mr-1" />
+                {(row as any).feedbackRequestedAt ? "Resend Feedback" : "Request Feedback"}
               </Button>
             )}
           </div>

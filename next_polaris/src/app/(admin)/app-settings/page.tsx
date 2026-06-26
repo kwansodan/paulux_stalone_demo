@@ -7,6 +7,7 @@ import { blockedDateRepository } from "@/features/blocked-date/server/blockedDat
 import { StaffMember } from "@/features/staff/types"
 import { PAYMENT_EMAILS_KEY, parseEmailList } from "@/features/payment/server/payment-recipients"
 import { GLOBAL_MIN_DEPOSIT_KEY } from "@/features/payment/server/deposit-settings"
+import { GOOGLE_REVIEW_LINK_KEY } from "@/features/feedback/server/review-settings"
 
 export const dynamic = "force-dynamic"
 
@@ -17,11 +18,12 @@ export default async function AppSettingsPage() {
 
   const db = prisma as any
 
-  const [images, walkinSetting, paymentEmailsSetting, globalDepositSetting, categories, businessHours, blockedDates, staffRaw, rolesRaw] = await Promise.all([
+  const [images, walkinSetting, paymentEmailsSetting, globalDepositSetting, reviewLinkSetting, categories, businessHours, blockedDates, staffRaw, rolesRaw] = await Promise.all([
     prisma.styleImage.findMany({ orderBy: { sortOrder: "asc" } }),
     prisma.systemSetting.findUnique({ where: { key: "walkin_email" } }),
     prisma.systemSetting.findUnique({ where: { key: PAYMENT_EMAILS_KEY } }),
     prisma.systemSetting.findUnique({ where: { key: GLOBAL_MIN_DEPOSIT_KEY } }),
+    prisma.systemSetting.findUnique({ where: { key: GOOGLE_REVIEW_LINK_KEY } }),
     prisma.serviceCategory.findMany({
       include: { _count: { select: { services: true } } },
       orderBy: { createdAt: "asc" },
@@ -89,6 +91,7 @@ export default async function AppSettingsPage() {
         initialWalkinEmail={walkinSetting?.value ?? WALKIN_EMAIL_DEFAULT}
         initialPaymentEmails={parseEmailList(paymentEmailsSetting?.value)}
         initialGlobalMinDeposit={initialGlobalMinDeposit}
+        initialGoogleReviewLink={reviewLinkSetting?.value || null}
         initialCategories={serializedCategories}
         initialBusinessHours={businessHours}
         initialBlockedDates={blockedDates}

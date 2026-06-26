@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles, MessageSquareHeart } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
 import { BookingWithService } from "../types"
 import { calculateBookingTotal, formatTime, isBookingOwner } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
-import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid } from "../client/hooks/use-booking"
+import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid, useRequestFeedback } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
@@ -37,6 +37,15 @@ export default function BookingCard({ booking, user, services, products, onEdit,
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
+  const requestFeedback = useRequestFeedback()
+  const feedbackRequestedAt = (booking as any).feedbackRequestedAt as string | null | undefined
+
+  const handleRequestFeedback = () => {
+    const confirmed = feedbackRequestedAt
+      ? window.confirm(`Feedback was already requested on ${new Date(feedbackRequestedAt).toLocaleDateString()}. Send again?`)
+      : true
+    if (confirmed) requestFeedback.mutate(booking.id)
+  }
   const bookingPaymentStatus = calculatePaymentStatus(booking)
   const bookingTotal = calculateBookingTotal(booking)
 
@@ -131,6 +140,15 @@ export default function BookingCard({ booking, user, services, products, onEdit,
             <DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
               <CircleCheck className="text-green-600" />
               <span className="w-full">Mark as completed</span>
+            </DropdownMenuItem>
+          )}
+
+          {booking.status === 'COMPLETED' && (booking.clientEmail || booking.clientPhone) && (
+            <DropdownMenuItem onClick={handleRequestFeedback} className="flex gap-2 text-pink-600">
+              <MessageSquareHeart className="text-pink-600" />
+              <span className="w-full">
+                {feedbackRequestedAt ? "Resend feedback request" : "Request feedback"}
+              </span>
             </DropdownMenuItem>
           )}
 

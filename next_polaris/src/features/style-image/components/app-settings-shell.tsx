@@ -140,10 +140,12 @@ function GeneralSection({
   initialWalkinEmail,
   initialPaymentEmails,
   initialGlobalMinDeposit,
+  initialGoogleReviewLink,
 }: {
   initialWalkinEmail: string
   initialPaymentEmails: string[]
   initialGlobalMinDeposit: number | null
+  initialGoogleReviewLink: string | null
 }) {
   const [walkinEmail, setWalkinEmail] = useState(initialWalkinEmail)
   const [walkinEmailInput, setWalkinEmailInput] = useState(initialWalkinEmail)
@@ -207,6 +209,72 @@ function GeneralSection({
 
       <PaymentRecipientsCard initialPaymentEmails={initialPaymentEmails} />
       <GlobalDepositCard initialAmount={initialGlobalMinDeposit} />
+      <ReviewLinkCard initialLink={initialGoogleReviewLink} />
+    </div>
+  )
+}
+
+// Google Business review link used when admins request feedback from a
+// satisfied customer after a completed booking — see "Request Feedback" on
+// the bookings table.
+function ReviewLinkCard({ initialLink }: { initialLink: string | null }) {
+  const [savedLink, setSavedLink] = useState<string | null>(initialLink)
+  const [linkInput, setLinkInput] = useState(initialLink ?? "")
+  const [saving, setSaving] = useState(false)
+
+  const dirty = linkInput.trim() !== (savedLink ?? "")
+
+  async function handleSave() {
+    setSaving(true)
+    try {
+      const res = await api.patch("/settings/review-link", { link: linkInput.trim() })
+      setSavedLink(res.data.data.link)
+      setLinkInput(res.data.data.link ?? "")
+      toast.success(res.data.message || "Review link updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update review link")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 mt-4">
+      <div className="flex flex-col gap-4 px-6 py-5">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-gray-900">Google Business review link</p>
+          </div>
+          <p className="text-xs text-gray-500 pl-6">
+            Used in the &quot;Request Feedback&quot; message sent to customers after a completed booking.
+          </p>
+          <p className="text-xs text-gray-400 pl-6 pt-1">
+            {savedLink ? `Current: ${savedLink}` : "Not set — feedback requests will use a generic message with no review link."}
+          </p>
+        </div>
+
+        <div className="flex gap-2">
+          <Input
+            type="url"
+            className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none flex-1"
+            value={linkInput}
+            onChange={(e) => setLinkInput(e.target.value)}
+            placeholder="https://g.page/r/.../review"
+          />
+          <Button
+            className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-3 flex-shrink-0"
+            disabled={saving || !dirty}
+            onClick={handleSave}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <><Save className="w-4 h-4 mr-1.5" />Save</>
+            )}
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
@@ -731,6 +799,7 @@ export default function AppSettingsShell({
   initialWalkinEmail,
   initialPaymentEmails,
   initialGlobalMinDeposit,
+  initialGoogleReviewLink,
   initialCategories,
   initialBusinessHours,
   initialBlockedDates,
@@ -741,6 +810,7 @@ export default function AppSettingsShell({
   initialWalkinEmail: string
   initialPaymentEmails: string[]
   initialGlobalMinDeposit: number | null
+  initialGoogleReviewLink: string | null
   initialCategories: SerializedServiceCategory[]
   initialBusinessHours: BusinessHour[]
   initialBlockedDates: BlockedDate[]
@@ -820,6 +890,7 @@ export default function AppSettingsShell({
               initialWalkinEmail={initialWalkinEmail}
               initialPaymentEmails={initialPaymentEmails}
               initialGlobalMinDeposit={initialGlobalMinDeposit}
+              initialGoogleReviewLink={initialGoogleReviewLink}
             />
           )}
           {activeSection === "gallery" && (

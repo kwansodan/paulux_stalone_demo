@@ -221,6 +221,26 @@ export function useMarkAsCompleted() {
   })
 }
 
+export function useRequestFeedback() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: (id: string) => api.post(`/bookings/${id}/request-feedback`),
+    onMutate: () => {
+      toast.loading("Sending feedback request...", { id: "request-feedback" })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["bookings"] })
+      toast.success("Feedback request sent", { id: "request-feedback" })
+    },
+    onError: (error: any) => {
+      console.error("Failed to request feedback", error)
+      const message = error?.response?.data?.message || "Failed to send feedback request"
+      toast.error(message, { id: "request-feedback" })
+    },
+  })
+}
+
 export function useCancelBooking() {
   const queryClient = useQueryClient()
 
