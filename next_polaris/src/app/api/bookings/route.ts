@@ -206,57 +206,66 @@ export async function POST(request: NextRequest) {
     const totalDuration = existingServices.reduce((sum, s) => sum + s.durationMinutes, 0);
 
     if (!isWalkIn) {
-      // check if date is blocked
-      const blocked = await blockedDateRepository.findByDate(
-        new Date(validatedBody.bookingDate!).toString()
-      )
+      // When editing, skip time-based validations if the date/time hasn't changed —
+      // a past booking's existing slot should not block service/product edits.
+      const dateTimeUnchanged =
+        isEditing &&
+        previousBooking?.bookingDate === validatedBody.bookingDate &&
+        previousBooking?.bookingTime === validatedBody.bookingTime
 
-      if (blocked) {
-        return NextResponse.json(
-          { success: false, error: "Selected date is blocked" },
-          { status: 409 }
+      if (!dateTimeUnchanged) {
+        // check if date is blocked
+        const blocked = await blockedDateRepository.findByDate(
+          new Date(validatedBody.bookingDate!).toString()
         )
-      }
 
-      const bookingDateObj = new Date(validatedBody.bookingDate!)
-      const dayOfWeek = bookingDateObj.getUTCDay()
+        if (blocked) {
+          return NextResponse.json(
+            { success: false, error: "Selected date is blocked" },
+            { status: 409 }
+          )
+        }
 
-      const businessHour = await businessHourRepository.findByDayOfWeek(dayOfWeek)
+        const bookingDateObj = new Date(validatedBody.bookingDate!)
+        const dayOfWeek = bookingDateObj.getUTCDay()
 
-      if (!businessHour || !businessHour.isOpen) {
-        return NextResponse.json(
-          { success: false, error: "Business is closed on this day" },
-          { status: 409 }
+        const businessHour = await businessHourRepository.findByDayOfWeek(dayOfWeek)
+
+        if (!businessHour || !businessHour.isOpen) {
+          return NextResponse.json(
+            { success: false, error: "Business is closed on this day" },
+            { status: 409 }
+          )
+        }
+
+        if (!isTimeWithinRange(validatedBody.bookingTime!, businessHour.startTime, businessHour.endTime)) {
+          return NextResponse.json(
+            { success: false, error: "Booking time is outside business hours" },
+            { status: 409 }
+          )
+        }
+
+        if (isPastSlot(new Date(validatedBody.bookingDate!), validatedBody.bookingTime!)) {
+          return NextResponse.json(
+            { success: false, error: "Selected time is already in the past" },
+            { status: 409 }
+          )
+        }
+
+        // check if booking already exists for chosen date or time
+        const isAvailable = await bookingRepository.isSlotAvailable(
+          new Date(validatedBody.bookingDate!),
+          validatedBody.bookingTime!,
+          totalDuration,
+          validatedBody.id,
+          serviceIds,   // plain string[] — slot check doesn't need quantities
         )
-      }
 
-      if (!isTimeWithinRange(validatedBody.bookingTime!, businessHour.startTime, businessHour.endTime)) {
-        return NextResponse.json(
-          { success: false, error: "Booking time is outside business hours" },
-          { status: 409 }
-        )
-      }
-
-      if (isPastSlot(new Date(validatedBody.bookingDate!), validatedBody.bookingTime!)) {
-        return NextResponse.json(
-          { success: false, error: "Selected time is already in the past" },
-          { status: 409 }
-        )
-      }
-
-      // check if booking already exists for chosen date or time
-      const isAvailable = await bookingRepository.isSlotAvailable(
-        new Date(validatedBody.bookingDate!),
-        validatedBody.bookingTime!,
-        totalDuration,
-        validatedBody.id,
-        serviceIds,   // plain string[] — slot check doesn't need quantities
-      )
-
-      if (!isAvailable) {
-        return NextResponse.json(
-          { success: false, error: 'Booking already exists for slot (overlap detected)' },
-          { status: 409 })
+        if (!isAvailable) {
+          return NextResponse.json(
+            { success: false, error: 'Booking already exists for slot (overlap detected)' },
+            { status: 409 })
+        }
       }
     }
 
