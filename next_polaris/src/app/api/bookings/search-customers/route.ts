@@ -32,25 +32,27 @@ export async function GET(request: NextRequest) {
             if (byPhone.size >= MAX_RESULTS) break;
         }
 
-        const phones = Array.from(byPhone.keys());
-        const counts = phones.length > 0
-            ? await prisma.booking.groupBy({
-                by: ["clientPhone"],
-                where: { clientPhone: { in: phones } },
-                _count: { _all: true },
-            })
-            : [];
-        const countByPhone = new Map(counts.map((c) => [c.clientPhone, c._count._all]));
+        // Count visits per (phone, name) pair, not phone alone — the same
+        // phone number can be reused across different real customers (a
+        // shared household line, or a placeholder a front-desk staffer enters
+        // for someone who doesn't want to share their number), so counting by
+        // phone only would inflate one person's visit count with strangers'
+        // bookings that merely share that number.
+        const entries = Array.from(byPhone.values());
+        const counts = await Promise.all(
+            entries.map((m) =>
+                prisma.booking.count({
+                    where: { clientPhone: m.clientPhone, clientName: { equals: m.clientName, mode: "insensitive" } },
+                })
+            )
+        );
 
-        const results = phones.map((phone) => {
-            const m = byPhone.get(phone)!;
-            return {
-                clientName: m.clientName,
-                clientEmail: m.clientEmail,
-                clientPhone: m.clientPhone,
-                visitCount: countByPhone.get(phone) ?? 1,
-            };
-        });
+        const results = entries.map((m, i) => ({
+            clientName: m.clientName,
+            clientEmail: m.clientEmail,
+            clientPhone: m.clientPhone,
+            visitCount: counts[i] || 1,
+        }));
 
         return NextResponse.json({ success: true, data: { results } });
     } catch (error: any) {

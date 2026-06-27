@@ -19,18 +19,27 @@ export async function GET(request: NextRequest) {
             return NextResponse.json({ success: true, data: { found: false } });
         }
 
-        const [mostRecent, visitCount] = await Promise.all([
-            prisma.booking.findFirst({
-                where: { clientPhone: { contains: last9 } },
-                orderBy: { createdAt: "desc" },
-                select: { clientName: true, clientEmail: true },
-            }),
-            prisma.booking.count({ where: { clientPhone: { contains: last9 } } }),
-        ]);
+        const mostRecent = await prisma.booking.findFirst({
+            where: { clientPhone: { contains: last9 } },
+            orderBy: { createdAt: "desc" },
+            select: { clientName: true, clientEmail: true },
+        });
 
         if (!mostRecent) {
             return NextResponse.json({ success: true, data: { found: false } });
         }
+
+        // Count visits for this phone+name pair, not phone alone — the same
+        // number can be reused across different real customers (a shared
+        // household line, or a placeholder entered for someone who doesn't
+        // want to share their number), which would otherwise inflate this
+        // person's visit count with strangers' bookings.
+        const visitCount = await prisma.booking.count({
+            where: {
+                clientPhone: { contains: last9 },
+                clientName: { equals: mostRecent.clientName, mode: "insensitive" },
+            },
+        });
 
         return NextResponse.json({
             success: true,
