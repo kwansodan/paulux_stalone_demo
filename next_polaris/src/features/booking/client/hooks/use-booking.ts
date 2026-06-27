@@ -35,6 +35,49 @@ export function useAvailableSlots(date?: string, serviceIds?: string[], userId?:
 }
 
 
+type CustomerLookupResult =
+  | { found: false }
+  | { found: true; clientName: string; clientEmail: string; visitCount: number }
+
+// Debounced by the caller (only call with a settled phone value) — looks up
+// a returning customer by phone so front-desk staff don't have to ask for
+// name/email again on repeat visits.
+export function useCustomerLookup(phone: string) {
+  const digits = phone.replace(/\D/g, "")
+  return useQuery<CustomerLookupResult>({
+    queryKey: ["customer-lookup", digits.slice(-9)],
+    enabled: digits.length >= 9,
+    queryFn: async () => {
+      const res = await api.get(`/bookings/lookup-by-phone?phone=${encodeURIComponent(phone)}`)
+      return res.data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
+type CustomerSearchResult = {
+  clientName: string
+  clientEmail: string
+  clientPhone: string
+  visitCount: number
+}
+
+// Debounced by the caller — searches past customers by (partial) name so
+// staff can find a returning customer the way they'd naturally be greeted,
+// by name rather than phone number. Names aren't unique, so this returns
+// multiple candidates for staff to pick the right one from.
+export function useCustomerNameSearch(query: string) {
+  return useQuery<{ results: CustomerSearchResult[] }>({
+    queryKey: ["customer-search", query],
+    enabled: query.trim().length >= 2,
+    queryFn: async () => {
+      const res = await api.get(`/bookings/search-customers?q=${encodeURIComponent(query)}`)
+      return res.data.data
+    },
+    staleTime: 60_000,
+  })
+}
+
 export function useGetBookingsById(id: string) {
   return useQuery({
     queryKey: ["booking", id],

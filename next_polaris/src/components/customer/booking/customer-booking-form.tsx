@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import StepIndicator from "./step-indicator"
 import { SerializedService } from "@/features/service/types"
@@ -11,6 +11,7 @@ import BookingDateTimeStep from "./booking-datetime-step"
 import BookingConfirmationStep from "./booking-confirmation-step"
 import { BOOKING_STEPS } from "@/constants"
 import { SerializedPackage } from "@/features/package/types"
+import { getSavedCustomerDetails, saveCustomerDetails } from "./customer-details-storage"
 
 export type BookingFormData = {
   // Step 1: Details
@@ -82,9 +83,26 @@ export default function CustomerBookingForm({
     return initialFormData
   })
 
+  // Pre-fill from a previous booking on this device — saved on submit — so
+  // repeat visitors don't have to retype their name/email/phone. Done in an
+  // effect (not the initializer above) so server- and client-rendered HTML
+  // match on first paint and only fills in after mount.
+  useEffect(() => {
+    const saved = getSavedCustomerDetails()
+    if (saved) {
+      setFormData((prev) => ({ ...prev, ...saved }))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const updateFormData = (data: Partial<BookingFormData>) => {
-    setFormData((prev) => ({ ...prev, ...data }))
+    setFormData((prev) => {
+      const next = { ...prev, ...data }
+      if ("fullName" in data || "email" in data || "phone" in data) {
+        saveCustomerDetails({ fullName: next.fullName, email: next.email, phone: next.phone })
+      }
+      return next
+    })
   }
 
   const nextStep = () => {

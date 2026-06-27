@@ -5,15 +5,15 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import { BookingInput, BookingInputSchema } from "@/features/booking/utils/validation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useAvailableSlots, useCreateBooking } from "../../client/hooks/use-booking"
+import { useAvailableSlots, useCreateBooking, useCustomerLookup, useCustomerNameSearch } from "../../client/hooks/use-booking"
 import { SerializedService } from "@/features/service/types"
 import { SerializedProduct } from "@/features/product/types"
 import { Form, FormField } from "@/components/ui/form"
 import { Label } from "@/components/ui/label"
 import { cn, isAxiosError } from "@/lib/utils"
 import { User } from "@generated/prisma/client"
-import { useMemo, useState } from "react"
-import { CalendarClock, UserRound, Info, ShoppingBag, Minus, Plus, Tag, X, CheckCircle2 } from "lucide-react"
+import { useEffect, useMemo, useState } from "react"
+import { CalendarClock, UserRound, Info, ShoppingBag, Minus, Plus, Tag, X, CheckCircle2, UserCheck } from "lucide-react"
 
 
 
@@ -63,6 +63,51 @@ export default function CreateBookingForm({
 
   const date = form.watch("bookingDate")
   const minDepositFixed = form.watch("minDepositFixed")
+  const clientPhone = form.watch("clientPhone")
+  const clientName = form.watch("clientName")
+  const clientEmail = form.watch("clientEmail")
+
+  // Look up returning customers by phone so staff don't have to ask for
+  // name/email again — debounced so we don't fire a request per keystroke.
+  const [debouncedPhone, setDebouncedPhone] = useState("")
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedPhone(clientPhone || ""), 500)
+    return () => clearTimeout(timeout)
+  }, [clientPhone])
+
+  const customerLookup = useCustomerLookup(debouncedPhone)
+  const [autoFilledPhone, setAutoFilledPhone] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!customerLookup.data?.found) return
+    // Only autofill empty fields, and only once per matched lookup — don't
+    // clobber details staff has already typed or edited.
+    if (autoFilledPhone === debouncedPhone) return
+    if (!clientName?.trim()) form.setValue("clientName", customerLookup.data.clientName)
+    if (!clientEmail?.trim()) form.setValue("clientEmail", customerLookup.data.clientEmail)
+    setAutoFilledPhone(debouncedPhone)
+  }, [customerLookup.data, debouncedPhone, autoFilledPhone, clientName, clientEmail, form])
+
+  // Search past customers by name as staff types — this is the natural flow
+  // (a walk-in says their name, not their phone number), so unlike the phone
+  // lookup above this shows a picker rather than silently auto-filling,
+  // since names aren't unique.
+  const [debouncedName, setDebouncedName] = useState("")
+  useEffect(() => {
+    const timeout = setTimeout(() => setDebouncedName(clientName || ""), 500)
+    return () => clearTimeout(timeout)
+  }, [clientName])
+
+  const nameSearch = useCustomerNameSearch(debouncedName)
+  const [nameDropdownOpen, setNameDropdownOpen] = useState(false)
+  const nameResults = nameSearch.data?.results ?? []
+
+  const handleSelectCustomer = (result: { clientName: string; clientEmail: string; clientPhone: string }) => {
+    form.setValue("clientName", result.clientName)
+    form.setValue("clientEmail", result.clientEmail)
+    form.setValue("clientPhone", result.clientPhone)
+    setNameDropdownOpen(false)
+  }
   const serviceEntries = (form.watch("serviceIds") || []).map(
     (s) => ({ id: s.id, quantity: s.quantity ?? 1 })
   )
@@ -205,7 +250,7 @@ export default function CreateBookingForm({
             control={form.control}
             name="clientName"
             render={({ field }) => (
-              <div className="space-y-1">
+              <div className="space-y-1 relative">
                 <Label className="text-sm font-normal text-foreground">
                   Customer Name {!isWalkIn && <span className="text-red-500">*</span>}
                   {isWalkIn && <span className="text-gray-400 text-xs ml-1">(optional)</span>}
@@ -214,7 +259,31 @@ export default function CreateBookingForm({
                   placeholder={isWalkIn ? "Walk-in Guest" : "Customer name"}
                   className="h-12 bg-white shadow-none border-[#E2E8F0] rounded-lg"
                   {...field}
+                  onFocus={() => setNameDropdownOpen(true)}
+                  onChange={(e) => { field.onChange(e); setNameDropdownOpen(true) }}
+                  onBlur={() => setTimeout(() => setNameDropdownOpen(false), 150)}
+                  autoComplete="off"
                 />
+                {nameDropdownOpen && nameResults.length > 0 && (
+                  <div className="absolute z-10 top-full mt-1 left-0 right-0 bg-white border border-[#E2E8F0] rounded-lg shadow-md max-h-56 overflow-y-auto">
+                    <p className="px-3 py-1.5 text-[11px] uppercase tracking-wide text-gray-400 border-b border-gray-100">
+                      Returning customers
+                    </p>
+                    {nameResults.map((r) => (
+                      <button
+                        key={r.clientPhone}
+                        type="button"
+                        onMouseDown={(e) => { e.preventDefault(); handleSelectCustomer(r) }}
+                        className="w-full text-left px-3 py-2 hover:bg-fuchsia-50 flex items-center justify-between gap-2"
+                      >
+                        <span className="text-sm font-medium text-gray-900">{r.clientName}</span>
+                        <span className="text-xs text-gray-400 whitespace-nowrap">
+                          {r.clientPhone} · {r.visitCount} visit{r.visitCount === 1 ? "" : "s"}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
                 {form.formState.errors.clientName && (
                   <p className="text-red-500 text-sm mt-1">
                     {form.formState.errors.clientName.message}
@@ -266,6 +335,12 @@ export default function CreateBookingForm({
                 {form.formState.errors.clientPhone && (
                   <p className="text-red-500 text-sm mt-1">
                     {form.formState.errors.clientPhone.message}
+                  </p>
+                )}
+                {customerLookup.data?.found && autoFilledPhone === debouncedPhone && (
+                  <p className="text-xs text-green-600 flex items-center gap-1 mt-1">
+                    <UserCheck className="w-3.5 h-3.5" />
+                    Returning customer — {customerLookup.data.visitCount} previous visit{customerLookup.data.visitCount === 1 ? "" : "s"}. Details filled in below.
                   </p>
                 )}
               </div>
