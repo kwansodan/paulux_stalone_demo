@@ -2,11 +2,11 @@ import { serviceRepository } from "@/features/service/server/service.repository"
 import { ServiceUpsertSchema } from "@/features/service/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { requireRoleApi } from "@/app/_auth/require-role-api";
 
 
 export async function GET(request: NextRequest) {
   try {
-    // await isAuthenticated()
     const services = await serviceRepository.getAllServices({})
 
     return NextResponse.json({
@@ -22,12 +22,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const auth = await requireRoleApi(["ADMIN"])
+    if (!auth.ok) return auth.response
+
     const reqBody = await request.json();
     const validatedBody = ServiceUpsertSchema.parse(reqBody)
 
     const upsertedService = await serviceRepository.upsertService(validatedBody);
 
-    return NextResponse.json({ successs: true, message: "Successfully upserted service!", data: upsertedService }, { status: 200 })
+    return NextResponse.json({ success: true, message: "Successfully upserted service!", data: upsertedService }, { status: 200 })
 
   } catch (error: any) {
     if (error instanceof NextResponse) return error

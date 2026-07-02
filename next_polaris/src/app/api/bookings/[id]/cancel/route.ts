@@ -5,12 +5,16 @@ import { BookingStatus, PaymentProvider } from "@generated/prisma/client"
 import { prisma } from "@/lib/prisma"
 import { initiateRefund } from "@/lib/paystack"
 import { inngest } from "@/lib/inngest"
+import { requireRoleApi } from "@/app/_auth/require-role-api"
 
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const auth = await requireRoleApi(["ADMIN"])
+    if (!auth.ok) return auth.response
+
     const awaitedParams = await params;
     const bookingId = awaitedParams.id
     const body = await request.json()

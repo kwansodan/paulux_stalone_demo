@@ -2,6 +2,7 @@ import { businessHourRepository } from "@/features/business-hour/server/business
 import { BusinessHourInputSchema } from "@/features/business-hour/utils/validation";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { requireRoleApi } from "@/app/_auth/require-role-api";
 
 export async function GET() {
   const hours = await businessHourRepository.getAll();
@@ -10,9 +11,10 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoleApi(["ADMIN"])
+    if (!auth.ok) return auth.response
 
     const body = await req.json();
-    console.log('POST BUSINESS HOURS DATA', body)
     const data = BusinessHourInputSchema.parse(body);
 
     const existingHour = await businessHourRepository.findByDayOfWeek(data.dayOfWeek)

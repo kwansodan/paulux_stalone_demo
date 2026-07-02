@@ -14,8 +14,6 @@ export default async function PaymentsPage() {
   const services = await serviceRepository.getAllServices({})
   const gatewayMetrics = await gatewayMetricsService.getMetrics()
 
-  console.log("GATEWAY METRICS", gatewayMetrics)
-
   return (
     <PaymentsPageContent
       gatewayMetrics={{

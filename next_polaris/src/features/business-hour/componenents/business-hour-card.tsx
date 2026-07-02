@@ -16,7 +16,6 @@ export default function BusinessHourCard({
 }) {
   const [start, setStart] = useState(hour.startTime || "09:00")
   const [end, setEnd] = useState(hour.endTime || "17:00")
-  // const [open, setOpen] = useState(hour.isOpen)
 
   const updateStatus = useUpdateStatus()
   const update = useEditBusinessHour()
