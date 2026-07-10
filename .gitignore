@@ -56,3 +56,8 @@ backup_*.sql
 *.swp
 *.swo
 *~
+
+# SSH keys (never commit these)
+.ssh/
+id_rsa*
+id_ed25519*
