@@ -1,0 +1,1983 @@
+[
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Mizani Moisture Fusion Hydrating Wash & Blowout (Short)",
+    "price": 150.0,
+    "durationMinutes": 45,
+    "description": "Shampoo + conditioning ritual with steam; finished with blowout or roller set"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Mizani Moisture Fusion Hydrating Wash & Blowout (Medium)",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": "Shampoo + conditioning ritual with steam; finished with blowout or roller set"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Mizani Moisture Fusion Hydrating Wash & Blowout (Long)",
+    "price": 300.0,
+    "durationMinutes": 45,
+    "description": "Shampoo + conditioning ritual with steam; finished with blowout or roller set"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Affirm Moistur Right Hydrating Cleanse (Short)",
+    "price": 120.0,
+    "durationMinutes": 45,
+    "description": "Moisture-replenishing cleanse with steam therapy; blowout or roller set finish"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Affirm Moistur Right Hydrating Cleanse (Medium)",
+    "price": 150.0,
+    "durationMinutes": 45,
+    "description": "Moisture-replenishing cleanse with steam therapy; blowout or roller set finish"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Shampoo Rituals: Affirm Moistur Right Hydrating Cleanse (Long)",
+    "price": 180.0,
+    "durationMinutes": 45,
+    "description": "Moisture-replenishing cleanse with steam therapy; blowout or roller set finish"
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Relaxing Rituals: Mizani Butter Blend Relaxer Experience (Retouch Service)",
+    "price": 400.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Relaxing Rituals: Mizani Butter Blend Relaxer Experience (Virgin hair relaxing)",
+    "price": 650.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Relaxing Rituals: Affirm Conditioning Relaxer Service (Retouch Service)",
+    "price": 300.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Relaxing Rituals: Affirm Conditioning Relaxer Service (Virgin hair relaxing)",
+    "price": 500.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Treatment Rituals: Mizani Strength Fusion Repair Therapy",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Treatment Rituals: Mizani Moisture Fusion Steam Hydration",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Treatment Rituals: Affirm Fiberguard Strengthening Treatment",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Polaris Treatment Rituals: Affirm 5-in-1 Reconstructor Deep Conditioning",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Colouring: Hair dye",
+    "price": 150.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Colouring: Root Touch-up",
+    "price": 150.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Care Menu",
+    "name": "Colouring: Highlights",
+    "price": 150.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Boho / Goddess Braids (Shoulder)",
+    "price": 220.0,
+    "durationMinutes": 90,
+    "description": "Includes standard fibre extensions and finishing oil & mousse"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Boho / Goddess Braids (Back)",
+    "price": 250.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Boho / Goddess Braids (Waist)",
+    "price": 300.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Boho / Goddess Braids (Butt)",
+    "price": 350.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Boho / Goddess Braids (Thigh)",
+    "price": 380.0,
+    "durationMinutes": 210,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Bone straight braids (Shoulder)",
+    "price": 280.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Bone straight braids (Back)",
+    "price": 300.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Bone straight braids (Waist)",
+    "price": 350.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Bone straight braids (Butt)",
+    "price": 380.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow Pony (Shoulder)",
+    "price": 250.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow Pony (Back)",
+    "price": 270.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow Pony (Waist)",
+    "price": 300.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow Pony (Butt / Thigh)",
+    "price": 330.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow All back (Shoulder)",
+    "price": 220.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow All back (Back)",
+    "price": 250.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow All back (Waist)",
+    "price": 280.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow All back (Butt / Thigh)",
+    "price": 350.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Cornrow Rasta (Thigh)",
+    "price": 380.0,
+    "durationMinutes": 210,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Spiral Braids (Shoulder)",
+    "price": 250.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Spiral Braids (Back)",
+    "price": 300.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Spiral Braids (Waist)",
+    "price": 350.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Spiral Braids (Butt)",
+    "price": 380.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Micro / Mini Twist (Shoulder)",
+    "price": 450.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Micro / Mini Twist (Back)",
+    "price": 550.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Shoulder)",
+    "price": 250.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Back)",
+    "price": 280.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Waist)",
+    "price": 300.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Butt)",
+    "price": 330.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Under butt)",
+    "price": 350.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Italian Curls Braids (Thigh)",
+    "price": 400.0,
+    "durationMinutes": 210,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Kinky Twist (Shoulder)",
+    "price": 220.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Kinky Twist (Waist)",
+    "price": 250.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Kinky Twist (Butt)",
+    "price": 280.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Small) (Shoulder)",
+    "price": 250.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Small) (Back)",
+    "price": 280.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Small) (Waist)",
+    "price": 320.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Small) (Thigh)",
+    "price": 400.0,
+    "durationMinutes": 210,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Medium) (Shoulder)",
+    "price": 220.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Medium) (Back)",
+    "price": 250.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Medium) (Waist)",
+    "price": 280.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Medium) (Butt / Thigh)",
+    "price": 350.0,
+    "durationMinutes": 180,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Large) (Shoulder)",
+    "price": 200.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Large) (Back)",
+    "price": 220.0,
+    "durationMinutes": 120,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Large) (Waist)",
+    "price": 270.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Knotless Only (Large) (Thigh)",
+    "price": 300.0,
+    "durationMinutes": 210,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Stitch Braids (6 stitch braids)",
+    "price": 300.0,
+    "durationMinutes": 150,
+    "description": "Hair inclusive"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Stitch Braids (8 stitch braids)",
+    "price": 350.0,
+    "durationMinutes": 150,
+    "description": "Hair inclusive"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Stitch Braids (2-4 stitch braids)",
+    "price": 250.0,
+    "durationMinutes": 150,
+    "description": "Hair inclusive"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Stitch Braids (Stitch with designs)",
+    "price": 400.0,
+    "durationMinutes": 150,
+    "description": "Hair inclusive"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Stitch Braids (10-12 stitch braids)",
+    "price": 400.0,
+    "durationMinutes": 150,
+    "description": "Hair inclusive"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Small sizes",
+    "price": 150.0,
+    "durationMinutes": 150,
+    "description": "Extra length beyond thigh +50"
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Beads",
+    "price": 30.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Passion",
+    "price": 55.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Outre",
+    "price": 40.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Spiral",
+    "price": 55.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Braiding Services",
+    "name": "Add-ons: Human Blend Boho",
+    "price": 200.0,
+    "durationMinutes": 150,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Regular wash (Short)",
+    "price": 70.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Regular wash (Medium)",
+    "price": 100.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Regular wash (Long)",
+    "price": 120.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Corn row only",
+    "price": 100.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Washing and corn row",
+    "price": 100.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Washing & Cornrow: Root touch up",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Sew-in",
+    "price": 350.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Sew-in in frontal or closure",
+    "price": 400.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Versatile sew-in",
+    "price": 400.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Sew-in shampooing",
+    "price": 250.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Ponytail",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Natural hair ponytail",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Half up half down",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Half up half down natural hair",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Frontal ponytail",
+    "price": 450.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Frontal ponytail touch up",
+    "price": 100.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: 360 frontal ponytail",
+    "price": 550.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Frontal installation",
+    "price": 300.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Closure install",
+    "price": 200.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Frontal installation with extra styling",
+    "price": 450.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging: Frontal customization (plucking and bleaching)",
+    "price": 120.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging - Frontal: 5*5 and 6*6 closure",
+    "price": 250.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Wigging - Frontal: 2*6 and 2*4 closure",
+    "price": 200.0,
+    "durationMinutes": 100,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Straightening (Long hair)",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Straightening (Short)",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Curling (Long)",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Curling (Short)",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Coloring (10 - 16 inches)",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Coloring (180 - 30 inches)",
+    "price": 800.0,
+    "durationMinutes": 60,
+    "description": "Printed as \"180 - 30 inches\" on the menu (likely 18 - 30 inches)"
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Coloring (Jet black 10 - 16 inches)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Coloring (Jet black 18 - 30 inches)",
+    "price": 500.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Curl defining",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Extra styling",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Removal of wig",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Revamping",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Coloring (Wigs): Express revamping",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Home service hairstyling (Early hours (8am - 3pm))",
+    "price": 1000.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Home service hairstyling (4pm going)",
+    "price": 1500.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Care",
+    "name": "Home Service Hairstyling: Customization",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Regular haircut",
+    "price": 60.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Cut and dye",
+    "price": 100.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Shape and dye",
+    "price": 70.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Cut and dye with beard enhancement",
+    "price": 120.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Shave with beard grooming",
+    "price": 40.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Men: Cut, dye, waves",
+    "price": 150.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Kids: Regular cut",
+    "price": 40.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Kids: Cut and dye",
+    "price": 60.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Kids: Cut and dye plus waves",
+    "price": 80.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Kids: Shape up and dye with braids",
+    "price": 40.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Regular cut",
+    "price": 60.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut and dye",
+    "price": 100.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut and dye plus waves (Short hair)",
+    "price": 120.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut and bleach",
+    "price": 150.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut and coloring (For short hair)",
+    "price": 180.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut and coloring (For Afro hair)",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Perm cut",
+    "price": 100.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Curls",
+    "price": 80.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut, dye and curls (Long hair)",
+    "price": 180.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut, bleach and curls",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Cut, coloring and curls",
+    "price": 250.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Finger waves (Short hair)",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Ladies: Finger waves with colour (Short hair)",
+    "price": 280.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Add-ons: Coloring",
+    "price": 120.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Hair Cut",
+    "name": "Add-ons: Bleach",
+    "price": 100.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Classic Lash Extensions (Normal)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Classic Lash Extensions (Cat eye)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Classic Lash Extensions (Refill)",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Hybrid Lash Extensions (Normal)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Hybrid Lash Extensions (Cat eye)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Hybrid Lash Extensions (Refill)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Volume Lash Extensions (Normal)",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Volume Lash Extensions (Cat eye)",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Volume Lash Extensions (Refill)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Lash Removal",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": "Safe removal or touch-up of existing lash sets"
+  },
+  {
+    "category": "Lashes",
+    "name": "Extra: Revamp",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Extra: Bottom lash",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": "Listed twice on the menu at the same price"
+  },
+  {
+    "category": "Lashes",
+    "name": "Extra: Lash bath",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Extra: Wispy",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Lashes",
+    "name": "Extra: Cat eye",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Upper Lip",
+    "price": 80.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Brow waxing",
+    "price": 70.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Chin",
+    "price": 150.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Sides / Full Face",
+    "price": 150.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Underarms",
+    "price": 250.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Brow shaping",
+    "price": 70.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Back",
+    "price": 250.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Waxing",
+    "name": "Waxing Services: Half leg for both legs",
+    "price": 300.0,
+    "durationMinutes": 30,
+    "description": null
+  },
+  {
+    "category": "Polaris Foot Rituals",
+    "name": "Pedicures: Classic Spa Pedicure",
+    "price": 200.0,
+    "durationMinutes": 45,
+    "description": "With gel polish - 250"
+  },
+  {
+    "category": "Polaris Foot Rituals",
+    "name": "Pedicures: MediHeel Pedicure",
+    "price": 300.0,
+    "durationMinutes": 45,
+    "description": "With gel polish - 350"
+  },
+  {
+    "category": "Polaris Foot Rituals",
+    "name": "Pedicures: Express Pedicure",
+    "price": 180.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Polaris Foot Rituals",
+    "name": "Pedicures: Gel Polish Pedicure",
+    "price": 300.0,
+    "durationMinutes": 45,
+    "description": "Classic pedicure + gel polish finish"
+  },
+  {
+    "category": "Polaris Foot Rituals",
+    "name": "Pedicures: Luxury Polaris Pedicure",
+    "price": 450.0,
+    "durationMinutes": 45,
+    "description": "Includes hot stone massage and warm paraffin wrap"
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic full set (clear powder) (Short)",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic full set (clear powder) (Medium)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic full set (clear powder) (Long)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic full set (clear powder) (Extra Long)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic Full Set (Clear Powder): Acrylic overlay (natural nails)",
+    "price": 180.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic French tips (custom powder) (Short)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic French tips (custom powder) (Medium)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic French tips (custom powder) (Long)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic French tips (custom powder) (Extra Long)",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic Ombre (Short)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic Ombre (Medium)",
+    "price": 280.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic Ombre (Long)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic Ombre (Extra Long)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Marble Nails (Short)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Marble Nails (Medium)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Marble Nails (Long)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Marble Nails (Extra Long)",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Overlay on natural nails 1",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Overlay on natural nails with gel",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Overlay on natural nails with French tips",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Short gel-x with biab overlay",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Medium gel-x with biab overlay",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Long gel-x with biab overlay",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Short gel-x with French tips",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Medium gel-x with French tips",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Long gel-x with French tips",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel X and BIAB: Gel-x with gel polish",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel long",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel short",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel medium",
+    "price": 380.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "French tips (Short tips)",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "French tips (Medium)",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "French tips (Long)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "French tips (Extra Long)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Nail Repair (per nail)",
+    "price": 15.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Gel polish",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Aura finishes (per nail)",
+    "price": 20.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Normal polish",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Stick-on with normal polish",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Stick-on with gel polish",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Nail prepping",
+    "price": 40.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Gel soak off",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Acrylic removal",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Other Nail Services: Nail polish removal",
+    "price": 30.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Toes: Acrylic toe (full set)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Toes: Acrylic big toe (with gel)",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": "Add GH₵50 for gel"
+  },
+  {
+    "category": "Nails",
+    "name": "Stick-on toes (full set)",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Gel overlay on toes",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic refill (Short)",
+    "price": 180.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic refill (Medium)",
+    "price": 220.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Acrylic refill (Long)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel refill (Short)",
+    "price": 220.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel refill (Medium)",
+    "price": 270.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nails",
+    "name": "Builder gel refill (Long)",
+    "price": 300.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Acrylic nail replacement per finger",
+    "price": 40.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Stick-on replacement per finger",
+    "price": 20.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: French tips per finger",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: French outline per finger",
+    "price": 5.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Gel marble per finger",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Polish marble per finger",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Swirls (1 color per finger)",
+    "price": 5.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Swirls (2 plus colors)",
+    "price": 3.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Cat eye French per finger",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Cat eye full per finger",
+    "price": 15.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Airbrush per finger",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Airbrush French (2 plus colors) per finger",
+    "price": 15.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Anything blooming (per finger)",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: 3D crocks (French)",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: 3D crocks full",
+    "price": 20.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Chrome",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Stickers",
+    "price": 5.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: 3D flower only",
+    "price": 25.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: 3D flower with stones",
+    "price": 45.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Builder gel flower",
+    "price": 25.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Builder gel flower with stones",
+    "price": 40.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Builder gel 3D swirls French",
+    "price": 10.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Nail Art",
+    "name": "Nail Art: Builder gel 3D swirls full",
+    "price": 20.0,
+    "durationMinutes": 45,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Swedish Massage (60 min)",
+    "price": 350.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Swedish Massage (90 min)",
+    "price": 450.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Deep Tissue Massage (60 min)",
+    "price": 400.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Deep Tissue Massage (90 min)",
+    "price": 500.0,
+    "durationMinutes": 90,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Aromatherapy Massage",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Massage: Hot Stone Massage",
+    "price": 500.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Exfoliation: Body Scrub (Vanilla or Chocolate Infusion)",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Body Exfoliation: Body Scrub & Wrap (Vanilla or Chocolate Infusion)",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Express Treatments: Neck & Shoulder Release",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Express Treatments: Back Relief Massage",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Express Treatments: Head & Scalp Massage",
+    "price": 180.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Express Treatments: Leg & Foot Massage",
+    "price": 200.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Express Treatments: Arm & Hand Massage",
+    "price": 150.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Add-On Enhancements: Scalp Massage",
+    "price": 100.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Add-On Enhancements: Back Exfoliation",
+    "price": 120.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Body Therapy",
+    "name": "Add-On Enhancements: Shea Candle Oil Upgrade",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: The Executive Reset Package",
+    "price": 500.0,
+    "durationMinutes": 120,
+    "description": "Classic Pedicure + Swedish Massage (45 min)"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: The Urban Gentleman Ritual",
+    "price": 900.0,
+    "durationMinutes": 120,
+    "description": "Classic Pedicure + Men's Urban Detox Facial + Swedish Massage (45 min)"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: The Groom Package",
+    "price": 950.0,
+    "durationMinutes": 120,
+    "description": "Hydrasole Pedicure + Men's Urban Detox Facial + Swedish Massage (45 min)"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: The Empowered Woman Ritual",
+    "price": 1050.0,
+    "durationMinutes": 120,
+    "description": "Classic Pedicure + Signature Glow / Hydra Renewal Facial + Swedish Massage (45 min)"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: The Total Glow Package",
+    "price": 1450.0,
+    "durationMinutes": 120,
+    "description": "Hydrasole Pedicure + Signature Glow / Hydra Facial + Full Body Scrub + Swedish Massage (45 min)"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Packages: Beauty Prep Package",
+    "price": 480.0,
+    "durationMinutes": 120,
+    "description": "Classic Lash Extensions + Brow Waxing + Gel Polish Nails"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Bridal Packages: Luxe Bride Package",
+    "price": 1900.0,
+    "durationMinutes": 120,
+    "description": "Signature Facial + Gel Nail Extensions with Advanced Nail Art (medium length, 2-finger nail art) + HydraSole Pedicure + Swedish Massage (45 min) + Lash Extensions (Classic or Hybrid) + Brow Waxing or Shaping"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Bridal Packages: Premium Bride Package",
+    "price": 1500.0,
+    "durationMinutes": 120,
+    "description": "Glow Facial or Hydra Renewal Facial + Gel Extensions with Basic Nail Art + Classic Pedicure + Hybrid Lash Extensions + Brow Waxing"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Bridal Packages: Minimalist Bride Package",
+    "price": 1000.0,
+    "durationMinutes": 120,
+    "description": "Signature Glow Facial + Classic Pedicure + Gel Polish Nails"
+  },
+  {
+    "category": "Signature Packages",
+    "name": "Bridal Packages: The Bride Package (Per person)",
+    "price": 350.0,
+    "durationMinutes": 120,
+    "description": "Express Facial or Express Pedicure + Gel Polish + Brow Waxing"
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Classic Polaris Facial",
+    "price": 380.0,
+    "durationMinutes": 60,
+    "description": "Choice of Hydration / Alginate / Purity mask"
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Polaris Signature Glow Facial",
+    "price": 550.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Hydra Renewal Facial",
+    "price": 600.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Barrier Repair & Hydration Facial",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Purifying Facial (Acne & Congestion)",
+    "price": 480.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Age-Renew Facial",
+    "price": 550.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Facials: Men's Urban Detox Facial",
+    "price": 450.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Express Facials: Hydration Boost",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Express Facials: Glow Enzyme Facial",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Express Facials: Purifying Facial (Express)",
+    "price": 250.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Add-ons: LED Light Therapy (10 minutes)",
+    "price": 100.0,
+    "durationMinutes": 10,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Add-ons: High Frequency",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Add-ons: Serum Infusion Upgrade",
+    "price": 50.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Add-ons: Cooling Therapy",
+    "price": 60.0,
+    "durationMinutes": 60,
+    "description": null
+  },
+  {
+    "category": "Facial Treatments",
+    "name": "Add-ons: Extraction Booster",
+    "price": 80.0,
+    "durationMinutes": 60,
+    "description": null
+  }
+]
