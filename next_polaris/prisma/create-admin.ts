@@ -1,8 +1,22 @@
-import 'dotenv/config';
+// Self-contained on purpose: this runs inside the production runner image via
+// `npx tsx prisma/create-admin.ts`, which only has .next/standalone's
+// tree-shaken node_modules, prisma/, and generated/ — no src/, no
+// tsconfig.json, so no `@/...` path aliases and no dotenv (Next.js loads its
+// own env, nothing in the compiled server imports the dotenv package).
 import { randomBytes } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { hashPassword } from "@/utils/helpers";
-import { UserRole } from "@generated/prisma/enums";
+import bcrypt from "bcrypt";
+import { PrismaPg } from "@prisma/adapter-pg";
+import { PrismaClient } from "../generated/prisma/client";
+
+const SALTROUNDS = 10;
+
+const connectionString = process.env.DIRECT_URL;
+if (!connectionString) {
+  throw new Error("DIRECT_URL environment variable is not defined");
+}
+
+const adapter = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter });
 
 const username = process.env.ADMIN_USERNAME || "Clint";
 const email = (process.env.ADMIN_EMAIL || "cdanso@service4gh.com").toLowerCase();
@@ -15,14 +29,14 @@ async function main() {
     return;
   }
 
-  const passwordHash = await hashPassword(password);
+  const passwordHash = await bcrypt.hash(password, SALTROUNDS);
 
   const user = await prisma.user.create({
     data: {
       username,
       email,
       passwordHash,
-      role: UserRole.ADMIN,
+      role: "ADMIN",
     },
     select: {
       id: true,
