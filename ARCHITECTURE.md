@@ -139,11 +139,21 @@ features/<domain>/
 |---|---|
 | `auth` | Login, logout, session management, password reset |
 | `booking` | Creating, editing, cancelling, rescheduling bookings |
-| `service` | CRUD for beauty services (price, duration, image, active/inactive) |
+| `service` / `service-category` | CRUD for beauty services and their categories (price, duration, image, active/inactive) |
+| `package` | Bundled services sold as a single package |
 | `payment` | Paystack integration, dual-gateway routing, invoicing |
 | `invoice` | Invoice creation and lifecycle tracking per booking |
 | `business-hour` | Opening hours by day-of-week |
 | `blocked-date` | Blocking specific dates (e.g., holidays) |
+| `promo-code` | Discount codes applied at booking time |
+| `staff` | Staff account management (assigned to bookings/services) |
+| `roles` | Custom permission-based roles for STAFF accounts (see §6) |
+| `product` / `product-category` | Retail product catalogue with optional stock tracking |
+| `material` | Internal consumables (nail polish, dye, …) issued to a business "section" for cost accounting — distinct from `product` |
+| `gift-card` | Stored-value gift cards: purchase (Paystack, mobile money only), delivery (email/SMS), redemption against a booking |
+| `style-image` | "Our Work" gallery images shown on the public site |
+| `faq` | Static FAQ content (no DB model) feeding `/faq` and JSON-LD |
+| `feedback` | Google review link setting + post-visit feedback-request email (no DB model — `Booking.feedbackRequestedAt` tracks send state) |
 
 ---
 
@@ -155,18 +165,30 @@ Managed by **Prisma** (`prisma/schema.prisma`). Generated client output goes to 
 
 | Model | Purpose |
 |---|---|
-| `User` | Admin/staff accounts. Roles: `ADMIN`, `CUSTOMER`, `STAFF` |
+| `User` | Admin/staff accounts. Roles: `ADMIN`, `SUPER_ADMIN`, `CUSTOMER`, `STAFF` |
+| `Role` | Custom, admin-defined permission set (`permissions: String[]`) assignable to `STAFF` users |
 | `Session` | Session tokens for custom auth (not NextAuth) |
 | `PasswordResetToken` | Time-limited tokens for password reset emails |
-| `Service` | Beauty services with price, duration, image, booking limits |
+| `Service` / `ServiceCategory` | Beauty services with price, duration, image, booking limits |
+| `ServicePackage` / `PackageService` | Bundled services sold as one package |
 | `Booking` | An appointment — holds client info, date/time, status, payment status |
 | `BookingService` | Join table: which services are in a booking (snapshot price/duration at time of booking) |
-| `Payment` | Individual Paystack payment records linked to a booking |
+| `Product` / `ProductCategory` | Retail items sold to customers, with optional stock tracking |
+| `ProductStockMovement` | Audit trail of product stock changes (`IN`/`OUT`/`ADJUSTMENT`) |
+| `BookingProduct` | Join table: which products were sold in a booking (price snapshot) |
+| `Material` / `MaterialCategory` | Internal consumables (not sold) used to deliver services |
+| `Section` | A cost centre (e.g. "Nails", "Barber") that consumes materials |
+| `MaterialMovement` | Audit trail of material stock/issuance, with cost snapshot per movement |
+| `GiftCard` | Stored-value gift card — balance spendable across future bookings |
+| `GiftCardItem` | Legacy itemized snapshot (unused by current stored-value purchases) |
+| `GiftCardRedemption` | Append-only ledger of balance applied to bookings |
+| `Payment` | Individual payment records (Paystack or manual) linked to a booking |
+| `ManualPaymentMethod` | Admin-configurable named manual payment methods (Cash, POS, Gift Card, …) |
 | `Invoice` | Invoice per payment attempt, supports parent-child (top-up) relationships |
 | `PaymentAuditLog` | Immutable audit trail of every payment action/status change |
 | `BusinessHour` | One row per day (0=Sun → 6=Sat) with open/close times |
 | `BlockedDate` | Dates (or partial times) when bookings are disabled |
-| `SystemSetting` | Key-value config store (e.g., gateway routing threshold) |
+| `SystemSetting` | Key-value config store (e.g., gateway routing threshold, Google review link, payment notification emails) |
 
 ### Key enums
 
@@ -174,7 +196,9 @@ Managed by **Prisma** (`prisma/schema.prisma`). Generated client output goes to 
 - `PaymentStatus`: `PENDING / PAID / PARTIAL / REFUNDED / FAILED`
 - `PaymentProvider`: `PRIMARY_PAYSTACK`, `SECONDARY_PAYSTACK`, `MANUAL`
 - `InvoiceStatus`: `DRAFT → PENDING → ISSUED → PAID / VOID / OVERDUE`
-- `UserRole`: `ADMIN`, `STAFF`, `CUSTOMER`
+- `UserRole`: `ADMIN`, `SUPER_ADMIN`, `STAFF`, `CUSTOMER`
+- `StockMovementType`: `IN / OUT / ADJUSTMENT` (shared by products and materials)
+- `GiftCardStatus`: `PENDING_PAYMENT → ACTIVE → PARTIALLY_REDEEMED / REDEEMED`, or `EXPIRED / CANCELLED`
 
 ---
 
@@ -194,11 +218,13 @@ This app uses **custom session-based auth** (not NextAuth/Auth.js, despite the e
 |---|---|
 | `isAuthenticated()` | Returns `{ user, session }` or nulls — no redirect |
 | `requireAuth()` | Redirects to `/login` if not authenticated |
-| `requireRole(roles[])` | Redirects to `/unauthorized` if role doesn't match |
+| `requireRole(roles[], permission?)` | Redirects to `/unauthorized` if role/permission doesn't match |
 | `requireAuthApi()` | For API routes — returns 401 instead of redirecting |
-| `requireRoleApi(roles[])` | For API routes — returns 403 instead of redirecting |
+| `requireRoleApi(roles[], permission?)` | For API routes — returns 403 instead of redirecting |
 
 All auth helpers use React's `cache()` to deduplicate calls per request.
+
+**Permissions layer:** `ADMIN`/`SUPER_ADMIN` bypass all checks. `STAFF` accounts are gated by an optional `permission` argument (a `PermissionKey` from `src/lib/permissions.ts`) — they pass only if their assigned custom `Role.permissions` array includes it. This lets individual pages/routes be locked down per-permission (`"bookings.view"`, `"materials.manage"`, `"roles.manage"`, etc.) without changing the guard functions themselves. Roles are managed at `/app-settings` → Roles tab. See `next_polaris/ARCHITECTURE.md` §4 for the full resolution order.
 
 ---
 
@@ -379,4 +405,5 @@ When a booking is created, the service's price and duration are copied into the 
    - Customer: `(customer)/customer/booking/page.tsx` → `customer-booking-form.tsx` → `POST /api/bookings`
    - Admin: `(admin)/bookings/page.tsx` → booking table/filters → edit/cancel forms
 5. **Understand payments:** Read `payment-processing.service.ts` and the two webhook routes.
-6. **Check the docs** in the repo root: `DEPLOYMENT.md`, `MIGRATION_GUIDE.md`, `DOCKER_MIGRATIONS.md`, `MINIO_GUIDE.md`, `GATEWAY_DOCUMENTATION.md` (in `next_polaris/`).
+6. **Understand the newer subsystems:** roles/permissions (`src/lib/permissions.ts`, `features/roles/`), gift cards (`features/gift-card/`), and inventory (`features/product/` vs `features/material/` — read §11 of `next_polaris/ARCHITECTURE.md` for why they're separate).
+7. **Check the docs** in the repo root: `DEPLOYMENT.md`, `MIGRATION_GUIDE.md`, `DOCKER_MIGRATIONS.md`, `MINIO_GUIDE.md`, `GATEWAY_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DESIGN.md` (in `next_polaris/`).

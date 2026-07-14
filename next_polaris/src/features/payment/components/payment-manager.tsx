@@ -54,7 +54,14 @@ export default function PaymentManager({ services }: { services: SerializedServi
       }
     },
     { key: "status", label: "Payment status", render: (p: PaymentWithBookingAndService) => p.status },
-    { key: "createdAt", label: "Created At", render: (p: PaymentWithBookingAndService) => new Date(p.createdAt).toDateString() },
+    {
+      key: "createdAt",
+      label: "Created At",
+      render: (p: PaymentWithBookingAndService) => {
+        const d = new Date(p.createdAt)
+        return `${d.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })} · ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`
+      },
+    },
     {
       key: "action",
       label: "Action",

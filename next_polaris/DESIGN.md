@@ -26,6 +26,10 @@ This document is the single source of truth for all visual and interaction patte
    - [Toggle Switch](#toggle-switch)
    - [Custom Checkbox & Radio](#custom-checkbox--radio)
    - [Carousel & Dots](#carousel--dots)
+   - [Stock / Status Badges](#stock--status-badges)
+   - [Permission Checkbox Grid](#permission-checkbox-grid)
+   - [Preset Amount Selector](#preset-amount-selector)
+   - [Selection-Mode Card Overlay](#selection-mode-card-overlay)
 8. [Interactive States](#8-interactive-states)
 9. [Layout Patterns](#9-layout-patterns)
 10. [Surface Contexts](#10-surface-contexts)
@@ -609,6 +613,124 @@ Use the shared `<Modal>` component. Size via `childrenClassName`:
 ```jsx
 // Active: w-5 h-2 bg-white
 // Inactive: w-2 h-2 bg-white/40 hover:bg-white/60
+```
+
+---
+
+### Stock / Status Badges
+
+Introduced for the Products/Materials inventory features. Same shape as other pill badges (`text-[11px] font-medium ... px-2 py-0.5 rounded-full border`), but with a fixed semantic color mapping — reuse this mapping anywhere stock/availability state is shown, don't invent new colors per feature.
+
+```jsx
+// Out of stock
+<span className="text-[11px] font-medium bg-red-50 text-red-600 border border-red-200 px-2 py-0.5 rounded-full">
+  Out of stock
+</span>
+// Low stock (at or below threshold)
+<span className="text-[11px] font-medium bg-amber-50 text-amber-600 border border-amber-200 px-2 py-0.5 rounded-full">
+  Low stock · {quantity}
+</span>
+// In stock (healthy)
+<span className="text-[11px] font-medium bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full">
+  {quantity} in stock
+</span>
+// Tracking disabled for this item
+<span className="text-[11px] font-medium bg-gray-50 text-gray-400 border border-gray-200 px-2 py-0.5 rounded-full">
+  No stock tracking
+</span>
+```
+
+> **Rule**: `red` = zero/blocked, `amber` = warning/near-threshold, `green` = healthy, `gray` = not applicable/disabled. Do not reuse `amber` for anything other than a "getting low" warning state.
+
+---
+
+### Permission Checkbox Grid
+
+Used on the Roles & Permissions admin screen (`/app-settings`) for assigning `PermissionKey`s to a custom `Role`. Permissions are grouped by area (Core, Catalog, Analytics, Marketing, Administration), each group collapsible with a "select all / deselect all" affordance and a "partial" indicator when only some of the group is selected.
+
+```jsx
+// Group header
+<div className="flex items-center justify-between px-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl">
+  <button className="flex items-center gap-2 text-sm font-semibold text-gray-700">
+    {/* ChevronUp/ChevronDown */} {areaName}
+    {someSelected && !allSelected && (
+      <span className="text-[10px] font-medium text-fuchsia-600 bg-fuchsia-50 px-1.5 py-0.5 rounded-full">partial</span>
+    )}
+  </button>
+  <button className={allSelected
+    ? "text-xs font-medium px-2.5 py-1 rounded-lg text-fuchsia-700 bg-fuchsia-100 hover:bg-fuchsia-200"
+    : "text-xs font-medium px-2.5 py-1 rounded-lg text-gray-500 bg-white border border-gray-200 hover:bg-gray-50"
+  }>
+    {allSelected ? "Deselect all" : "Select all"}
+  </button>
+</div>
+
+// Individual permission row (inside the expanded group, grid grid-cols-1 sm:grid-cols-2 gap-2)
+<label className="flex items-center gap-2.5 cursor-pointer group">
+  <input type="checkbox" className="w-4 h-4 rounded border-gray-300 text-fuchsia-600 focus:ring-fuchsia-500 cursor-pointer" />
+  <span className="text-sm text-gray-700 group-hover:text-gray-900">{label}</span>
+</label>
+```
+
+Role cards in the list (below the form) use a small icon-in-rounded-square pattern worth reusing for any "entity with a badge count" list:
+```jsx
+<div className="w-10 h-10 rounded-xl bg-fuchsia-50 flex items-center justify-center flex-shrink-0">
+  <Shield className="w-5 h-5 text-fuchsia-600" />
+</div>
+// "system" badge next to a protected/non-deletable row's name:
+<span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">system</span>
+```
+
+---
+
+### Preset Amount Selector
+
+Used on the gift card purchase builder (`/gift-cards`) for choosing a value from a fixed set, with a custom-amount fallback. Reuse this for any "pick a preset or type your own number" input (e.g. deposit overrides, promo amounts).
+
+```jsx
+<div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
+  {presets.map((value) => (
+    <button
+      key={value}
+      className={`py-2.5 rounded-xl border-2 text-sm font-semibold transition-colors ${
+        active
+          ? "border-fuchsia-500 bg-fuchsia-50 text-fuchsia-700"
+          : "border-gray-200 text-gray-600 hover:border-gray-300"
+      }`}
+    >
+      GHS {value}
+    </button>
+  ))}
+</div>
+```
+
+The same `border-2` selected/unselected pattern (not just a background swap) is used for the delivery-method selector (Email / SMS / Both), each option a `flex flex-col items-center gap-1 py-2.5 rounded-xl border-2` button with an icon above a label — use this style whenever offering 2-4 mutually exclusive choices as buttons rather than a dropdown.
+
+---
+
+### Selection-Mode Card Overlay
+
+Used on Product cards in the Stock Management bulk-action view. When a grid of cards enters a "select multiple" mode, each card gets a circular checkbox overlay in the top-left corner and a ring around the whole card when selected — don't repurpose the corner badge slot used for category/duration badges for this.
+
+```jsx
+<Card className={`... ${isSelectionMode ? "cursor-pointer select-none" : "hover:shadow-md"} ${
+  isSelected ? "ring-2 ring-fuchsia-500 border-fuchsia-300" : ""
+}`}>
+  {isSelectionMode && (
+    <div className="absolute top-3 left-3 z-10">
+      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+        isSelected ? "bg-fuchsia-600 border-fuchsia-600" : "bg-white border-gray-300"
+      }`}>
+        {isSelected && (
+          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+          </svg>
+        )}
+      </div>
+    </div>
+  )}
+  {/* card content; per-card dropdown menu (Edit/Delete) is hidden while isSelectionMode is true */}
+</Card>
 ```
 
 ---
