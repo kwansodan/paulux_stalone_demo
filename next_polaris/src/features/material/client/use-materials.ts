@@ -94,6 +94,19 @@ export function useCreateSection() {
   })
 }
 
+export function useUpdateSection() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, ...data }: { id: string; name?: string; isActive?: boolean; sortOrder?: number }) =>
+      (await api.patch(`/sections/${id}`, data)).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: SECTIONS_KEY })
+      toast.success("Section updated")
+    },
+    onError: (error: any) => toast.error(error?.response?.data?.message || "Failed to update section"),
+  })
+}
+
 export function useSeedSections() {
   const qc = useQueryClient()
   return useMutation({

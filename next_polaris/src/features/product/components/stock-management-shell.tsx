@@ -6,8 +6,9 @@ import { getProducts } from "../client/use-product"
 import { SerializedProduct } from "../types"
 import StockMovementModal from "./stock-movement-modal"
 import StockHistoryModal from "./stock-history-modal"
-import { AlertTriangle, PackageX, History, Plus } from "lucide-react"
+import { AlertTriangle, PackageX, History, Plus, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 
 type Props = {
   initialProducts: SerializedProduct[]
@@ -28,8 +29,12 @@ export default function StockManagementShell({ initialProducts }: Props) {
 
   const [movementTarget, setMovementTarget] = useState<SerializedProduct | null>(null)
   const [historyTarget, setHistoryTarget] = useState<SerializedProduct | null>(null)
+  const [search, setSearch] = useState("")
 
-  const trackedProducts = products.filter(p => (p as any).trackStock)
+  const q = search.trim().toLowerCase()
+  const trackedProducts = products
+    .filter(p => (p as any).trackStock)
+    .filter(p => !q || p.name.toLowerCase().includes(q) || (p.category?.name?.toLowerCase().includes(q) ?? false))
   const sorted = [...trackedProducts].sort((a, b) => {
     const order = { out: 0, low: 1, ok: 2 }
     return order[stockStatus(a)] - order[stockStatus(b)]
@@ -40,6 +45,16 @@ export default function StockManagementShell({ initialProducts }: Props) {
       <p className="text-sm text-gray-500">
         Track inventory levels for products with stock tracking enabled. To add products here, enable &quot;Track inventory&quot; on the product in the Products tab.
       </p>
+
+      <div className="relative w-full sm:w-72">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+        <Input
+          placeholder="Search stock by name or category..."
+          className="pl-10 bg-white border-gray-200"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       <div className="bg-white rounded-xl border overflow-hidden">
         <table className="w-full text-sm">

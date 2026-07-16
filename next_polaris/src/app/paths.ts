@@ -22,6 +22,7 @@ export const productsPath = () => "/products"
 export const materialsPath = () => "/materials"
 export const materialUsageReportPath = () => "/materials/usage"
 export const reportsPath = () => "/reports"
+export const reportPath = (slug: string) => `/reports/${slug}`
 export const appSettingsPath = () => "/app-settings"
 export const promoCodesPath = () => "/promo-codes"
 export const giftCardsPath = () => "/gift-cards"

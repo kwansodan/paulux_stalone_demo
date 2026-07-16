@@ -54,7 +54,15 @@ export const SectionInputSchema = z.object({
   sortOrder: z.number().int().optional().default(0),
 })
 
+// Partial schema for PATCH — no defaults, so an update only touches the fields sent.
+export const UpdateSectionSchema = z.object({
+  name: z.string().min(1, "Section name is required").max(120).optional(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+})
+
 export type MaterialFormInput = z.input<typeof MaterialInputSchema>
 export type MaterialUpsertInput = z.infer<typeof MaterialUpsertSchema>
 export type MaterialMovementInput = z.infer<typeof MaterialMovementSchema>
 export type SectionInput = z.infer<typeof SectionInputSchema>
+export type UpdateSectionInput = z.infer<typeof UpdateSectionSchema>

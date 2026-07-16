@@ -11,6 +11,7 @@ import {
   useToggleMaterialStatus,
   useSeedSections,
   useCreateSection,
+  useUpdateSection,
 } from "@/features/material/client/use-materials"
 import { SerializedMaterial } from "@/features/material/types"
 import { materialUsageReportPath } from "@/app/paths"
@@ -35,12 +36,23 @@ export default function MaterialsClientShell() {
   const toggleStatus = useToggleMaterialStatus()
   const seedSections = useSeedSections()
   const createSection = useCreateSection()
+  const updateSection = useUpdateSection()
 
   const [formOpen, setFormOpen] = useState(false)
   const [editing, setEditing] = useState<SerializedMaterial | null>(null)
   const [movementFor, setMovementFor] = useState<{ material: SerializedMaterial; type: "IN" | "OUT" } | null>(null)
   const [historyFor, setHistoryFor] = useState<SerializedMaterial | null>(null)
   const [newSection, setNewSection] = useState("")
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
+  const [editingSectionName, setEditingSectionName] = useState("")
+
+  const startEditSection = (id: string, name: string) => { setEditingSectionId(id); setEditingSectionName(name) }
+  const cancelEditSection = () => { setEditingSectionId(null); setEditingSectionName("") }
+  const saveEditSection = (id: string) => {
+    const name = editingSectionName.trim()
+    if (!name) return
+    updateSection.mutate({ id, name }, { onSuccess: cancelEditSection })
+  }
 
   const openCreate = () => { setEditing(null); setFormOpen(true) }
   const openEdit = (m: SerializedMaterial) => { setEditing(m); setFormOpen(true) }
@@ -81,11 +93,48 @@ export default function MaterialsClientShell() {
           )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {sections?.map((s) => (
-            <span key={s.id} className={`text-xs font-medium px-2.5 py-1 rounded-full ${s.isActive ? "bg-fuchsia-50 text-fuchsia-700" : "bg-gray-100 text-gray-400"}`}>
-              {s.name}
-            </span>
-          ))}
+          {sections?.map((s) =>
+            editingSectionId === s.id ? (
+              <span key={s.id} className="inline-flex items-center gap-1">
+                <Input
+                  autoFocus
+                  value={editingSectionName}
+                  onChange={(e) => setEditingSectionName(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") saveEditSection(s.id)
+                    if (e.key === "Escape") cancelEditSection()
+                  }}
+                  className="h-8 w-40 text-sm"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={!editingSectionName.trim() || updateSection.isPending}
+                  onClick={() => saveEditSection(s.id)}
+                >
+                  Save
+                </Button>
+                <Button size="sm" variant="ghost" onClick={cancelEditSection} disabled={updateSection.isPending}>
+                  Cancel
+                </Button>
+              </span>
+            ) : (
+              <span
+                key={s.id}
+                className={`group inline-flex items-center gap-1 text-xs font-medium pl-2.5 pr-1.5 py-1 rounded-full ${s.isActive ? "bg-fuchsia-50 text-fuchsia-700" : "bg-gray-100 text-gray-400"}`}
+              >
+                {s.name}
+                <button
+                  type="button"
+                  onClick={() => startEditSection(s.id, s.name)}
+                  className="opacity-60 hover:opacity-100 transition-opacity"
+                  title="Rename section"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+              </span>
+            )
+          )}
           <div className="flex items-center gap-1">
             <Input
               value={newSection}
