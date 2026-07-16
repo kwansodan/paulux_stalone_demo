@@ -11,6 +11,7 @@ import { z } from "zod";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { inngest } from "@/lib/inngest";
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service";
 
 class SlotUnavailableError extends Error {
   constructor() {
@@ -339,6 +340,13 @@ export async function POST(request: NextRequest) {
 
           return bookingRepository.upsertBooking(bookingPayload, tx)
         })
+
+    // Sync product stock after the booking is persisted (post-commit, idempotent).
+    // No-op for pending bookings; deducts for walk-ins created CONFIRMED, and
+    // reconciles when an edit changes the products on an already-confirmed booking.
+    await reconcileBookingProductStock(createdBooking.id).catch(err =>
+      console.error("Failed to reconcile product stock:", err)
+    )
 
     // Only consume a promo use once the booking has actually been persisted —
     // incrementing beforehand would burn a redemption slot on a request that ultimately fails.

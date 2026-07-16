@@ -74,7 +74,9 @@ export async function POST(
   let newStock = prevStock
   if (type === "IN") newStock += quantity
   else if (type === "OUT") newStock = Math.max(0, newStock - quantity)
-  else if (type === "ADJUSTMENT") newStock = quantity
+  // ADJUSTMENT is a relative +/- correction (quantity may be negative), not an
+  // absolute "set to" — keeps the balance a clean sum of every movement.
+  else if (type === "ADJUSTMENT") newStock = newStock + quantity
 
   await prisma.$transaction([
     db.product.update({
@@ -88,7 +90,7 @@ export async function POST(
 
   const wasOk = prevStock > threshold
   const nowLow = newStock <= threshold
-  const nowOut = newStock === 0
+  const nowOut = newStock <= 0
 
   if (nowOut || (wasOk && nowLow)) {
     await inngest.send({

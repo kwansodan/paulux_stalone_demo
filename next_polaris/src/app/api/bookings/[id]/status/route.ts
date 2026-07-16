@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
 import { BookingStatusSchema } from "@/features/booking/utils/validation"
 import { requireRoleApi } from "@/app/_auth/require-role-api"
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service"
 
 export async function POST(
   request: NextRequest,
@@ -33,6 +34,12 @@ export async function POST(
     }
 
     const updated = await bookingRepository.updateStatus(bookingId, status)
+
+    // Sync product stock to the new status: deduct on CONFIRMED/COMPLETED,
+    // restore on CANCELLED (idempotent).
+    await reconcileBookingProductStock(bookingId).catch((err) =>
+      console.error("Failed to reconcile product stock on status change:", err)
+    )
 
     return NextResponse.json({
       success: true,

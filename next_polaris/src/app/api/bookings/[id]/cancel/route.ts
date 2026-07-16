@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma"
 import { initiateRefund } from "@/lib/paystack"
 import { inngest } from "@/lib/inngest"
 import { requireRoleApi } from "@/app/_auth/require-role-api"
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service"
 
 export async function POST(
   request: NextRequest,
@@ -85,6 +86,11 @@ export async function POST(
 
     // Cancel the booking
     const cancelled = await bookingRepository.cancelBooking(bookingId, reason)
+
+    // Restore any product stock this booking had consumed (idempotent).
+    await reconcileBookingProductStock(bookingId).catch((err) =>
+      console.error("Failed to reconcile product stock on cancel:", err)
+    )
 
     await inngest.send({
       name: "app/booking.booking-cancel",

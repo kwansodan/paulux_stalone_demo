@@ -5,6 +5,8 @@ export enum StockMovementType {
   IN = "IN",
   OUT = "OUT",
   ADJUSTMENT = "ADJUSTMENT",
+  SALE = "SALE",
+  SALE_REVERSAL = "SALE_REVERSAL",
 }
 
 export type SerializedProduct = Omit<Product, 'price' | 'createdAt' | 'updatedAt'> & {

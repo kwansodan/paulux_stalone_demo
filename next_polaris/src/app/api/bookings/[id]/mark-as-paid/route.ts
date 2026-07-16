@@ -9,6 +9,7 @@ import { prisma } from "@/lib/prisma";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { inngest } from "@/lib/inngest";
 import { bookingInclude } from "@/lib/prisma-includes";
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service";
 
 export async function POST(
     request: NextRequest,
@@ -108,6 +109,11 @@ export async function POST(
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED via Manual Payment`);
         }
+
+        // Sync product stock now that the booking is a committed sale (idempotent).
+        await reconcileBookingProductStock(booking.id).catch((err) =>
+            console.error('Failed to reconcile product stock:', err)
+        );
 
         // Create Google Calendar Event
         if (!booking.googleEventId) {

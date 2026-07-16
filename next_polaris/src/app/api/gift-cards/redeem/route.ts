@@ -11,6 +11,7 @@ import { createCalendarEvent } from "@/lib/google-calendar"
 import { inngest } from "@/lib/inngest"
 import { PaymentProvider, PaymentStatus } from "@generated/prisma/client"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service"
 
 export async function POST(request: NextRequest) {
   try {
@@ -88,6 +89,11 @@ export async function POST(request: NextRequest) {
           include: bookingInclude,
         })
       }
+
+      // Sync product stock now that the booking is a committed sale (idempotent).
+      await reconcileBookingProductStock(booking.id).catch((err) =>
+        console.error("Failed to reconcile product stock:", err)
+      )
 
       if (!booking.googleEventId) {
         try {

@@ -36,7 +36,7 @@ const TYPES: { value: MovementType; label: string; description: string; icon: Re
   {
     value: "ADJUSTMENT",
     label: "Adjustment",
-    description: "Set exact stock count",
+    description: "Correct count by + or −",
     icon: <SlidersHorizontal className="w-4 h-4" />,
     colour: "border-blue-400 bg-blue-50 text-blue-700",
   },
@@ -48,10 +48,18 @@ export default function StockMovementModal({ product, open, onClose }: Props) {
   const [notes, setNotes] = useState("")
   const mutation = useRecordStockMovement()
 
+  // IN/OUT require a positive quantity; ADJUSTMENT accepts a relative +/- delta
+  // (any non-zero integer).
+  const qtyNum = Number(quantity)
+  const isValidQty =
+    quantity !== "" &&
+    Number.isInteger(qtyNum) &&
+    qtyNum !== 0 &&
+    (type === "ADJUSTMENT" || qtyNum > 0)
+
   const handleSave = async () => {
-    const qty = Number(quantity)
-    if (!qty || qty <= 0 || !Number.isInteger(qty)) return
-    await mutation.mutateAsync({ productId: product.id, type, quantity: qty, notes: notes || undefined })
+    if (!isValidQty) return
+    await mutation.mutateAsync({ productId: product.id, type, quantity: qtyNum, notes: notes || undefined })
     setQuantity("")
     setNotes("")
     onClose()
@@ -62,7 +70,7 @@ export default function StockMovementModal({ product, open, onClose }: Props) {
       ? product.stockQuantity + (Number(quantity) || 0)
       : type === "OUT"
       ? Math.max(0, product.stockQuantity - (Number(quantity) || 0))
-      : Number(quantity) || 0
+      : product.stockQuantity + (Number(quantity) || 0)
 
   return (
     <Modal
@@ -104,18 +112,18 @@ export default function StockMovementModal({ product, open, onClose }: Props) {
         {/* Quantity */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium text-gray-700">
-            {type === "ADJUSTMENT" ? "Set stock to" : "Quantity"}
+            {type === "ADJUSTMENT" ? "Adjust by (+/−)" : "Quantity"}
           </Label>
           <Input
             type="number"
-            min={1}
+            min={type === "ADJUSTMENT" ? undefined : 1}
             step={1}
-            placeholder="0"
+            placeholder={type === "ADJUSTMENT" ? "e.g. -2 or 5" : "0"}
             value={quantity}
             onChange={e => setQuantity(e.target.value)}
             className="h-11 bg-white border-[#E2E8F0] rounded-lg shadow-none"
           />
-          {quantity && Number(quantity) > 0 && (
+          {isValidQty && (
             <p className="text-xs text-gray-500">
               New stock will be: <span className="font-semibold text-gray-800">{preview} units</span>
             </p>
@@ -141,7 +149,7 @@ export default function StockMovementModal({ product, open, onClose }: Props) {
           <Button
             className="flex-1 bg-fuchsia-600 hover:bg-fuchsia-700 text-white"
             onClick={handleSave}
-            disabled={mutation.isPending || !quantity || Number(quantity) <= 0}
+            disabled={mutation.isPending || !isValidQty}
           >
             {mutation.isPending ? "Saving..." : "Save"}
           </Button>

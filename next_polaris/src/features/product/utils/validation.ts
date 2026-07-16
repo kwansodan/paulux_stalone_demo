@@ -28,14 +28,21 @@ export const ProductStatusSchema = z.object({
   isActive: z.boolean(),
 })
 
-export const StockMovementSchema = z.object({
-  type: z.enum(["IN", "OUT", "ADJUSTMENT"]),
-  quantity: z
-    .union([z.string(), z.number()])
-    .transform((val) => Number(val))
-    .refine((val) => !isNaN(val) && val > 0 && Number.isInteger(val), "Quantity must be a positive whole number"),
-  notes: z.string().max(500).optional(),
-})
+export const StockMovementSchema = z
+  .object({
+    type: z.enum(["IN", "OUT", "ADJUSTMENT"]),
+    quantity: z
+      .union([z.string(), z.number()])
+      .transform((val) => Number(val))
+      // IN/OUT are always positive; ADJUSTMENT is a relative +/- correction, so
+      // it may be negative. Zero is never a valid movement.
+      .refine((val) => !isNaN(val) && val !== 0 && Number.isInteger(val), "Quantity must be a non-zero whole number"),
+    notes: z.string().max(500).optional(),
+  })
+  .refine((data) => data.type === "ADJUSTMENT" || data.quantity > 0, {
+    message: "Quantity must be a positive whole number",
+    path: ["quantity"],
+  })
 
 export type StockMovementInput = z.infer<typeof StockMovementSchema>
 export type ProductStatusInput = z.infer<typeof ProductStatusSchema>

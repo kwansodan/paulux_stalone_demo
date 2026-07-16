@@ -5,6 +5,7 @@ import { PaymentProvider, Prisma } from "@generated/prisma/client";
 import { initiateRefund as initiatePaystackRefund, verifyTransaction } from "@/lib/paystack";
 import { inngest } from "@/lib/inngest";
 import { bookingInclude } from "@/lib/prisma-includes";
+import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service";
 
 export class PaymentService {
     /**
@@ -65,6 +66,11 @@ export class PaymentService {
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
+
+        // Sync product stock now that the booking is a committed sale (idempotent).
+        await reconcileBookingProductStock(payment.bookingId).catch((err) =>
+            console.error('Failed to reconcile product stock:', err)
+        );
 
         // 4. Create Google Calendar Event if not already created
         if (!booking.googleEventId) {
@@ -141,6 +147,11 @@ export class PaymentService {
             });
             console.log(`Updated booking ${booking.bookingReference} to CONFIRMED`);
         }
+
+        // Sync product stock now that the booking is a committed sale (idempotent).
+        await reconcileBookingProductStock(invoice.bookingId).catch((err) =>
+            console.error('Failed to reconcile product stock:', err)
+        );
 
         // 4. Create Google Calendar Event
         if (!booking.googleEventId) {

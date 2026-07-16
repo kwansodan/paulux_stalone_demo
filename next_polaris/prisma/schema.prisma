@@ -56,6 +56,8 @@ enum StockMovementType {
   IN
   OUT
   ADJUSTMENT
+  SALE
+  SALE_REVERSAL
 }
 
 model Session {
@@ -314,6 +316,7 @@ model Booking {
   invoices          Invoice[]          @relation("BookingInvoices")
   paymentAuditLogs  PaymentAuditLog[]  @relation("BookingPaymentAuditLogs")
   giftCardRedemptions GiftCardRedemption[] @relation("BookingGiftCardRedemptions")
+  productStockMovements ProductStockMovement[]
 
   @@index([createdById])
   @@index([assignedToId])
@@ -386,12 +389,18 @@ model ProductStockMovement {
   quantity  Int
   notes     String?
 
+  // Set for SALE / SALE_REVERSAL movements — links the movement to the booking
+  // whose product sale (or reversal) it represents. Null for manual IN/OUT/ADJUSTMENT.
+  bookingId String?  @db.Uuid
+  booking   Booking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
   createdById String? @db.Uuid
   createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
 
   @@index([productId])
+  @@index([bookingId])
   @@index([createdAt])
   @@map("product_stock_movements")
 }
