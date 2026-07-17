@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect } from "react"
 import Image from "next/image"
 import axios from "axios"
 import {
@@ -209,6 +209,7 @@ function GeneralSection({
 
       <PaymentRecipientsCard initialPaymentEmails={initialPaymentEmails} />
       <GlobalDepositCard initialAmount={initialGlobalMinDeposit} />
+      <ProcessingFeeCard />
       <ReviewLinkCard initialLink={initialGoogleReviewLink} />
     </div>
   )
@@ -355,6 +356,103 @@ function GlobalDepositCard({ initialAmount }: { initialAmount: number | null }) 
           <Button
             className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
             disabled={saving || !dirty || (enabled && amountInput.trim() === "")}
+            onClick={handleSave}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <><Save className="w-4 h-4 mr-1.5" />Save</>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Paystack processing-fee surcharge. The rate is passed on to the customer via
+// gross-up (see fee-settings.ts) and is never shown to them — this is the only
+// place it's set. Speaks PERCENT (e.g. 1.95); the API stores the fraction.
+function ProcessingFeeCard() {
+  const [savedPercent, setSavedPercent] = useState<number | null>(null)
+  const [percentInput, setPercentInput] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    api
+      .get("/settings/processing-fee")
+      .then((res) => {
+        if (!active) return
+        const percent = Number(res.data.data.percent)
+        setSavedPercent(percent)
+        setPercentInput(String(percent))
+      })
+      .catch(() => {})
+      .finally(() => active && setLoading(false))
+    return () => { active = false }
+  }, [])
+
+  const dirty = percentInput.trim() !== (savedPercent != null ? String(savedPercent) : "")
+
+  async function handleSave() {
+    const percent = Number(percentInput)
+    if (!Number.isFinite(percent) || percent < 0 || percent >= 50) {
+      toast.error("Enter a percentage between 0 and 50")
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await api.patch("/settings/processing-fee", { percent })
+      setSavedPercent(res.data.data.percent)
+      setPercentInput(String(res.data.data.percent))
+      toast.success(res.data.message || "Processing fee updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update processing fee")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 mt-4">
+      <div className="flex flex-col gap-4 px-6 py-5">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-gray-900">Payment processing fee</p>
+          </div>
+          <p className="text-xs text-gray-500 pl-6">
+            Surcharged on top of every Paystack payment (bookings &amp; gift cards) so the salon
+            nets the full amount. Applied silently — customers are not shown a fee line.
+          </p>
+          <p className="text-xs text-gray-400 pl-6 pt-1">
+            {savedPercent != null
+              ? `Currently ${savedPercent}% added to Paystack charges.`
+              : "Loading…"}
+          </p>
+        </div>
+
+        <div className="flex items-center gap-2 pl-6">
+          <Input
+            type="number"
+            min={0}
+            max={50}
+            step="0.01"
+            disabled={loading}
+            className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none w-32"
+            value={percentInput}
+            onChange={(e) => setPercentInput(e.target.value)}
+            placeholder="e.g. 1.95"
+          />
+          <span className="text-sm text-gray-500">%</span>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
+            disabled={saving || loading || !dirty || percentInput.trim() === ""}
             onClick={handleSave}
           >
             {saving ? (

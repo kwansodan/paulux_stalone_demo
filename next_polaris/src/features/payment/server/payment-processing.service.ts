@@ -1,6 +1,7 @@
 import { invoiceService } from "@/features/invoice/server/invoice.service"
 import { auditLogService } from "./audit-log.service"
 import { gatewaySelectionService } from "./gateway-selection.service"
+import { getProcessingFeeRate, grossUp } from "./fee-settings"
 import { initializeTransaction } from "@/lib/paystack"
 import { InvoiceStatus, PaymentProvider, SupportedCurrency, Prisma } from "@generated/prisma/client"
 
@@ -32,12 +33,19 @@ export class PaymentProcessingService {
             metrics = selection.metrics
         }
 
+        // Gross up so the customer covers Paystack's fee and the salon nets `amount`.
+        // The invoice keeps the service `amount` (what's credited to the booking);
+        // the gateway is billed `charge` (service + fee).
+        const feeRate = await getProcessingFeeRate()
+        const { charge, fee } = grossUp(amount, feeRate)
+
         // STEP 2 — Create invoice (always BEFORE calling payment provider)
         const invoiceNumber = `INV-${Date.now()}`
         const invoice = await invoiceService.createInvoice({
             bookingId,
             invoiceNumber,
             amount,
+            feeAmount: fee,
             currency: SupportedCurrency.GHS,
             gateway,
             parentInvoiceId,
@@ -51,12 +59,12 @@ export class PaymentProcessingService {
             { selectionMetrics: metrics }
         )
 
-        // STEP 3 — Initialize payment with retry + failover
+        // STEP 3 — Initialize payment with retry + failover (charge the grossed total)
         return this.initializeWithResilience(gateway, {
             invoiceId: invoice.id,
             bookingId,
             email,
-            amount,
+            amount: charge,
             bookingReference,
             callbackUrl,
             invoiceNumber: invoice.invoiceNumber,

@@ -15,6 +15,7 @@ function serializeGiftCard(giftCard: any): SerializedGiftCard {
     ...giftCard,
     totalAmount: giftCard.totalAmount.toString(),
     balance: giftCard.balance.toString(),
+    feeAmount: (giftCard.feeAmount ?? 0).toString(),
     createdAt: giftCard.createdAt.toISOString(),
     updatedAt: giftCard.updatedAt.toISOString(),
     expiresAt: giftCard.expiresAt ? giftCard.expiresAt.toISOString() : null,
@@ -52,6 +53,8 @@ export interface CreateGiftCardData {
   message?: string | null
   deliveryMethod: GiftCardDeliveryMethod
   totalAmount: number
+  // Processing fee the purchaser paid on top of totalAmount (Paystack surcharge).
+  feeAmount?: number
   // Optional purchase-time snapshot. Stored-value cards (custom amount, not
   // tied to specific services/products) are created without items.
   items?: CreateGiftCardItemData[]
@@ -74,6 +77,7 @@ export class GiftCardRepository {
         deliveryMethod: data.deliveryMethod,
         totalAmount: data.totalAmount,
         balance: data.totalAmount,
+        feeAmount: data.feeAmount ?? 0,
         status: GiftCardStatus.PENDING_PAYMENT,
         paymentStatus: PaymentStatus.PENDING,
         paymentProvider: data.paymentProvider,

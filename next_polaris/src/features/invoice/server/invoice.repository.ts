@@ -5,6 +5,7 @@ export interface CreateInvoiceDTO {
     bookingId: string
     invoiceNumber: string
     amount: number
+    feeAmount?: number
     currency: SupportedCurrency
     dueDate?: Date
     parentInvoiceId?: string
@@ -19,6 +20,7 @@ export class InvoiceRepository {
                 bookingId: data.bookingId,
                 invoiceNumber: data.invoiceNumber,
                 amount: data.amount,
+                feeAmount: data.feeAmount ?? 0,
                 currency: data.currency,
                 dueDate: data.dueDate,
                 status: InvoiceStatus.DRAFT,

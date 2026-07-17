@@ -6,6 +6,7 @@ import { generateGiftCardPaymentReference } from "@/features/gift-card/utils/hel
 import { initializeTransaction } from "@/lib/paystack"
 import { PaymentProvider } from "@generated/prisma/client"
 import { requireRoleApi } from "@/app/_auth/require-role-api"
+import { getProcessingFeeRate, grossUp } from "@/features/payment/server/fee-settings"
 
 export async function GET(request: NextRequest) {
   try {
@@ -48,6 +49,11 @@ export async function POST(request: NextRequest) {
     // tied to any service or product. The recipient spends the balance later.
     const totalAmount = Math.round(validated.amount * 100) / 100
 
+    // Gross up so the purchaser covers Paystack's fee: the stored value stays
+    // `totalAmount`, but the buyer is charged `charge` (value + fee).
+    const feeRate = await getProcessingFeeRate()
+    const { charge, fee } = grossUp(totalAmount, feeRate)
+
     const reference = generateGiftCardPaymentReference()
 
     const giftCard = await giftCardRepository.create({
@@ -60,13 +66,14 @@ export async function POST(request: NextRequest) {
       message: validated.message || null,
       deliveryMethod: validated.deliveryMethod,
       totalAmount,
+      feeAmount: fee,
       paymentProvider: PaymentProvider.PRIMARY_PAYSTACK,
       paymentRef: reference,
     })
 
     const initResponse = await initializeTransaction(
       validated.senderEmail,
-      Math.round(totalAmount * 100),
+      Math.round(charge * 100),
       reference,
       validated.callbackUrl,
       "GHS",

@@ -23,10 +23,11 @@ export type SerializedGiftCardRedemption = Omit<GiftCardRedemption, "amountAppli
 
 export type SerializedGiftCard = Omit<
   GiftCard,
-  "totalAmount" | "balance" | "createdAt" | "updatedAt" | "expiresAt" | "deliveredAt"
+  "totalAmount" | "balance" | "feeAmount" | "createdAt" | "updatedAt" | "expiresAt" | "deliveredAt"
 > & {
   totalAmount: string
   balance: string
+  feeAmount: string
   createdAt: string
   updatedAt: string
   expiresAt: string | null

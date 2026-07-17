@@ -103,7 +103,7 @@ export class PaymentService {
         return { success: true, paymentId: payment.id, bookingId: booking.id };
     }
 
-    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: Prisma.InputJsonValue, actualAmount?: number) {
+    async confirmInvoicePayment(invoiceId: string, providerRef: string, payload: Prisma.InputJsonValue) {
         console.log(`Confirming invoice payment: ${invoiceId}`);
 
         const invoice = await prisma.invoice.findUnique({
@@ -122,13 +122,19 @@ export class PaymentService {
             }
         });
 
-        // 2. Create Payment record for tracking
+        // 2. Create Payment record for tracking.
+        // Credit only the SERVICE amount (invoice.amount) toward the booking — the
+        // processing fee the customer also paid (invoice.feeAmount) is a pass-through
+        // and must not inflate the booking balance. The gateway's grossed total is
+        // preserved in rawPayload for audit. `actualAmount` (grossed webhook amount)
+        // is intentionally not used for the credited amount.
         const payment = await prisma.payment.create({
             data: {
                 bookingId: invoice.bookingId,
                 provider: invoice.gateway || PaymentProvider.PRIMARY_PAYSTACK,
                 providerRef: providerRef,
-                amount: actualAmount !== undefined ? actualAmount : invoice.amount,
+                amount: invoice.amount,
+                feeAmount: (invoice as any).feeAmount ?? 0,
                 currency: invoice.currency,
                 status: 'PAID',
                 rawPayload: payload,
@@ -214,8 +220,9 @@ export class PaymentService {
             } else if (!payment) {
                 const invoice = await prisma.invoice.findUnique({ where: { invoiceNumber: reference } });
                 if (invoice && invoice.status !== 'PAID') {
-                    const actualAmount = data.amount ? data.amount / 100 : undefined;
-                    await this.confirmInvoicePayment(invoice.id, reference, data as unknown as Prisma.InputJsonValue, actualAmount);
+                    // Credits the invoice's service amount (not the grossed gateway amount)
+                    // and records the fee — see confirmInvoicePayment.
+                    await this.confirmInvoicePayment(invoice.id, reference, data as unknown as Prisma.InputJsonValue);
                 }
             }
         }
