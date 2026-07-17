@@ -21,6 +21,26 @@ export async function GET(
       const verification = await verifyTransaction(reference, provider)
 
       if (verification.status && verification.data.status === "success") {
+        // Confirm Paystack charged what we expected (stored value grossed up by the
+        // fee) before granting the card its value. Never activate at full value on
+        // an amount we can't confirm.
+        const expectedPesewas = Math.round(
+          (Number(giftCard.totalAmount) + Number(giftCard.feeAmount)) * 100
+        )
+        const paidPesewas = Number(verification.data.amount)
+        const amountMatches =
+          Number.isFinite(paidPesewas) && Math.abs(paidPesewas - expectedPesewas) <= 2
+
+        if (!amountMatches) {
+          console.error(
+            `Gift card ${giftCard.code} amount mismatch — expected ${expectedPesewas} pesewas, got ${paidPesewas} (ref ${reference}). Not activating.`
+          )
+          return NextResponse.json(
+            { success: false, message: "Payment amount could not be verified. Please contact support." },
+            { status: 400 }
+          )
+        }
+
         const activated = await giftCardRepository.activate(giftCard.id)
 
         // Best-effort delivery — don't fail the response if SMS/email sending errors out

@@ -6,6 +6,8 @@ import { initiateRefund as initiatePaystackRefund, verifyTransaction } from "@/l
 import { inngest } from "@/lib/inngest";
 import { bookingInclude } from "@/lib/prisma-includes";
 import { reconcileBookingProductStock } from "@/features/product/server/product-stock.service";
+import { auditLogService } from "./audit-log.service";
+import { getProcessingFeeRate } from "./fee-settings";
 
 export class PaymentService {
     /**
@@ -122,19 +124,55 @@ export class PaymentService {
             }
         });
 
-        // 2. Create Payment record for tracking.
-        // Credit only the SERVICE amount (invoice.amount) toward the booking — the
-        // processing fee the customer also paid (invoice.feeAmount) is a pass-through
-        // and must not inflate the booking balance. The gateway's grossed total is
-        // preserved in rawPayload for audit. `actualAmount` (grossed webhook amount)
-        // is intentionally not used for the credited amount.
+        // 2. Confirm the amount Paystack actually charged against what we expected
+        // (service grossed up by the fee) — we validate the credit against the
+        // gateway's own number rather than blindly trusting the invoice.
+        const round2 = (n: number) => Math.round(n * 100) / 100
+        const serviceAmount = Number(invoice.amount)
+        const feeAmount = Number((invoice as any).feeAmount ?? 0)
+        const expectedPesewas = Math.round((serviceAmount + feeAmount) * 100)
+        const paidPesewas = Number((payload as any)?.amount)
+        const paidValid = Number.isFinite(paidPesewas)
+        // The grossed charge was rounded to 2dp at init, so allow a couple of pesewas.
+        const amountMatches = paidValid && Math.abs(paidPesewas - expectedPesewas) <= 2
+
+        // Default (match): credit the clean service figure so the booking balance
+        // reconciles exactly, having proven the gateway charged what we expected.
+        let creditedAmount = serviceAmount
+        let creditedFee = feeAmount
+
+        if (!amountMatches) {
+            await auditLogService.logAction({
+                action: "PAYMENT_AMOUNT_MISMATCH",
+                invoiceId: invoice.id,
+                bookingId: invoice.bookingId,
+                newValue: { expectedPesewas, paidPesewas: paidValid ? paidPesewas : null, providerRef },
+                metadata: { note: "Gateway charged amount differs from expected" },
+            }).catch((e) => console.error("Failed to log amount mismatch:", e))
+
+            if (paidValid && paidPesewas > 0 && paidPesewas < expectedPesewas) {
+                // Underpaid → credit only the service actually covered, using the
+                // exact inverse of the gross-up (service = paid × (1 − rate)). The
+                // booking then computes to PARTIAL rather than being marked PAID.
+                const feeRate = await getProcessingFeeRate()
+                const paidGhs = paidPesewas / 100
+                creditedAmount = round2(paidGhs * (1 - feeRate))
+                creditedFee = round2(paidGhs - creditedAmount)
+            }
+            // Overpaid or unreadable → keep the full service credit (no over-credit;
+            // any surplus is logged above, not lost).
+        }
+
+        // Credit only the SERVICE amount toward the booking — the processing fee the
+        // customer also paid is a pass-through and must not inflate the balance. The
+        // gateway's grossed total is preserved in rawPayload for audit.
         const payment = await prisma.payment.create({
             data: {
                 bookingId: invoice.bookingId,
                 provider: invoice.gateway || PaymentProvider.PRIMARY_PAYSTACK,
                 providerRef: providerRef,
-                amount: invoice.amount,
-                feeAmount: (invoice as any).feeAmount ?? 0,
+                amount: creditedAmount,
+                feeAmount: creditedFee,
                 currency: invoice.currency,
                 status: 'PAID',
                 rawPayload: payload,
