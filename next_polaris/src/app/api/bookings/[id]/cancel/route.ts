@@ -13,7 +13,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "bookings.view")
     if (!auth.ok) return auth.response
 
     const awaitedParams = await params;

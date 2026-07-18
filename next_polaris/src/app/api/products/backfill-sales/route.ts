@@ -18,7 +18,7 @@ const db = prisma as any
  * so it's safe to re-run and won't fight the live reconciliation.
  */
 export async function POST() {
-  const auth = await requireRoleApi(["ADMIN"])
+  const auth = await requireRoleApi(["ADMIN"], "products.view")
   if (!auth.ok) return auth.response
 
   try {

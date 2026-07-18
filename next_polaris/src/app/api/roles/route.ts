@@ -13,7 +13,7 @@ const RoleSchema = z.object({
 })
 
 export async function GET() {
-  const auth = await requireRoleApi([UserRole.ADMIN])
+  const auth = await requireRoleApi([UserRole.ADMIN], "roles.manage")
   if (!auth.ok) return auth.response
 
   const roles = await db.role.findMany({
@@ -37,7 +37,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
-  const auth = await requireRoleApi([UserRole.ADMIN])
+  const auth = await requireRoleApi([UserRole.ADMIN], "roles.manage")
   if (!auth.ok) return auth.response
 
   const body = await request.json()

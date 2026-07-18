@@ -6,15 +6,18 @@ import { z } from "zod"
 
 const db = prisma as any
 
+// Both fields optional so the same endpoint can toggle the role, the stylist
+// capability, or both. `.strict()` would reject unknown keys; keep it lenient.
 const PatchStaffSchema = z.object({
-  customRoleId: z.string().uuid().nullable(),
+  customRoleId: z.string().uuid().nullable().optional(),
+  isStylist: z.boolean().optional(),
 })
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRoleApi([UserRole.ADMIN])
+  const auth = await requireRoleApi([UserRole.ADMIN], "settings.view")
   if (!auth.ok) return auth.response
 
   const { id } = await params
@@ -37,13 +40,17 @@ export async function PATCH(
 
   const updated = await db.user.update({
     where: { id },
-    data: { customRoleId: parsed.data.customRoleId },
+    data: {
+      ...(parsed.data.customRoleId !== undefined ? { customRoleId: parsed.data.customRoleId } : {}),
+      ...(parsed.data.isStylist !== undefined ? { isStylist: parsed.data.isStylist } : {}),
+    },
     select: {
       id: true,
       username: true,
       email: true,
       phone: true,
       role: true,
+      isStylist: true,
       customRoleId: true,
       customRole: { select: { id: true, name: true } },
       createdAt: true,

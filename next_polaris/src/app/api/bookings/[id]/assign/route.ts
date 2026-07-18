@@ -9,7 +9,7 @@ export async function PATCH(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "bookings.view");
         if (!auth.ok) return auth.response;
 
         const bookingId = (await params).id;
@@ -25,15 +25,15 @@ export async function PATCH(
             );
         }
 
-        // If assigning, validate the stylist is a STAFF user
+        // If assigning, validate the assignee is a STAFF user flagged as a stylist
         if (stylistId !== null && stylistId !== undefined) {
             const stylist = await prisma.user.findUnique({
                 where: { id: stylistId },
-                select: { id: true, role: true },
-            });
-            if (!stylist || stylist.role !== UserRole.STAFF) {
+                select: { id: true, role: true, isStylist: true } as any,
+            }) as { id: string; role: UserRole; isStylist?: boolean } | null;
+            if (!stylist || stylist.role !== UserRole.STAFF || !stylist.isStylist) {
                 return NextResponse.json(
-                    { success: false, message: "Stylist not found or is not a staff member" },
+                    { success: false, message: "Assignee not found or is not a stylist" },
                     { status: 400 }
                 );
             }

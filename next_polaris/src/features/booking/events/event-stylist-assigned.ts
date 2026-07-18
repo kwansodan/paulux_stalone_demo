@@ -37,6 +37,10 @@ export const stylistAssignedEvent = inngest.createFunction(
     const { booking, service, stylist } = data
 
     if (!stylist?.phone) {
+      // Common cause of "no SMS": the stylist was created without a phone number.
+      console.warn(
+        `Stylist assignment SMS skipped — stylist ${stylistId} (${stylist?.username ?? "unknown"}) has no phone number on file. Booking ${booking.bookingReference}.`
+      )
       return { status: "no_phone", stylistId }
     }
 
@@ -51,7 +55,12 @@ export const stylistAssignedEvent = inngest.createFunction(
       })
 
       if (!smsResult?.success) {
-        console.error("Failed to send stylist assignment SMS:", smsResult)
+        // sendSMS now reflects Arkesel's real outcome, so this surfaces the true
+        // reason (unregistered sender, low balance, etc.) instead of a false "sent".
+        console.error(
+          `Failed to send stylist assignment SMS to ${stylist.username} (${stylist.phone}) for booking ${booking.bookingReference}:`,
+          smsResult
+        )
       }
       return smsResult
     })

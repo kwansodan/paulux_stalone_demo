@@ -29,6 +29,8 @@ export const giftCardsPath = () => "/gift-cards"
 export const giftCardSuccessPath = (reference?: string) =>
   reference ? `/gift-cards/success?reference=${reference}` : "/gift-cards/success"
 export const giftCardOrdersPath = () => "/gift-card-orders"
+export const stylistPath = () => "/stylist"
+export const stylistHistoryPath = () => "/stylist/history"
 export const unauthorizedPath = () => "/unauthorized"
 export const forgotPasswordPath = () => "/forgot-password"
 export const resetPasswordPath = () => "/reset-password"

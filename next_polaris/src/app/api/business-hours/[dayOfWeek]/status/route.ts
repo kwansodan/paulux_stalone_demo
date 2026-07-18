@@ -8,7 +8,7 @@ export async function POST(
   { params }: { params: Promise<{ dayOfWeek: string }> }
 ) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "settings.view")
     if (!auth.ok) return auth.response
 
     const awaitedParams = await params;

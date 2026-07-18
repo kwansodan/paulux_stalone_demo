@@ -16,7 +16,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "products.view")
     if (!auth.ok) return auth.response
 
     const body = await request.json()

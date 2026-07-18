@@ -24,7 +24,7 @@ class SlotUnavailableError extends Error {
 
 export async function GET(request: NextRequest) {
   try {
-    const auth = await requireRoleApi(['ADMIN'])
+    const auth = await requireRoleApi(['ADMIN'], "bookings.view")
     if (!auth.ok) return auth.response
 
 
@@ -103,7 +103,7 @@ export async function POST(request: NextRequest) {
     // customer what actually changed (rather than re-sending a "booking received" message).
     let previousBooking: Awaited<ReturnType<typeof bookingRepository.findById>> = null
     if (isEditing) {
-      const auth = await requireRoleApi(['ADMIN'])
+      const auth = await requireRoleApi(['ADMIN'], "bookings.view")
       if (!auth.ok) return auth.response
 
       previousBooking = await bookingRepository.findById(validatedBody.id!)
@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
       }
     } else if (isWalkIn) {
       // Walk-in bookings are admin-only
-      const auth = await requireRoleApi(['ADMIN'])
+      const auth = await requireRoleApi(['ADMIN'], "bookings.view")
       if (!auth.ok) return auth.response
       // Don't trust a client-supplied createdById — use the actual authenticated admin.
       validatedBody.createdById = auth.user.id
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       // A scheduled booking attributed to an admin (booked on a customer's behalf) must
       // itself be made by an authenticated admin — otherwise anyone who knows/guesses an
       // admin's UUID could spoof "Booked by: Admin" attribution on their own booking.
-      const auth = await requireRoleApi(['ADMIN'])
+      const auth = await requireRoleApi(['ADMIN'], "bookings.view")
       if (!auth.ok) return auth.response
       validatedBody.createdById = auth.user.id
     }

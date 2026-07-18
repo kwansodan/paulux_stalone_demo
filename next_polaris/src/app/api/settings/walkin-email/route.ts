@@ -7,7 +7,7 @@ const DEFAULT_EMAIL = "walkin@polarisbeautylounge.com";
 
 export async function GET() {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "settings.view");
         if (!auth.ok) return auth.response;
 
         const setting = await prisma.systemSetting.findUnique({
@@ -29,7 +29,7 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "settings.view");
         if (!auth.ok) return auth.response;
 
         const body = await request.json();

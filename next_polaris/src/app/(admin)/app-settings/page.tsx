@@ -38,6 +38,7 @@ export default async function AppSettingsPage() {
         email: true,
         phone: true,
         role: true,
+        isStylist: true,
         customRoleId: true,
         customRole: { select: { id: true, name: true } },
         createdAt: true,

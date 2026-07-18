@@ -5,7 +5,7 @@ import Modal from "@/components/modal"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { BookingWithService } from "../../types"
-import { useGetStaff } from "@/features/staff/client/use-staff"
+import { useGetStylists } from "@/features/staff/client/use-staff"
 import { useAssignServiceStylists } from "@/features/staff/client/use-staff"
 import { Scissors, UserX } from "lucide-react"
 
@@ -18,7 +18,8 @@ type Props = {
 const UNASSIGN_VALUE = "__unassign__"
 
 export default function AssignStylistModal({ booking, open, onClose }: Props) {
-  const { data: staff = [], isLoading } = useGetStaff()
+  // Server-filtered to stylists only (assignable staff).
+  const { data: stylists = [], isLoading } = useGetStylists()
   const assignMutation = useAssignServiceStylists()
 
   // Initialise from current per-service assignments
@@ -55,11 +56,11 @@ export default function AssignStylistModal({ booking, open, onClose }: Props) {
       <div className="space-y-5 py-2">
         {isLoading ? (
           <p className="text-sm text-gray-500 text-center py-4">Loading stylists...</p>
-        ) : staff.length === 0 ? (
+        ) : stylists.length === 0 ? (
           <div className="text-center py-6 space-y-2">
             <Scissors className="w-8 h-8 text-gray-300 mx-auto" />
             <p className="text-sm text-gray-500">No stylists found.</p>
-            <p className="text-xs text-gray-400">Add staff members from the Staff page first.</p>
+            <p className="text-xs text-gray-400">Add a staff member marked as a stylist from App Settings first.</p>
           </div>
         ) : (
           <>
@@ -84,7 +85,7 @@ export default function AssignStylistModal({ booking, open, onClose }: Props) {
                         Unassigned
                       </span>
                     </SelectItem>
-                    {staff.map(s => (
+                    {stylists.map(s => (
                       <SelectItem key={s.id} value={s.id}>
                         <span className="flex items-center gap-2">
                           <Scissors className="w-4 h-4 text-fuchsia-500" />

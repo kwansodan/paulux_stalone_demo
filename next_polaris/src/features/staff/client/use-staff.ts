@@ -13,19 +13,31 @@ export function useGetStaff() {
   })
 }
 
+// Stylists only — for the assign-stylist dropdown. Reachable with bookings.view
+// (the full staff list is settings-gated).
+export function useGetStylists() {
+  return useQuery<StaffMember[]>({
+    queryKey: ["staff", "stylists"],
+    queryFn: async () => {
+      const res = await api.get("/staff?stylistsOnly=true")
+      return res.data.data
+    },
+  })
+}
+
 export function useUpdateStaffRole() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, customRoleId }: { id: string; customRoleId: string | null }) => {
-      const res = await api.patch(`/staff/${id}`, { customRoleId })
+    mutationFn: async ({ id, ...patch }: { id: string; customRoleId?: string | null; isStylist?: boolean }) => {
+      const res = await api.patch(`/staff/${id}`, patch)
       return res.data.data as StaffMember
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["staff"] })
-      toast.success("Role updated")
+      toast.success("Staff member updated")
     },
     onError: (err: any) => {
-      toast.error(err?.response?.data?.message ?? "Failed to update role")
+      toast.error(err?.response?.data?.message ?? "Failed to update staff member")
     },
   })
 }
@@ -33,7 +45,13 @@ export function useUpdateStaffRole() {
 export function useCreateStaff() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async (payload: { username: string; email: string; phone?: string }) => {
+    mutationFn: async (payload: {
+      username: string
+      email: string
+      phone?: string
+      isStylist?: boolean
+      customRoleId?: string | null
+    }) => {
       const res = await api.post("/staff", payload)
       return res.data
     },
@@ -41,7 +59,7 @@ export function useCreateStaff() {
       queryClient.invalidateQueries({ queryKey: ["staff"] })
     },
     onError: (error: any) => {
-      const message = error?.response?.data?.message || "Failed to create stylist"
+      const message = error?.response?.data?.message || "Failed to create staff member"
       toast.error(message)
     },
   })

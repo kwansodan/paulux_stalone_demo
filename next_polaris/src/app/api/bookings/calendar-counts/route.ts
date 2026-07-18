@@ -4,7 +4,7 @@ import { bookingRepository } from "@/features/booking/server/booking.repository"
 
 export async function GET(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "bookings.view");
         if (!auth.ok) return auth.response;
 
         const searchParams = request.nextUrl.searchParams;

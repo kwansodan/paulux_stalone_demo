@@ -25,7 +25,7 @@ function isAllowedImage(buffer: Buffer): boolean {
 
 export async function POST(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "settings.view");
         if (!auth.ok) return auth.response;
 
         const formData = await request.formData();

@@ -19,7 +19,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "promo_codes.view")
     if (!auth.ok) return auth.response
 
     const { id } = await params
@@ -77,7 +77,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "promo_codes.view")
     if (!auth.ok) return auth.response
 
     const { id } = await params

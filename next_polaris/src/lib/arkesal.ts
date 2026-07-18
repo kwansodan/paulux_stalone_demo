@@ -52,8 +52,19 @@ export async function sendSMS({
         const data = await response.json();
         console.log("Arkesel API Response:", data);
 
-        if (!response.ok) {
-            console.error("Failed to send SMS. Status:", response.status, "Data:", data);
+        // Arkesel's v2 API returns HTTP 200 even on logical rejections (unregistered
+        // sender ID, insufficient balance, invalid recipient), signalling the real
+        // outcome in the body's `status`/`code`. Keying success off `response.ok`
+        // alone would record undelivered messages as sent, so check the body too.
+        const bodyStatus = String((data as any)?.status ?? "").toLowerCase();
+        const delivered = response.ok && (bodyStatus === "success" || bodyStatus === "");
+
+        if (!delivered) {
+            console.error(
+                "Failed to send SMS. HTTP:", response.status,
+                "Arkesel status:", (data as any)?.status,
+                "Data:", data
+            );
             return { success: false, data, status: response.status };
         }
 

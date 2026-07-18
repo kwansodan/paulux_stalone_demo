@@ -4,6 +4,7 @@ export interface StaffMember {
   email: string
   phone: string | null
   role: string
+  isStylist: boolean
   customRoleId: string | null
   customRole: { id: string; name: string } | null
   createdAt: string

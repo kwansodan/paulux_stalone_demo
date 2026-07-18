@@ -87,6 +87,11 @@ model User {
 
   role UserRole @default(ADMIN)
 
+  // A capability, independent of role: a STAFF member marked isStylist is
+  // assignable to bookings and gets the stylist portal. A person can be a
+  // stylist AND hold an admin customRole.
+  isStylist Boolean @default(false)
+
   customRoleId String? @db.Uuid
   customRole   Role?   @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
 

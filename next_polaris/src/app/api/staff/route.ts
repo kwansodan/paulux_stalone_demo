@@ -4,19 +4,26 @@ import { hashPassword } from "@/utils/helpers";
 import { UserRole } from "@generated/prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        // ?stylistsOnly=true powers the assign-stylist dropdown, so it's reachable by
+        // anyone who can manage bookings; the full staff list stays settings-gated.
+        const stylistsOnly = request.nextUrl.searchParams.get("stylistsOnly") === "true";
+
+        const auth = await requireRoleApi(["ADMIN"], stylistsOnly ? "bookings.view" : "settings.view");
         if (!auth.ok) return auth.response;
 
         const staff = await prisma.user.findMany({
-            where: { role: UserRole.STAFF },
+            where: { role: UserRole.STAFF, ...(stylistsOnly ? { isStylist: true } : {}) },
             select: {
                 id: true,
                 username: true,
                 email: true,
                 phone: true,
                 role: true,
+                isStylist: true,
+                customRoleId: true,
+                customRole: { select: { id: true, name: true } },
                 createdAt: true,
             },
             orderBy: { username: "asc" },
@@ -34,11 +41,13 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "settings.view");
         if (!auth.ok) return auth.response;
 
         const body = await request.json();
         const { username, email, phone } = body;
+        const isStylist: boolean = body?.isStylist === true;
+        const customRoleId: string | null = body?.customRoleId ?? null;
 
         if (!username || username.trim().length < 2) {
             return NextResponse.json(
@@ -72,6 +81,17 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // If an admin role is provided, make sure it exists before creating.
+        if (customRoleId) {
+            const role = await prisma.role.findUnique({ where: { id: customRoleId } });
+            if (!role) {
+                return NextResponse.json(
+                    { success: false, message: "Selected role not found" },
+                    { status: 400 }
+                );
+            }
+        }
+
         // Generate a temporary password
         const tempPassword =
             Math.random().toString(36).slice(2, 7).toUpperCase() +
@@ -87,6 +107,8 @@ export async function POST(request: NextRequest) {
                 phone: phone?.trim() || null,
                 passwordHash,
                 role: UserRole.STAFF,
+                isStylist,
+                customRoleId,
             },
             select: {
                 id: true,
@@ -94,6 +116,9 @@ export async function POST(request: NextRequest) {
                 email: true,
                 phone: true,
                 role: true,
+                isStylist: true,
+                customRoleId: true,
+                customRole: { select: { id: true, name: true } },
                 createdAt: true,
             },
         });
@@ -101,7 +126,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
             {
                 success: true,
-                message: "Stylist created",
+                message: "Staff member created",
                 data: { staff, tempPassword },
             },
             { status: 201 }

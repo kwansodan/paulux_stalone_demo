@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
+import { ToggleSwitch } from "@/features/service/components/toggle-switch"
 import { useGetStaff, useCreateStaff, useUpdateStaffRole } from "../client/use-staff"
 import { StaffMember } from "../types"
 import { RoleWithCount } from "@/features/roles/types"
@@ -21,7 +22,7 @@ export default function StaffShell({
 }) {
   const { data: staff = initialStaff } = useGetStaff()
   const createMutation = useCreateStaff()
-  const updateRoleMutation = useUpdateStaffRole()
+  const updateMutation = useUpdateStaffRole()
 
   const [addOpen, setAddOpen] = useState(false)
   const [createdResult, setCreatedResult] = useState<{ staff: StaffMember; tempPassword: string } | null>(null)
@@ -31,12 +32,16 @@ export default function StaffShell({
   const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [phone, setPhone] = useState("")
+  const [isStylist, setIsStylist] = useState(true)
+  const [customRoleId, setCustomRoleId] = useState("")
   const [formError, setFormError] = useState("")
 
   function openAdd() {
     setUsername("")
     setEmail("")
     setPhone("")
+    setIsStylist(true)
+    setCustomRoleId("")
     setFormError("")
     setAddOpen(true)
   }
@@ -51,11 +56,17 @@ export default function StaffShell({
       setFormError("A valid email address is required")
       return
     }
+    if (!isStylist && !customRoleId) {
+      setFormError("Choose a role, or mark this person as a stylist — otherwise they'd have no access")
+      return
+    }
     try {
       const res = await createMutation.mutateAsync({
         username: username.trim(),
         email: email.trim(),
         phone: phone.trim() || undefined,
+        isStylist,
+        customRoleId: customRoleId || null,
       })
       setAddOpen(false)
       setCreatedResult({ staff: res.data.staff, tempPassword: res.data.tempPassword })
@@ -77,14 +88,15 @@ export default function StaffShell({
       {/* Header */}
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <p className="text-sm text-gray-500">
-          Manage your salon stylists. Assign them to bookings from the Bookings page.
+          Manage your team — stylists (assignable to bookings) and administrative staff. Give each
+          person only the access they need with a role.
         </p>
         <Button
           className="bg-fuchsia-600 hover:bg-fuchsia-700 w-full sm:w-auto px-6 whitespace-nowrap"
           onClick={openAdd}
         >
           <Plus className="w-4 h-4 mr-1" />
-          Add Stylist
+          Add Staff
         </Button>
       </div>
 
@@ -92,9 +104,9 @@ export default function StaffShell({
       {staff.length === 0 && (
         <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed border-gray-200 rounded-3xl">
           <Users className="w-12 h-12 text-gray-300 mb-4" />
-          <p className="text-gray-500 font-semibold text-lg">No stylists yet</p>
+          <p className="text-gray-500 font-semibold text-lg">No staff yet</p>
           <p className="text-gray-400 text-sm mt-1">
-            Add your first stylist to start assigning them to bookings.
+            Add your first staff member — a stylist or an administrator.
           </p>
         </div>
       )}
@@ -108,16 +120,34 @@ export default function StaffShell({
               className="rounded-3xl border shadow-none hover:shadow-md transition-shadow duration-200"
             >
               <CardContent className="p-5 space-y-3">
-                {/* Avatar + name */}
+                {/* Avatar + name + type badges */}
                 <div className="flex items-center gap-3">
                   <div className="w-11 h-11 rounded-full bg-fuchsia-100 flex items-center justify-center flex-shrink-0">
-                    <Scissors className="w-5 h-5 text-fuchsia-600" />
+                    {member.isStylist ? (
+                      <Scissors className="w-5 h-5 text-fuchsia-600" />
+                    ) : (
+                      <Shield className="w-5 h-5 text-fuchsia-600" />
+                    )}
                   </div>
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{member.username}</p>
-                    <span className="text-[10px] font-semibold bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full">
-                      Stylist
-                    </span>
+                    <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                      {member.isStylist && (
+                        <span className="text-[10px] font-semibold bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full">
+                          Stylist
+                        </span>
+                      )}
+                      {member.customRole && (
+                        <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+                          {member.customRole.name}
+                        </span>
+                      )}
+                      {!member.isStylist && !member.customRole && (
+                        <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
+                          No access
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -135,7 +165,20 @@ export default function StaffShell({
                   )}
                 </div>
 
-                {/* Role assignment */}
+                {/* Stylist toggle */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Scissors className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span>Stylist (assignable to bookings)</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={member.isStylist}
+                    onChecked={() => updateMutation.mutate({ id: member.id, isStylist: true })}
+                    onUnchecked={() => updateMutation.mutate({ id: member.id, isStylist: false })}
+                  />
+                </div>
+
+                {/* Admin role assignment */}
                 <div className="flex items-center gap-2 pt-1 border-t border-gray-100">
                   <Shield className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
                   {availableRoles.length === 0 ? (
@@ -144,15 +187,15 @@ export default function StaffShell({
                     <select
                       className="flex-1 text-xs border border-gray-200 rounded-lg px-2 py-1.5 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-fuchsia-500 cursor-pointer"
                       value={member.customRoleId ?? ""}
-                      disabled={updateRoleMutation.isPending}
+                      disabled={updateMutation.isPending}
                       onChange={(e) =>
-                        updateRoleMutation.mutate({
+                        updateMutation.mutate({
                           id: member.id,
                           customRoleId: e.target.value || null,
                         })
                       }
                     >
-                      <option value="">— No role —</option>
+                      <option value="">— No admin role —</option>
                       {availableRoles.map((r) => (
                         <option key={r.id} value={r.id}>{r.name}</option>
                       ))}
@@ -172,12 +215,12 @@ export default function StaffShell({
         </div>
       )}
 
-      {/* Add stylist modal */}
+      {/* Add staff modal */}
       <Modal
         open={addOpen}
         onClose={() => setAddOpen(false)}
-        title="Add Stylist"
-        childrenClassName="max-h-[420px]"
+        title="Add Staff Member"
+        childrenClassName="max-h-[560px]"
         showSeparator
       >
         <div className="space-y-4 pt-2">
@@ -198,20 +241,59 @@ export default function StaffShell({
             </Label>
             <Input
               type="email"
-              placeholder="stylist@example.com"
+              placeholder="person@example.com"
               className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
           <div className="space-y-1">
-            <Label className="text-sm font-normal">Phone (optional)</Label>
+            <Label className="text-sm font-normal">Phone (recommended for stylists)</Label>
             <Input
               placeholder="+233 xx xxx xxxx"
               className="h-12 bg-white border-[#E2E8F0] rounded-lg shadow-none"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
             />
+            <p className="text-xs text-gray-400">Stylists need a phone number to receive assignment SMS.</p>
+          </div>
+
+          {/* Stylist toggle */}
+          <div className="flex items-center justify-between rounded-xl border border-gray-200 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Scissors className="w-4 h-4 text-fuchsia-600" />
+              <div>
+                <p className="text-sm font-medium text-gray-800">Stylist</p>
+                <p className="text-xs text-gray-500">Can be assigned to bookings and sees their own jobs.</p>
+              </div>
+            </div>
+            <ToggleSwitch
+              checked={isStylist}
+              onChecked={() => setIsStylist(true)}
+              onUnchecked={() => setIsStylist(false)}
+            />
+          </div>
+
+          {/* Admin role */}
+          <div className="space-y-1">
+            <Label className="text-sm font-normal">Admin role (optional)</Label>
+            {availableRoles.length === 0 ? (
+              <p className="text-xs text-gray-400 italic">No roles created yet — create one in Roles &amp; Permissions.</p>
+            ) : (
+              <select
+                className="w-full h-12 text-sm border border-[#E2E8F0] rounded-lg px-3 bg-white text-gray-700 focus:outline-none focus:ring-2 focus:ring-fuchsia-500"
+                value={customRoleId}
+                onChange={(e) => setCustomRoleId(e.target.value)}
+              >
+                <option value="">— No admin role —</option>
+                {availableRoles.map((r) => (
+                  <option key={r.id} value={r.id}>{r.name}</option>
+                ))}
+              </select>
+            )}
+            <p className="text-xs text-gray-400">
+              Grants access to admin areas per the role&apos;s permissions. Leave empty for a stylist-only account.
+            </p>
           </div>
 
           {formError && (
@@ -225,7 +307,7 @@ export default function StaffShell({
               disabled={createMutation.isPending}
               onClick={handleCreate}
             >
-              {createMutation.isPending ? "Creating..." : "Add Stylist"}
+              {createMutation.isPending ? "Creating..." : "Add Staff"}
             </Button>
           </div>
         </div>
@@ -235,7 +317,7 @@ export default function StaffShell({
       <Modal
         open={!!createdResult}
         onClose={() => setCreatedResult(null)}
-        title="Stylist Added"
+        title="Staff Member Added"
         subtitle={`${createdResult?.staff.username} has been added. Share their temporary password below — it won't be shown again.`}
         childrenClassName="max-h-[300px]"
         showSeparator={false}
@@ -262,7 +344,7 @@ export default function StaffShell({
             </div>
           </div>
           <p className="text-xs text-gray-500">
-            The stylist can log in with <strong>{createdResult?.staff.email}</strong> and change their password after first login.
+            They can log in with <strong>{createdResult?.staff.email}</strong> and change their password after first login.
           </p>
           <div className="flex justify-end pt-1">
             <Button

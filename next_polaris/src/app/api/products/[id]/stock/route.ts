@@ -10,7 +10,7 @@ export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRoleApi(["ADMIN"])
+  const auth = await requireRoleApi(["ADMIN"], "products.view")
   if (!auth.ok) return auth.response
 
   const productId = (await params).id
@@ -35,7 +35,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRoleApi(["ADMIN"])
+  const auth = await requireRoleApi(["ADMIN"], "products.view")
   if (!auth.ok) return auth.response
 
   const productId = (await params).id

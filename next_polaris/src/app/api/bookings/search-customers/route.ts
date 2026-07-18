@@ -9,7 +9,7 @@ const MAX_RESULTS = 6;
 // count) for staff to disambiguate, rather than silently picking one.
 export async function GET(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "bookings.view");
         if (!auth.ok) return auth.response;
 
         const query = (request.nextUrl.searchParams.get("q") || "").trim();

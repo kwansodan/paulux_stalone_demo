@@ -3,7 +3,7 @@ import { paymentRepository } from "@/features/payment/server/payment.repository"
 import { requireRoleApi } from "@/app/_auth/require-role-api"
 
 export async function GET() {
-  await requireRoleApi(["ADMIN"])
+  await requireRoleApi(["ADMIN"], "payments.view")
   const metrics = await paymentRepository.getMetrics()
   return NextResponse.json({
     success: true,

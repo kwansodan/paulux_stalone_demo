@@ -9,7 +9,7 @@ const ALLOWED_TYPES = new Set(["image/png", "image/jpeg", "image/gif", "image/we
 
 export async function POST(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "settings.view");
         if (!auth.ok) return auth.response;
 
         const { filename, fileType } = await request.json();

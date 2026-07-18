@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "services.view")
     if (!auth.ok) return auth.response
 
     const reqBody = await request.json();

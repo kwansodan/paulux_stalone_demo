@@ -17,7 +17,7 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ dayOfWeek: string }> }
 ) {
-  const auth = await requireRoleApi(["ADMIN"])
+  const auth = await requireRoleApi(["ADMIN"], "settings.view")
   if (!auth.ok) return auth.response
 
   const awaitedParams = await params;

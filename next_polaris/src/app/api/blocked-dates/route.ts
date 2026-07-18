@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 export async function GET() {
-  const auth = await requireRoleApi(['ADMIN'])
+  const auth = await requireRoleApi(['ADMIN'], "settings.view")
   if (!auth.ok) return auth.response
 
   const dates = await blockedDateRepository.getAll();
@@ -14,7 +14,7 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await requireRoleApi(['ADMIN'])
+    const auth = await requireRoleApi(['ADMIN'], "settings.view")
     if (!auth.ok) return auth.response
 
 

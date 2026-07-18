@@ -8,7 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 // the same person regardless of how the number was typed previously.
 export async function GET(request: NextRequest) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "bookings.view");
         if (!auth.ok) return auth.response;
 
         const phone = request.nextUrl.searchParams.get("phone") || "";

@@ -16,7 +16,7 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRoleApi([UserRole.ADMIN])
+  const auth = await requireRoleApi([UserRole.ADMIN], "roles.manage")
   if (!auth.ok) return auth.response
 
   const { id } = await params
@@ -64,7 +64,7 @@ export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const auth = await requireRoleApi([UserRole.ADMIN])
+  const auth = await requireRoleApi([UserRole.ADMIN], "roles.manage")
   if (!auth.ok) return auth.response
 
   const { id } = await params

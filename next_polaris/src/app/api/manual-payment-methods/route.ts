@@ -9,7 +9,7 @@ const CreateSchema = z.object({
 
 export async function GET() {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "payments.view")
     if (!auth.ok) return auth.response
 
     const methods = await prisma.manualPaymentMethod.findMany({
@@ -23,7 +23,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "payments.view")
     if (!auth.ok) return auth.response
 
     const body = await request.json()

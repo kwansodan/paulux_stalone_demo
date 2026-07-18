@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     // Returning inactive images is an admin-only operation
     if (all) {
-      const auth = await requireRoleApi(["ADMIN"])
+      const auth = await requireRoleApi(["ADMIN"], "settings.view")
       if (!auth.ok) return auth.response
     }
 
@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "settings.view")
     if (!auth.ok) return auth.response
 
     const body = await request.json()

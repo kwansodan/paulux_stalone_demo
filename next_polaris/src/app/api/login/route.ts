@@ -24,7 +24,8 @@ export async function POST(request: NextRequest) {
     const user = await prisma.user.findUnique({
       where: {
         email: validatedData.email.toLowerCase()
-      }
+      },
+      include: { customRole: { select: { permissions: true } } },
     })
 
     // Always run a bcrypt compare with the same cost factor, even when the user
@@ -37,7 +38,19 @@ export async function POST(request: NextRequest) {
     const sessionToken = generateSessionToken();
     const session = await authRepository.createSession(sessionToken, user.id)
 
-    const response = NextResponse.json({ success: true, data: { user }, message: "Logged In Successfully." }, { status: 200 })
+    // Never return the password hash. Expose just what the client needs (incl. the
+    // role/stylist flag/permissions used for the post-login redirect).
+    const safeUser = {
+      id: user.id,
+      username: user.username,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      isStylist: (user as any).isStylist ?? false,
+      permissions: (user as any).customRole?.permissions ?? [],
+    }
+
+    const response = NextResponse.json({ success: true, data: { user: safeUser }, message: "Logged In Successfully." }, { status: 200 })
 
     response.cookies.set(SESSION_COOKIE_NAME, sessionToken, {
       httpOnly: true,

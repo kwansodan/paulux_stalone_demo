@@ -16,7 +16,7 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const auth = await requireRoleApi(["ADMIN"]);
+        const auth = await requireRoleApi(["ADMIN"], "bookings.view");
         if (!auth.ok || !auth.user) return auth.response || NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
 
         const bookingId = (await params).id;

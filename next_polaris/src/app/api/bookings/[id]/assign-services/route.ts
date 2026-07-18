@@ -12,7 +12,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const auth = await requireRoleApi(["ADMIN"])
+    const auth = await requireRoleApi(["ADMIN"], "bookings.view")
     if (!auth.ok) return auth.response
 
     const bookingId = (await params).id
@@ -31,18 +31,19 @@ export async function PATCH(
       return NextResponse.json({ success: false, message: "Booking not found" }, { status: 404 })
     }
 
-    // Validate all stylist IDs are STAFF users
+    // Validate all assignees are STAFF users flagged as stylists (only stylists
+    // are assignable to bookings).
     const stylistIds = assignments.map(a => a.stylistId).filter(Boolean) as string[]
     if (stylistIds.length > 0) {
       const stylists = await prisma.user.findMany({
-        where: { id: { in: stylistIds }, role: UserRole.STAFF },
+        where: { id: { in: stylistIds }, role: UserRole.STAFF, isStylist: true } as any,
         select: { id: true },
       })
       const validIds = new Set(stylists.map(s => s.id))
       const invalid = stylistIds.find(id => !validIds.has(id))
       if (invalid) {
         return NextResponse.json(
-          { success: false, message: "One or more stylist IDs are not valid staff members" },
+          { success: false, message: "One or more assignees are not stylists" },
           { status: 400 }
         )
       }
