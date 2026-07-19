@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -27,6 +27,7 @@ import {
   Trash2,
   BarChart3,
   AlertTriangle,
+  Search,
 } from "lucide-react"
 
 export default function MaterialsClientShell() {
@@ -45,6 +46,12 @@ export default function MaterialsClientShell() {
   const [newSection, setNewSection] = useState("")
   const [editingSectionId, setEditingSectionId] = useState<string | null>(null)
   const [editingSectionName, setEditingSectionName] = useState("")
+  const [searchQuery, setSearchQuery] = useState("")
+
+  const filteredMaterials = useMemo(() => {
+    if (!materials) return materials
+    return materials.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
+  }, [materials, searchQuery])
 
   const startEditSection = (id: string, name: string) => { setEditingSectionId(id); setEditingSectionName(name) }
   const cancelEditSection = () => { setEditingSectionId(null); setEditingSectionName("") }
@@ -69,6 +76,15 @@ export default function MaterialsClientShell() {
           <p className="text-sm text-gray-500">Consumables issued to sections, tracked for cost accounting.</p>
         </div>
         <div className="flex items-center gap-2">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search materials..."
+              className="pl-10 bg-white border-gray-200"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
           <Link
             href={materialUsageReportPath()}
             className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50"
@@ -160,9 +176,11 @@ export default function MaterialsClientShell() {
           <p className="text-sm text-gray-400 text-center py-12">Loading…</p>
         ) : !materials || materials.length === 0 ? (
           <p className="text-sm text-gray-400 text-center py-12">No materials yet. Add your first one.</p>
+        ) : !filteredMaterials || filteredMaterials.length === 0 ? (
+          <p className="text-sm text-gray-400 text-center py-12">No materials match &quot;{searchQuery}&quot;.</p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {materials.map((m) => (
+            {filteredMaterials.map((m) => (
               <div key={m.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 ${!m.isActive ? "opacity-60" : ""}`}>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
