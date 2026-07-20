@@ -28,16 +28,38 @@ export function useGetStylists() {
 export function useUpdateStaffRole() {
   const queryClient = useQueryClient()
   return useMutation({
-    mutationFn: async ({ id, ...patch }: { id: string; customRoleId?: string | null; isStylist?: boolean }) => {
+    mutationFn: async ({ id, ...patch }: {
+      id: string
+      customRoleId?: string | null
+      isStylist?: boolean
+      isActive?: boolean
+    }) => {
       const res = await api.patch(`/staff/${id}`, patch)
-      return res.data.data as StaffMember
+      return res.data as { message?: string; data: StaffMember }
     },
-    onSuccess: () => {
+    onSuccess: (res) => {
       queryClient.invalidateQueries({ queryKey: ["staff"] })
-      toast.success("Staff member updated")
+      toast.success(res?.message ?? "Staff member updated")
     },
     onError: (err: any) => {
       toast.error(err?.response?.data?.message ?? "Failed to update staff member")
+    },
+  })
+}
+
+export function useDeleteStaff() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await api.delete(`/staff/${id}`)
+      return res.data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff"] })
+      toast.success("Staff member deleted")
+    },
+    onError: (err: any) => {
+      toast.error(err?.response?.data?.message ?? "Failed to delete staff member")
     },
   })
 }

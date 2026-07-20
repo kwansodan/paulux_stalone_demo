@@ -35,6 +35,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: "Invalid credentials" }, { status: 401 })
     }
 
+    // Deactivated accounts keep their history but cannot sign in.
+    if ((user as any).isActive === false) {
+      return NextResponse.json(
+        { success: false, message: "This account has been deactivated. Please contact an administrator." },
+        { status: 403 }
+      )
+    }
+
     const sessionToken = generateSessionToken();
     const session = await authRepository.createSession(sessionToken, user.id)
 

@@ -58,6 +58,13 @@ class AuthRepository {
 
     const { user, ...session } = result;
 
+    // A deactivated user must not hold a valid session — drop it immediately so
+    // access is revoked even if sessions were issued before deactivation.
+    if (user && (user as any).isActive === false) {
+      await prisma.session.deleteMany({ where: { userId: user.id } })
+      return { session: null, user: null }
+    }
+
     if (Date.now() >= session.expiresAt.getTime()) {
       await prisma.session.delete({
         where: {

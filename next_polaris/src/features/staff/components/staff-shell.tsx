@@ -1,14 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Plus, Scissors, Phone, Mail, Copy, Eye, EyeOff, Users, Shield } from "lucide-react"
+import { Plus, Scissors, Phone, Mail, Copy, Eye, EyeOff, Users, Shield, Trash2, Power } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import Modal from "@/components/modal"
 import { ToggleSwitch } from "@/features/service/components/toggle-switch"
-import { useGetStaff, useCreateStaff, useUpdateStaffRole } from "../client/use-staff"
+import { useGetStaff, useCreateStaff, useUpdateStaffRole, useDeleteStaff } from "../client/use-staff"
 import { StaffMember } from "../types"
 import { RoleWithCount } from "@/features/roles/types"
 import { toast } from "sonner"
@@ -23,10 +23,12 @@ export default function StaffShell({
   const { data: staff = initialStaff } = useGetStaff()
   const createMutation = useCreateStaff()
   const updateMutation = useUpdateStaffRole()
+  const deleteMutation = useDeleteStaff()
 
   const [addOpen, setAddOpen] = useState(false)
   const [createdResult, setCreatedResult] = useState<{ staff: StaffMember; tempPassword: string } | null>(null)
   const [showPassword, setShowPassword] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null)
 
   // Form state
   const [username, setUsername] = useState("")
@@ -117,7 +119,9 @@ export default function StaffShell({
           {staff.map((member) => (
             <Card
               key={member.id}
-              className="rounded-3xl border shadow-none hover:shadow-md transition-shadow duration-200"
+              className={`rounded-3xl border shadow-none hover:shadow-md transition-shadow duration-200 ${
+                member.isActive ? "" : "bg-gray-50 opacity-75"
+              }`}
             >
               <CardContent className="p-5 space-y-3">
                 {/* Avatar + name + type badges */}
@@ -132,6 +136,11 @@ export default function StaffShell({
                   <div className="min-w-0">
                     <p className="font-semibold text-gray-900 truncate">{member.username}</p>
                     <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                      {!member.isActive && (
+                        <span className="text-[10px] font-semibold bg-red-100 text-red-700 px-2 py-0.5 rounded-full">
+                          Inactive
+                        </span>
+                      )}
                       {member.isStylist && (
                         <span className="text-[10px] font-semibold bg-fuchsia-100 text-fuchsia-700 px-2 py-0.5 rounded-full">
                           Stylist
@@ -142,7 +151,7 @@ export default function StaffShell({
                           {member.customRole.name}
                         </span>
                       )}
-                      {!member.isStylist && !member.customRole && (
+                      {member.isActive && !member.isStylist && !member.customRole && (
                         <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">
                           No access
                         </span>
@@ -203,12 +212,36 @@ export default function StaffShell({
                   )}
                 </div>
 
-                {/* Added date */}
-                <p className="text-xs text-gray-400">
-                  Added {new Date(member.createdAt).toLocaleDateString("en-GB", {
-                    day: "numeric", month: "short", year: "numeric"
-                  })}
-                </p>
+                {/* Active toggle */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Power className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                    <span>{member.isActive ? "Active — can sign in" : "Deactivated — cannot sign in"}</span>
+                  </div>
+                  <ToggleSwitch
+                    checked={member.isActive}
+                    onChecked={() => updateMutation.mutate({ id: member.id, isActive: true })}
+                    onUnchecked={() => updateMutation.mutate({ id: member.id, isActive: false })}
+                  />
+                </div>
+
+                {/* Added date + delete */}
+                <div className="flex items-center justify-between pt-1 border-t border-gray-100">
+                  <p className="text-xs text-gray-400">
+                    Added {new Date(member.createdAt).toLocaleDateString("en-GB", {
+                      day: "numeric", month: "short", year: "numeric"
+                    })}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(member)}
+                    className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-red-600 transition-colors"
+                    title="Delete staff member"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    Delete
+                  </button>
+                </div>
               </CardContent>
             </Card>
           ))}
@@ -354,6 +387,45 @@ export default function StaffShell({
               Done
             </Button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Delete confirmation */}
+      <Modal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Delete staff member?"
+        subtitle={
+          deleteTarget
+            ? `${deleteTarget.username} will be permanently removed and can no longer sign in. Their name will be cleared from past bookings and records. Deactivate instead if you want to keep that history intact.`
+            : ""
+        }
+        childrenClassName="max-h-[260px] w-[500px]"
+        showSeparator={false}
+      >
+        <div className="flex justify-end gap-3 pt-4">
+          <Button
+            variant="outline"
+            onClick={() => setDeleteTarget(null)}
+            disabled={deleteMutation.isPending}
+          >
+            Cancel
+          </Button>
+          <Button
+            className="bg-[#D10505] hover:bg-[#D10505]/90 text-white"
+            disabled={deleteMutation.isPending}
+            onClick={async () => {
+              if (!deleteTarget) return
+              try {
+                await deleteMutation.mutateAsync(deleteTarget.id)
+                setDeleteTarget(null)
+              } catch {
+                // error surfaced by the mutation
+              }
+            }}
+          >
+            {deleteMutation.isPending ? "Deleting..." : "Delete permanently"}
+          </Button>
         </div>
       </Modal>
     </div>

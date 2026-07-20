@@ -92,6 +92,10 @@ model User {
   // stylist AND hold an admin customRole.
   isStylist Boolean @default(false)
 
+  // Deactivated users keep their history but cannot log in, hold a session, or
+  // be assigned to bookings. Preferred over deletion, which clears attribution.
+  isActive Boolean @default(true)
+
   customRoleId String? @db.Uuid
   customRole   Role?   @relation(fields: [customRoleId], references: [id], onDelete: SetNull)
 
@@ -318,7 +322,9 @@ model Booking {
   createdAt DateTime @default(now())
 
   createdById String? @db.Uuid
-  createdBy   User?   @relation(fields: [createdById], references: [id])
+  // Explicit SetNull (Prisma's implicit default for optional relations) so deleting
+  // a staff account clears attribution instead of blocking the delete.
+  createdBy   User?   @relation(fields: [createdById], references: [id], onDelete: SetNull)
 
   payments          Payment[]          @relation("BookingPayments")
   invoices          Invoice[]          @relation("BookingInvoices")

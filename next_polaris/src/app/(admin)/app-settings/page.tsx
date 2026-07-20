@@ -39,11 +39,12 @@ export default async function AppSettingsPage() {
         phone: true,
         role: true,
         isStylist: true,
+        isActive: true,
         customRoleId: true,
         customRole: { select: { id: true, name: true } },
         createdAt: true,
       },
-      orderBy: { username: "asc" },
+      orderBy: [{ isActive: "desc" }, { username: "asc" }],
     }),
     db.role.findMany({
       include: { _count: { select: { users: true } } },

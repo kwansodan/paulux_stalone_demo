@@ -14,7 +14,12 @@ export async function GET(request: NextRequest) {
         if (!auth.ok) return auth.response;
 
         const staff = await prisma.user.findMany({
-            where: { role: UserRole.STAFF, ...(stylistsOnly ? { isStylist: true } : {}) },
+            // Deactivated staff are never assignable, but still listed in the
+            // staff manager so they can be reactivated or removed.
+            where: {
+                role: UserRole.STAFF,
+                ...(stylistsOnly ? { isStylist: true, isActive: true } : {}),
+            },
             select: {
                 id: true,
                 username: true,
@@ -22,11 +27,12 @@ export async function GET(request: NextRequest) {
                 phone: true,
                 role: true,
                 isStylist: true,
+                isActive: true,
                 customRoleId: true,
                 customRole: { select: { id: true, name: true } },
                 createdAt: true,
             },
-            orderBy: { username: "asc" },
+            orderBy: [{ isActive: "desc" }, { username: "asc" }],
         });
 
         return NextResponse.json({ success: true, data: staff });
@@ -117,6 +123,7 @@ export async function POST(request: NextRequest) {
                 phone: true,
                 role: true,
                 isStylist: true,
+                isActive: true,
                 customRoleId: true,
                 customRole: { select: { id: true, name: true } },
                 createdAt: true,
