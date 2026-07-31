@@ -37,13 +37,73 @@ export default function EditServicesModal({ booking, services, products, open, o
   const [search, setSearch] = useState("")
   const [productSearch, setProductSearch] = useState("")
 
+  // Merge the live (active-only) catalog with the booking's OWN lines, so items
+  // turned off after the booking was made still appear here, remain removable,
+  // and count toward the total. On-booking items are priced at their locked-in
+  // snapshot (priceAtBooking) — matching what a save persists and what
+  // calculateBookingTotal reports — while catalog items not yet on the booking
+  // use the current price.
+  type PickItem = { id: string; name: string; price: number; sub: string; inactive: boolean }
+
+  const serviceItems = useMemo<PickItem[]>(() => {
+    const snap = new Map((booking.services as any[]).map(s => [s.serviceId, s]))
+    const catalogIds = new Set(services.map(s => s.id))
+    const items: PickItem[] = services.map(s => ({
+      id: s.id,
+      name: s.name,
+      price: snap.has(s.id) ? Number(snap.get(s.id).priceAtBooking) : Number(s.price),
+      sub: `${s.durationMinutes} mins`,
+      inactive: false,
+    }))
+    for (const bs of booking.services as any[]) {
+      if (!catalogIds.has(bs.serviceId)) {
+        items.push({
+          id: bs.serviceId,
+          name: bs.service?.name ?? "Service",
+          price: Number(bs.priceAtBooking ?? 0),
+          sub: `${bs.durationAtBooking ?? bs.service?.durationMinutes ?? 0} mins`,
+          inactive: true,
+        })
+      }
+    }
+    return items
+  }, [services, booking.services])
+
+  const productItems = useMemo<PickItem[]>(() => {
+    const bookingProducts = ((booking as any).products ?? []) as any[]
+    const snap = new Map(bookingProducts.map(p => [p.productId, p]))
+    const catalogIds = new Set(products.map(p => p.id))
+    const items: PickItem[] = products.map(p => ({
+      id: p.id,
+      name: p.name,
+      price: snap.has(p.id) ? Number(snap.get(p.id).priceAtBooking) : Number(p.price),
+      sub: "",
+      inactive: false,
+    }))
+    for (const bp of bookingProducts) {
+      if (!catalogIds.has(bp.productId)) {
+        items.push({
+          id: bp.productId,
+          name: bp.product?.name ?? "Product",
+          price: Number(bp.priceAtBooking ?? 0),
+          sub: "",
+          inactive: true,
+        })
+      }
+    }
+    return items
+  }, [products, booking])
+
+  const serviceItemById = useMemo(() => new Map(serviceItems.map(i => [i.id, i])), [serviceItems])
+  const productItemById = useMemo(() => new Map(productItems.map(i => [i.id, i])), [productItems])
+
   const filtered = useMemo(() =>
-    services.filter(s => s.name.toLowerCase().includes(search.toLowerCase())),
-    [services, search]
+    serviceItems.filter(s => s.name.toLowerCase().includes(search.toLowerCase())),
+    [serviceItems, search]
   )
   const filteredProducts = useMemo(() =>
-    products.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())),
-    [products, productSearch]
+    productItems.filter(p => p.name.toLowerCase().includes(productSearch.toLowerCase())),
+    [productItems, productSearch]
   )
 
   function isSelected(id: string) {
@@ -83,12 +143,10 @@ export default function EditServicesModal({ booking, services, products, open, o
   }
 
   const servicesTotal = entries.reduce((sum, entry) => {
-    const svc = services.find(s => s.id === entry.id)
-    return sum + (svc ? Number(svc.price) * entry.quantity : 0)
+    return sum + (serviceItemById.get(entry.id)?.price ?? 0) * entry.quantity
   }, 0)
   const productsTotal = productEntries.reduce((sum, entry) => {
-    const prod = products.find(p => p.id === entry.id)
-    return sum + (prod ? Number(prod.price) * entry.quantity : 0)
+    return sum + (productItemById.get(entry.id)?.price ?? 0) * entry.quantity
   }, 0)
   const total = servicesTotal + productsTotal
 
@@ -198,8 +256,13 @@ export default function EditServicesModal({ booking, services, products, open, o
                     className="flex-1 min-w-0 cursor-pointer"
                     onClick={() => toggle(svc.id)}
                   >
-                    <p className="text-sm font-medium text-gray-900 truncate">{svc.name}</p>
-                    <p className="text-xs text-gray-400">{svc.durationMinutes} mins</p>
+                    <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+                      {svc.name}
+                      {svc.inactive && (
+                        <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">Inactive</span>
+                      )}
+                    </p>
+                    <p className="text-xs text-gray-400">{svc.sub}</p>
                   </div>
 
                   {/* Quantity stepper — only when selected */}
@@ -228,7 +291,7 @@ export default function EditServicesModal({ booking, services, products, open, o
 
                   {/* Price */}
                   <p className="text-sm font-semibold text-fuchsia-700 whitespace-nowrap w-20 text-right flex-shrink-0">
-                    GHS {(Number(svc.price) * (selected ? qty : 1)).toFixed(2)}
+                    GHS {(svc.price * (selected ? qty : 1)).toFixed(2)}
                   </p>
                 </div>
               )
@@ -285,7 +348,12 @@ export default function EditServicesModal({ booking, services, products, open, o
                         className="flex-1 min-w-0 cursor-pointer"
                         onClick={() => toggleProduct(p.id)}
                       >
-                        <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                        <p className="text-sm font-medium text-gray-900 truncate flex items-center gap-1.5">
+                          {p.name}
+                          {p.inactive && (
+                            <span className="text-[10px] font-semibold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded-full">Inactive</span>
+                          )}
+                        </p>
                       </div>
 
                       {selected && (
@@ -312,7 +380,7 @@ export default function EditServicesModal({ booking, services, products, open, o
                       )}
 
                       <p className="text-sm font-semibold text-fuchsia-700 whitespace-nowrap w-20 text-right flex-shrink-0">
-                        GHS {(Number(p.price) * (selected ? qty : 1)).toFixed(2)}
+                        GHS {(p.price * (selected ? qty : 1)).toFixed(2)}
                       </p>
                     </div>
                   )
