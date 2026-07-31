@@ -13,7 +13,7 @@ export default async function CustomerBookingPage({
   const params = await searchParams
 
   const [services, packages, globalMinDeposit] = await Promise.all([
-    serviceRepository.getAllServices({}),
+    serviceRepository.getAllServices({ isActive: true }),
     prisma.servicePackage.findMany({
       where: { isActive: true },
       include: { services: { include: { service: true } } },
