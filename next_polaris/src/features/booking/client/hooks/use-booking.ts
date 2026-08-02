@@ -337,30 +337,6 @@ export function useChargeCustomer() {
   })
 }
 
-export function useRecheckPayment() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: (id: string) => api.post(`/bookings/${id}/recheck-payment`),
-    onMutate: () => {
-      toast.loading("Checking with Paystack...", { id: "recheck-payment" })
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["slots"] })
-      queryClient.invalidateQueries({ queryKey: ["bookings"] })
-      queryClient.invalidateQueries({ queryKey: ["reports-bookings"] })
-      queryClient.invalidateQueries({ queryKey: ["booking-metrics"] })
-      queryClient.invalidateQueries({ queryKey: ["payments"] })
-      toast.success(data?.data?.message || "Payment status refreshed", { id: "recheck-payment" })
-    },
-    onError: (error: any) => {
-      console.error("Failed to recheck payment", error)
-      const message = error.response?.data?.message || "Failed to recheck payment with Paystack"
-      toast.error(message, { id: "recheck-payment" })
-    },
-  })
-}
-
 export function useMarkAsPaid() {
   const queryClient = useQueryClient()
 
