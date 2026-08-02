@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles, MessageSquareHeart } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles, MessageSquareHeart, ReceiptText, Wallet, Tag, Gift } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BookingWithService } from "../types"
-import { calculateBookingTotal, formatTime, isBookingOwner } from "../utils/helpers"
+import { calculateBookingTotal, formatTime, isBookingOwner, getPaymentMethodLabels } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid, useRequestFeedback } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
@@ -17,6 +17,7 @@ import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
 import RecordPaymentModal from "./form/record-payment-modal"
 import EditServicesModal from "./form/edit-services-modal"
+import BookingDetailsModal from "./form/booking-details-modal"
 import { SerializedService } from "@/features/service/types"
 import { SerializedProduct } from "@/features/product/types"
 
@@ -34,6 +35,7 @@ export default function BookingCard({ booking, user, services, products, onEdit,
   const [assignModalOpen, setAssignModalOpen] = useState(false)
   const [recordPaymentOpen, setRecordPaymentOpen] = useState(false)
   const [editServicesOpen, setEditServicesOpen] = useState(false)
+  const [detailsOpen, setDetailsOpen] = useState(false)
   const markAsCompletedMutation = useMarkAsCompleted()
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
@@ -48,6 +50,8 @@ export default function BookingCard({ booking, user, services, products, onEdit,
   }
   const bookingPaymentStatus = calculatePaymentStatus(booking)
   const bookingTotal = calculateBookingTotal(booking)
+  const paymentMethodLabels = getPaymentMethodLabels(booking)
+  const hasGiftCard = !!(booking as any).giftCardRedemptions?.length
 
   return (
     <div className="bg-gray-50 rounded-xl p-3 flex justify-between">
@@ -98,6 +102,24 @@ export default function BookingCard({ booking, user, services, products, onEdit,
         <p className="text-sm font-semibold text-fuchsia-700 mt-1">
           GHS {bookingTotal.toFixed(2)}
         </p>
+        <div className="flex flex-wrap items-center gap-1.5 mt-1">
+          <span className="flex items-center gap-1 text-xs text-gray-500">
+            <Wallet className="w-3 h-3 text-gray-400" />
+            {paymentMethodLabels.length > 0 ? paymentMethodLabels.join(", ") : "Not paid"}
+          </span>
+          {booking.promoCode && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight border bg-fuchsia-50 text-fuchsia-700 border-fuchsia-200">
+              <Tag className="w-2.5 h-2.5" />
+              {booking.promoCode.code}
+            </span>
+          )}
+          {hasGiftCard && (
+            <span className="flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium leading-tight border bg-emerald-50 text-emerald-700 border-emerald-200">
+              <Gift className="w-2.5 h-2.5" />
+              Gift card
+            </span>
+          )}
+        </div>
         <p className="text-xs text-fuchsia-400">
           {booking.createdById ? "Created by admin" : "Created by client"}
         </p>
@@ -111,6 +133,11 @@ export default function BookingCard({ booking, user, services, products, onEdit,
         </DropdownMenuTrigger>
 
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setDetailsOpen(true)} className="flex gap-2 text-gray-900">
+            <ReceiptText className="text-gray-900" />
+            <span className="w-full">View details</span>
+          </DropdownMenuItem>
+
           {isBookingOwner(booking, user) && (
             <DropdownMenuItem onClick={() => onEdit(booking.id)} className="flex gap-2 text-gray-900">
               <PencilLine className="text-gray-900" />
@@ -207,6 +234,12 @@ export default function BookingCard({ booking, user, services, products, onEdit,
         products={products}
         open={editServicesOpen}
         onClose={() => setEditServicesOpen(false)}
+      />
+
+      <BookingDetailsModal
+        booking={booking}
+        open={detailsOpen}
+        onClose={() => setDetailsOpen(false)}
       />
     </div>
   )

@@ -74,6 +74,38 @@ export function minutesToTime(minutes: number): string {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+/**
+ * Distinct human-readable payment-method labels for a booking, derived from its
+ * PAID payments plus any gift-card redemptions. Returns [] when nothing is paid.
+ */
+export function getPaymentMethodLabels(booking: any): string[] {
+  const labels: string[] = []
+
+  const paidPayments = (booking?.payments ?? []).filter((p: any) => p.status === "PAID")
+  for (const p of paidPayments) {
+    if (p.provider === "MANUAL") {
+      labels.push(p.manualMethod?.name ?? "Cash")
+    } else {
+      const channel = p.rawPayload?.data?.channel
+      labels.push(channel === "card" ? "Card" : channel === "mobile_money" ? "Mobile Money" : "Paystack")
+    }
+  }
+
+  if (booking?.giftCardRedemptions?.length) {
+    labels.push("Gift card")
+  }
+
+  return Array.from(new Set(labels))
+}
+
+/** Total gift-card value applied to a booking (0 when none). */
+export function getGiftCardApplied(booking: any): number {
+  return (booking?.giftCardRedemptions ?? []).reduce(
+    (sum: number, r: any) => sum + Number(r.amountApplied || 0),
+    0
+  )
+}
+
 export function calculateBookingTotal(booking: any): number {
   if (!booking) return 0;
 

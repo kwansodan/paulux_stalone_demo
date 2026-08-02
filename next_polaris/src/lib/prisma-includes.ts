@@ -12,7 +12,11 @@ const _base = {
       product: true,
     },
   },
-  payments: true,
+  payments: {
+    include: {
+      manualMethod: { select: { name: true } },
+    },
+  },
   assignedTo: {
     select: {
       id: true,
@@ -25,6 +29,12 @@ const _base = {
       code: true,
       discountType: true,
       discountValue: true,
+    },
+  },
+  giftCardRedemptions: {
+    select: {
+      amountApplied: true,
+      giftCard: { select: { code: true } },
     },
   },
 } satisfies Prisma.BookingInclude
