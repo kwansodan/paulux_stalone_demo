@@ -106,6 +106,25 @@ export function getGiftCardApplied(booking: any): number {
   )
 }
 
+/**
+ * Gross value of items booked: services + products, with NO discount applied.
+ * Use this for displaying "value of items"; use calculateBookingTotal for the
+ * net amount the customer actually owes (which subtracts the promo discount).
+ */
+export function calculateBookingSubtotal(booking: any): number {
+  if (!booking) return 0;
+
+  const servicesTotal = booking.services?.reduce((sum: number, s: any) => {
+    return sum + (Number(s.priceAtBooking) * (s.quantity || 1));
+  }, 0) || 0;
+
+  const productsTotal = booking.products?.reduce((sum: number, p: any) => {
+    return sum + (Number(p.priceAtBooking) * (p.quantity || 1));
+  }, 0) || 0;
+
+  return servicesTotal + productsTotal;
+}
+
 export function calculateBookingTotal(booking: any): number {
   if (!booking) return 0;
 

@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { BookingWithService } from "../types"
-import { calculateBookingTotal, formatTime, isBookingOwner, getPaymentMethodLabels } from "../utils/helpers"
+import { calculateBookingSubtotal, formatTime, isBookingOwner, getPaymentMethodLabels } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
 import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid, useRequestFeedback } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
@@ -49,7 +49,7 @@ export default function BookingCard({ booking, user, services, products, onEdit,
     if (confirmed) requestFeedback.mutate(booking.id)
   }
   const bookingPaymentStatus = calculatePaymentStatus(booking)
-  const bookingTotal = calculateBookingTotal(booking)
+  const bookingTotal = calculateBookingSubtotal(booking)
   const paymentMethodLabels = getPaymentMethodLabels(booking)
   const hasGiftCard = !!(booking as any).giftCardRedemptions?.length
 

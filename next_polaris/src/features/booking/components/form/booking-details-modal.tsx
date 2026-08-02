@@ -5,6 +5,7 @@ import { Scissors, Package, Tag, Gift, Wallet } from "lucide-react"
 import { BookingWithService } from "../../types"
 import {
   calculateBookingTotal,
+  calculateBookingSubtotal,
   formatDate,
   formatTime,
   getGiftCardApplied,
@@ -27,15 +28,7 @@ export default function BookingDetailsModal({ booking, open, onClose }: Props) {
   const products = booking.products ?? []
   const payments = booking.payments ?? []
 
-  const servicesTotal = services.reduce(
-    (sum, s: any) => sum + Number(s.priceAtBooking) * (s.quantity || 1),
-    0
-  )
-  const productsTotal = products.reduce(
-    (sum, p: any) => sum + Number(p.priceAtBooking) * (p.quantity || 1),
-    0
-  )
-  const subtotal = servicesTotal + productsTotal
+  const subtotal = calculateBookingSubtotal(booking)
   const discount = Number(booking.discountAmount || 0)
   const giftCardApplied = getGiftCardApplied(booking)
   const total = calculateBookingTotal(booking)
