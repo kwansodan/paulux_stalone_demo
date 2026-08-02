@@ -9,12 +9,29 @@ import { Loader2 } from "lucide-react"
 import { useMarkAsPaid } from "@/features/booking/client/hooks/use-booking"
 import RecordPaymentModal from "@/features/booking/components/form/record-payment-modal"
 import { calculateBookingTotal } from "@/features/booking/utils/helpers"
+import Pagination from "@/components/pagination"
+
+const PAGE_SIZE = 20
 
 export default function PaymentManager({ services }: { services: SerializedService[] }) {
   const [filters, setFilters] = useState<PaymentFilters | null>(null)
   const [recordPaymentTarget, setRecordPaymentTarget] = useState<PaymentWithBookingAndService | null>(null)
+  const [page, setPage] = useState(1)
 
   const { data = [], isLoading } = usePayments(filters ?? {})
+
+  // Reset to the first page whenever the filters change (adjust-state-on-render
+  // pattern — avoids a setState-in-effect cascade).
+  const filterKey = JSON.stringify(filters ?? {})
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
+
+  const pageCount = Math.max(1, Math.ceil(data.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedData = data.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const collectPayment = useCollectPayment()
   const markAsPaid = useMarkAsPaid()
@@ -101,10 +118,12 @@ export default function PaymentManager({ services }: { services: SerializedServi
 
       <DataTable
         columns={columns}
-        data={data}
+        data={pagedData}
         loading={isLoading}
         emptyText="No payments yet"
       />
+
+      <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
 
       {recordPaymentTarget && (
         <RecordPaymentModal

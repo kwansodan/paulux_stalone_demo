@@ -7,6 +7,9 @@ import ProductCard from './product-card'
 import { getProducts, useUpdateStockTracking } from '../client/use-product'
 import { PackageCheck, X, CheckSquare } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import Pagination from '@/components/pagination'
+
+const PAGE_SIZE = 12
 
 const ProductList = ({
   products,
@@ -18,6 +21,7 @@ const ProductList = ({
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
   const [isSelectionMode, setIsSelectionMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [page, setPage] = useState(1)
 
   const { data, error, isError, isLoading } = useQuery({
     queryKey: ['products'],
@@ -45,6 +49,19 @@ const ProductList = ({
     const matchesCategory = activeCategory ? product.category?.id === activeCategory : true
     return matchesSearch && matchesCategory
   }), [data, searchQuery, activeCategory])
+
+  // Reset to the first page whenever the filters change (adjust-state-on-render
+  // pattern — avoids a setState-in-effect cascade).
+  const filterKey = `${searchQuery ?? ''}|${activeCategory ?? ''}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
+
+  const pageCount = Math.max(1, Math.ceil(filteredProducts.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedProducts = filteredProducts.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   function enterSelectionMode() {
     setIsSelectionMode(true)
@@ -175,17 +192,20 @@ const ProductList = ({
           </p>
         </div>
       ) : (
-        <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 ${isSelectionMode ? "pb-24" : ""}`}>
-          {filteredProducts.map((p) => (
-            <ProductCard
-              key={p.id}
-              product={p}
-              isSelectionMode={isSelectionMode}
-              isSelected={selectedIds.has(p.id)}
-              onToggleSelect={toggleSelect}
-            />
-          ))}
-        </div>
+        <>
+          <div className={`grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 ${isSelectionMode ? "pb-24" : ""}`}>
+            {pagedProducts.map((p) => (
+              <ProductCard
+                key={p.id}
+                product={p}
+                isSelectionMode={isSelectionMode}
+                isSelected={selectedIds.has(p.id)}
+                onToggleSelect={toggleSelect}
+              />
+            ))}
+          </div>
+          <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
+        </>
       )}
 
       {/* Sticky action bar — only shown in selection mode */}

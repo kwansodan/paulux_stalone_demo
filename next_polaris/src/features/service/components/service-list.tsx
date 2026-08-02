@@ -4,9 +4,13 @@ import { useQuery } from '@tanstack/react-query'
 import { SerializedService } from '../types'
 import ServiceCard from './service-card'
 import { getServices } from '../client/use-service'
+import Pagination from '@/components/pagination'
+
+const PAGE_SIZE = 12
 
 const ServiceList = ({ services, searchQuery }: { services: SerializedService[], searchQuery?: string }) => {
   const [activeCategory, setActiveCategory] = useState<string | null>(null)
+  const [page, setPage] = useState(1)
 
   const { data, error, isError, isLoading } = useQuery({
     queryKey: ["services"],
@@ -24,6 +28,15 @@ const ServiceList = ({ services, searchQuery }: { services: SerializedService[],
     })
     return Array.from(seen.entries()).map(([id, name]) => ({ id, name }))
   }, [data])
+
+  // Reset to the first page whenever the filters change (adjust-state-on-render
+  // pattern — avoids a setState-in-effect cascade).
+  const filterKey = `${searchQuery ?? ''}|${activeCategory ?? ''}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
 
   if (isLoading) {
     return (
@@ -51,6 +64,10 @@ const ServiceList = ({ services, searchQuery }: { services: SerializedService[],
     const matchesCategory = activeCategory ? service.category?.id === activeCategory : true
     return matchesSearch && matchesCategory
   })
+
+  const pageCount = Math.max(1, Math.ceil(filteredServices.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedServices = filteredServices.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   return (
     <div className="space-y-4">
@@ -93,11 +110,14 @@ const ServiceList = ({ services, searchQuery }: { services: SerializedService[],
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {filteredServices.map((s) => (
-            <ServiceCard key={s.id} service={s} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {pagedServices.map((s) => (
+              <ServiceCard key={s.id} service={s} />
+            ))}
+          </div>
+          <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
+        </>
       )}
     </div>
   )
