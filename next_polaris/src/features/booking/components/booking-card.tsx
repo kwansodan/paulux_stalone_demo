@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles, MessageSquareHeart, ReceiptText, Wallet, Tag, Gift } from "lucide-react"
+import { CircleCheck, CircleX, MoreVertical, PencilLine, CreditCard, Scissors, Sparkles, MessageSquareHeart, ReceiptText, Wallet, Tag, Gift, RefreshCw } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +11,7 @@ import {
 import { BookingWithService } from "../types"
 import { calculateBookingSubtotal, formatTime, isBookingOwner, getPaymentMethodLabels } from "../utils/helpers"
 import { User } from "@generated/prisma/client"
-import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid, useRequestFeedback } from "../client/hooks/use-booking"
+import { useMarkAsCompleted, useChargeCustomer, useMarkAsPaid, useRequestFeedback, useRecheckPayment } from "../client/hooks/use-booking"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import ChargeCustomerModal from "./form/charge-customer-modal"
 import AssignStylistModal from "./form/assign-stylist-modal"
@@ -40,6 +40,7 @@ export default function BookingCard({ booking, user, services, products, onEdit,
   const chargeCustomer = useChargeCustomer()
   const markAsPaid = useMarkAsPaid()
   const requestFeedback = useRequestFeedback()
+  const recheckPayment = useRecheckPayment()
   const feedbackRequestedAt = (booking as any).feedbackRequestedAt as string | null | undefined
 
   const handleRequestFeedback = () => {
@@ -183,6 +184,17 @@ export default function BookingCard({ booking, user, services, products, onEdit,
             <DropdownMenuItem onClick={() => setChargeModalOpen(true)} className="flex gap-2 text-fuchsia-600">
               <CreditCard className="text-fuchsia-600" />
               <span className="w-full">Charge customer</span>
+            </DropdownMenuItem>
+          )}
+
+          {!['CANCELLED', 'COMPLETED'].includes(booking.status) && ['PENDING', 'PARTIAL', 'FAILED'].includes(bookingPaymentStatus) && (
+            <DropdownMenuItem
+              onClick={() => recheckPayment.mutate(booking.id)}
+              disabled={recheckPayment.isPending}
+              className="flex gap-2 text-amber-600"
+            >
+              <RefreshCw className={recheckPayment.isPending && recheckPayment.variables === booking.id ? "text-amber-600 animate-spin" : "text-amber-600"} />
+              <span className="w-full">Recheck payment</span>
             </DropdownMenuItem>
           )}
 
