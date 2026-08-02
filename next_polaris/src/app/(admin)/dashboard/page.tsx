@@ -140,13 +140,6 @@ export default async function DashboardPage({
   const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
   const previouslyCollected = Number(previouslyCollectedResult._sum.amount ?? 0)
   const periodRevenue = revenue ?? 0
-  // Outstanding = revenue due in period, minus cash that applies to it
-  // (received this period for this period's bookings, plus anything received earlier for these bookings)
-  const outstanding = Math.max(
-    0,
-    periodRevenue - netReceived + preBookingReceived - previouslyCollected
-  )
-
   const lowStockProducts = allActiveProducts.filter(
     p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold
   )
@@ -165,7 +158,6 @@ export default async function DashboardPage({
         bookingsCount={count ?? bookings.length}
         revenue={periodRevenue}
         netCollected={netReceived}
-        outstanding={outstanding}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
