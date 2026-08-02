@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma"
 import { bookingInclude } from "@/lib/prisma-includes"
-import { calculateBookingTotal } from "@/features/booking/utils/helpers"
+import { calculateBookingTotal, calculateBookingSubtotal } from "@/features/booking/utils/helpers"
 import { materialRepository } from "@/features/material/server/material.repository"
 import { BookingStatus, PaymentProvider, PaymentStatus } from "@generated/prisma/client"
 
@@ -18,6 +18,25 @@ const paid = (booking: any) =>
     .filter((p: any) => p.status === PaymentStatus.PAID)
     .reduce((s: number, p: any) => s + Number(p.amount), 0)
 
+// Gift-card redemptions are recorded as PAID MANUAL payments (see gift-cards/redeem
+// route). They are not cash collected, so revenue reporting separates them out.
+const isGiftCardPayment = (p: any) =>
+  p.provider === PaymentProvider.MANUAL &&
+  (String(p.providerRef ?? "").startsWith("GIFTCARD_") || p.rawPayload?.method === "Gift Card")
+
+const paidPayments = (booking: any) =>
+  (booking.payments ?? []).filter((p: any) => p.status === PaymentStatus.PAID)
+
+const cashPaid = (booking: any) =>
+  paidPayments(booking)
+    .filter((p: any) => !isGiftCardPayment(p))
+    .reduce((s: number, p: any) => s + Number(p.amount), 0)
+
+const giftCardPaid = (booking: any) =>
+  paidPayments(booking)
+    .filter((p: any) => isGiftCardPayment(p))
+    .reduce((s: number, p: any) => s + Number(p.amount), 0)
+
 class ReportRepository {
   // ── Financial ──────────────────────────────────────────────────────────────
   async revenue(from: string, to: string): Promise<Row[]> {
@@ -27,17 +46,21 @@ class ReportRepository {
       orderBy: { bookingDate: "asc" },
     })
     return bookings.map((b: any) => {
-      const billed = b.status === BookingStatus.CANCELLED ? 0 : calculateBookingTotal(b)
-      const p = paid(b)
+      const billed = b.status === BookingStatus.CANCELLED ? 0 : calculateBookingSubtotal(b)
+      const discount = Number(b.discountAmount ?? 0)
+      const giftCard = giftCardPaid(b)
+      const cash = cashPaid(b)
       return {
         reference: b.bookingReference,
         date: b.bookingDate,
         customer: b.clientName,
         status: b.status,
         billed,
-        paid: p,
-        outstanding: Math.max(0, billed - p),
-        discount: Number(b.discountAmount ?? 0),
+        promoCode: b.promoCode?.code ?? "—",
+        discount,
+        giftCard,
+        paid: cash,
+        outstanding: Math.max(0, billed - discount - giftCard - cash),
       }
     })
   }
