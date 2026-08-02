@@ -4,7 +4,7 @@ import { generateBookingReference, timeToMinutes } from "@/utils/helpers";
 import { BookingQueryOptions, BookingQueryResult, BookingWithServiceAndPayment, BookingWithService } from "../types";
 import { createCalendarEvent } from "@/lib/google-calendar";
 import { bookingInclude } from "@/lib/prisma-includes";
-import { calculateBookingTotal } from "../utils/helpers";
+import { calculateBookingSubtotal } from "../utils/helpers";
 
 
 export class BookingRepository {
@@ -187,9 +187,10 @@ export class BookingRepository {
     }
     if (options.includeRevenue) {
       const activeBookings = bookings.filter(b => b.status !== BookingStatus.CANCELLED)
-      // Sum service value of today's bookings — this is revenue earned by delivering services today
+      // Gross value of services + products for active bookings in the period —
+      // NOT net of promo discount (use calculateBookingSubtotal, not ...Total).
       queryResult['revenue'] = activeBookings.reduce((sum, booking) => {
-        return sum + calculateBookingTotal(booking);
+        return sum + calculateBookingSubtotal(booking);
       }, 0);
     }
 
