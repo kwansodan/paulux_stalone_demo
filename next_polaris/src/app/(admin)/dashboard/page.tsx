@@ -8,6 +8,7 @@ import ScheduleList from "@/components/dashboard/schedule-list"
 import RevenueBreakdown from "@/components/dashboard/revenue-breakdown"
 import BookingStatusPanel from "@/components/dashboard/booking-status-panel"
 import { bookingRepository } from "@/features/booking/server/booking.repository"
+import { calculateBookingTotal } from "@/features/booking/utils/helpers"
 import { prisma } from "@/lib/prisma"
 import { PaymentProvider, PaymentStatus, UserRole } from "@generated/prisma/client"
 
@@ -140,6 +141,17 @@ export default async function DashboardPage({
   const preBookingReceived = Number(preBookingResult._sum.amount ?? 0)
   const previouslyCollected = Number(previouslyCollectedResult._sum.amount ?? 0)
   const periodRevenue = revenue ?? 0
+  // Outstanding = sum of each active booking's unpaid balance: net-of-discount
+  // total (calculateBookingTotal) minus everything already paid (cash + gift card,
+  // both recorded as PAID payments). Independent of the gross Revenue card figure.
+  const outstanding = bookings
+    .filter(b => b.status !== "CANCELLED")
+    .reduce((sum, b) => {
+      const paidToDate = (b.payments ?? [])
+        .filter(p => p.status === PaymentStatus.PAID)
+        .reduce((s, p) => s + Number(p.amount), 0)
+      return sum + Math.max(0, calculateBookingTotal(b) - paidToDate)
+    }, 0)
   const lowStockProducts = allActiveProducts.filter(
     p => p.stockQuantity > 0 && p.stockQuantity <= p.lowStockThreshold
   )
@@ -158,6 +170,7 @@ export default async function DashboardPage({
         bookingsCount={count ?? bookings.length}
         revenue={periodRevenue}
         netCollected={netReceived}
+        outstanding={outstanding}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
