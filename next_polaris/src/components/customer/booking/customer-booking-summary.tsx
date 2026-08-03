@@ -6,7 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import html2canvas from "html2canvas"
 import { useRef, useState, useEffect } from "react"
 import { toast } from "sonner"
-import { formatDate, formatTime, calculateBookingTotal } from "@/features/booking/utils/helpers"
+import { formatDate, formatTime, calculateBookingTotal, calculateBookingSubtotal } from "@/features/booking/utils/helpers"
 import { calculatePaymentStatus } from "@/features/payment/utils/helpers"
 import { PolicyBottomSheet } from "@/components/policy-bottom-sheet"
 
@@ -264,6 +264,50 @@ export default function BookingSummary({ booking }: Props) {
               </span>
             </div>
 
+            {/* Order summary — services, products, subtotal, discount, total */}
+            <div className="pt-2 border-t border-gray-100 space-y-2">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Order summary</p>
+
+              {booking.services.map((bs: any) => {
+                const qty = bs.quantity || 1
+                const line = Number(bs.priceAtBooking) * qty
+                return (
+                  <div key={bs.serviceId} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{bs.service.name}{qty > 1 ? ` × ${qty}` : ""}</span>
+                    <span className="text-gray-800">GHS {line.toFixed(2)}</span>
+                  </div>
+                )
+              })}
+
+              {(booking.products ?? []).map((bp: any) => {
+                const qty = bp.quantity || 1
+                const line = Number(bp.priceAtBooking) * qty
+                return (
+                  <div key={bp.productId} className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">{bp.product.name}{qty > 1 ? ` × ${qty}` : ""}</span>
+                    <span className="text-gray-800">GHS {line.toFixed(2)}</span>
+                  </div>
+                )
+              })}
+
+              <div className="flex items-center justify-between text-sm pt-1 border-t border-gray-50">
+                <span className="text-gray-500">Subtotal</span>
+                <span className="text-gray-700">GHS {calculateBookingSubtotal(booking).toFixed(2)}</span>
+              </div>
+
+              {Number(booking.discountAmount || 0) > 0 && (
+                <div className="flex items-center justify-between text-sm text-fuchsia-600">
+                  <span>Discount{booking.promoCode?.code ? ` (${booking.promoCode.code})` : ""}</span>
+                  <span>- GHS {Number(booking.discountAmount).toFixed(2)}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between text-sm font-semibold pt-1 border-t border-gray-100">
+                <span className="text-gray-900">Total</span>
+                <span className="text-fuchsia-700">GHS {calculateBookingTotal(booking).toFixed(2)}</span>
+              </div>
+            </div>
+
             {/* Price */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-gray-600">
@@ -280,6 +324,20 @@ export default function BookingSummary({ booking }: Props) {
               </div>
               <span className="text-sm font-medium">
                 GHS {Number(depositAmount).toFixed(2)}
+              </span>
+            </div>
+
+            {/* Balance due */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-gray-600">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 11H1V12H15V11Z" fill="#475568" />
+                  <path d="M15 13H1V14H15V13Z" fill="#475568" />
+                </svg>
+                <span className="text-sm">Balance due</span>
+              </div>
+              <span className="text-sm font-semibold">
+                GHS {Math.max(0, calculateBookingTotal(booking) - Number(depositAmount)).toFixed(2)}
               </span>
             </div>
           </div>

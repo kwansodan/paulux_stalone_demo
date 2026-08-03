@@ -7,6 +7,7 @@ export const sendWalkinWelcomeEmail = async (
   bookingReference: string,
   serviceNames: string[],
   bookingSummaryUrl: string,
+  productNames?: string[],
 ) => {
   return await resend.emails.send({
     from: "no-reply@polarisbeautylounge.com",
@@ -17,6 +18,7 @@ export const sendWalkinWelcomeEmail = async (
         clientName={clientName}
         bookingReference={bookingReference}
         serviceNames={serviceNames}
+        productNames={productNames}
         bookingSummaryUrl={bookingSummaryUrl}
       />
     ),

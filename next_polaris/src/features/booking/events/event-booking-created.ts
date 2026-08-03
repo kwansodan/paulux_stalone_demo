@@ -24,6 +24,10 @@ export const bookingCreatedEvent = inngest.createFunction(
     const isWalkIn = booking.bookingType === "WALKIN"
     const serviceNames = booking.services.map(s => s.service.name)
     const serviceNamesJoined = serviceNames.join(", ")
+    const productNames = (booking.products ?? []).map(p =>
+      (p.quantity ?? 1) > 1 ? `${p.product.name} x${p.quantity}` : p.product.name
+    )
+    const productNamesJoined = productNames.join(", ")
     const dateFormatted = formatDate(booking.bookingDate)
     const timeFormatted = formatTime(booking.bookingTime)
     const summaryUrl = getBaseUrl() + customerBookingSummaryPath(bookingId)
@@ -42,6 +46,7 @@ export const bookingCreatedEvent = inngest.createFunction(
             booking.bookingReference,
             serviceNames,
             summaryUrl,
+            productNames,
           )
         } else {
           // Scheduled: standard booking confirmation
@@ -53,6 +58,7 @@ export const bookingCreatedEvent = inngest.createFunction(
             dateFormatted,
             timeFormatted,
             summaryUrl,
+            productNamesJoined,
           )
         }
 
@@ -68,8 +74,8 @@ export const bookingCreatedEvent = inngest.createFunction(
     if (booking.clientPhone) {
       smsResult = await step.run("send-confirmation-sms", async () => {
         const message = isWalkIn
-          ? `Welcome to Polaris! 🌟 We're so glad you're here, ${booking.clientName}. Your service(s) today include ${serviceNamesJoined}. Sit back and relax — you're in great hands! Note: No-shows forfeit payment. Cancellations eligible for refund within policy. Full details: ${summaryUrl}. Instagram: ${INSTAGRAM_LINK}`
-          : `Hi ${booking.clientName}, thank you for your booking request for ${serviceNamesJoined} on ${dateFormatted} at ${timeFormatted} (Ref: ${booking.bookingReference}).\n\nTo confirm your appointment, please complete your deposit payment using the link below:\n${summaryUrl}\n\nYour booking will be confirmed once the deposit has been received.`
+          ? `Welcome to Polaris! 🌟 We're so glad you're here, ${booking.clientName}. Your service(s) today include ${serviceNamesJoined}.${productNamesJoined ? ` Products: ${productNamesJoined}.` : ""} Sit back and relax — you're in great hands! Note: No-shows forfeit payment. Cancellations eligible for refund within policy. Full details: ${summaryUrl}. Instagram: ${INSTAGRAM_LINK}`
+          : `Hi ${booking.clientName}, thank you for your booking request for ${serviceNamesJoined}${productNamesJoined ? ` (products: ${productNamesJoined})` : ""} on ${dateFormatted} at ${timeFormatted} (Ref: ${booking.bookingReference}).\n\nTo confirm your appointment, please complete your deposit payment using the link below:\n${summaryUrl}\n\nYour booking will be confirmed once the deposit has been received.`
 
         const result = await sendSMS({
           recipients: [booking.clientPhone!],

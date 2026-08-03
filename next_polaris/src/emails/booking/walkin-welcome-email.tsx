@@ -9,6 +9,7 @@ interface WalkinWelcomeEmailProps {
   clientName: string
   bookingReference: string
   serviceNames: string[]
+  productNames?: string[]
   bookingSummaryUrl: string
 }
 
@@ -16,6 +17,7 @@ const WalkinWelcomeEmail = ({
   clientName,
   bookingReference,
   serviceNames,
+  productNames,
   bookingSummaryUrl,
 }: WalkinWelcomeEmailProps) => {
   return (
@@ -60,6 +62,22 @@ const WalkinWelcomeEmail = ({
                 </Text>
               ))}
             </Section>
+
+            {productNames && productNames.length > 0 && (
+              <>
+                <Hr className="border-gray-200 my-6" />
+                <Section className="mb-6">
+                  <Text className="text-gray-500 text-sm font-semibold uppercase tracking-wide mb-3">
+                    Products
+                  </Text>
+                  {productNames.map((name, i) => (
+                    <Text key={i} className="text-gray-800 text-base font-medium mb-1">
+                      🛍 {name}
+                    </Text>
+                  ))}
+                </Section>
+              </>
+            )}
 
             <Hr className="border-gray-200 my-6" />
 

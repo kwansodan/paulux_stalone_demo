@@ -9,6 +9,7 @@ interface BookingConfirmedEmailProps {
   clientName: string
   bookingReference: string
   serviceNames: string
+  productNames?: string
   bookingDate: string
   bookingTime: string
   bookingSummaryUrl: string
@@ -18,6 +19,7 @@ const BookingConfirmedEmail = ({
   clientName,
   bookingReference,
   serviceNames,
+  productNames,
   bookingDate,
   bookingTime,
   bookingSummaryUrl,
@@ -74,6 +76,14 @@ const BookingConfirmedEmail = ({
                   <Text className="text-gray-900 text-base font-semibold m-0">{bookingTime}</Text>
                 </Column>
               </Row>
+              {productNames && (
+                <Row className="mt-4">
+                  <Column>
+                    <Text className="text-gray-500 text-xs font-medium m-0">Product(s)</Text>
+                    <Text className="text-gray-900 text-base font-semibold m-0">{productNames}</Text>
+                  </Column>
+                </Row>
+              )}
             </Section>
 
             <Hr className="border-gray-200 mb-6" />

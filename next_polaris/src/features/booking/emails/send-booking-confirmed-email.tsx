@@ -9,6 +9,7 @@ export const sendBookingConfirmedEmail = async (
   bookingDate: string,
   bookingTime: string,
   bookingSummaryUrl: string,
+  productNames?: string,
 ) => {
   return await resend.emails.send({
     from: "no-reply@polarisbeautylounge.com",
@@ -19,6 +20,7 @@ export const sendBookingConfirmedEmail = async (
         clientName={clientName}
         bookingReference={bookingReference}
         serviceNames={serviceNames}
+        productNames={productNames}
         bookingDate={bookingDate}
         bookingTime={bookingTime}
         bookingSummaryUrl={bookingSummaryUrl}
