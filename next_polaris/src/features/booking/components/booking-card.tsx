@@ -50,6 +50,12 @@ export default function BookingCard({ booking, user, services, products, onEdit,
     if (confirmed) requestFeedback.mutate(booking.id)
   }
   const bookingPaymentStatus = calculatePaymentStatus(booking)
+  // A finished booking can be completed when it's CONFIRMED, or when it's still
+  // PENDING but fully settled (e.g. covered entirely by a promo or gift card, so
+  // there was nothing to pay to auto-confirm it).
+  const canComplete =
+    booking.status === 'CONFIRMED' ||
+    (booking.status === 'PENDING' && bookingPaymentStatus === 'PAID')
   const bookingTotal = calculateBookingSubtotal(booking)
   const paymentMethodLabels = getPaymentMethodLabels(booking)
   const hasGiftCard = !!(booking as any).giftCardRedemptions?.length
@@ -164,7 +170,7 @@ export default function BookingCard({ booking, user, services, products, onEdit,
             </DropdownMenuItem>
           )}
 
-          {!['CANCELLED', 'COMPLETED', 'PENDING'].includes(booking.status) && (
+          {canComplete && (
             <DropdownMenuItem onClick={() => markAsCompletedMutation.mutate(booking.id)} className="flex gap-2 text-green-600">
               <CircleCheck className="text-green-600" />
               <span className="w-full">Mark as completed</span>
