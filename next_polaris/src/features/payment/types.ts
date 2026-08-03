@@ -41,6 +41,7 @@ export type PaymentFilters = {
 
 export type PaymentWithBookingAndService = PaymentGetPayload<{
   include: {
+    manualMethod: { select: { name: true } },
     booking: {
       include: {
         services: { include: { service: true } },

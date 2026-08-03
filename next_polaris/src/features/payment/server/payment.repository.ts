@@ -22,6 +22,7 @@ export class PaymentRepository {
     return prisma.payment.findMany({
       where,
       include: {
+        manualMethod: { select: { name: true } },
         booking: {
           include: {
             services: { include: { service: true } },

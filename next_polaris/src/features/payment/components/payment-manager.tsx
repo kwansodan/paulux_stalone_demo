@@ -13,6 +13,17 @@ import Pagination from "@/components/pagination"
 
 const PAGE_SIZE = 20
 
+// Whether a payment came through a gateway or was recorded manually, and its mode.
+function paymentMethod(p: PaymentWithBookingAndService): { mode: string; kind: "Gateway" | "Manual" } {
+  if (p.provider === "MANUAL") {
+    const mode = p.manualMethod?.name ?? (p.rawPayload as any)?.method ?? "Cash"
+    return { mode, kind: "Manual" }
+  }
+  const channel = (p.rawPayload as any)?.data?.channel
+  const mode = channel === "card" ? "Bank Card" : channel === "mobile_money" ? "Mobile Money" : "Paystack"
+  return { mode, kind: "Gateway" }
+}
+
 export default function PaymentManager({ services }: { services: SerializedService[] }) {
   const [filters, setFilters] = useState<PaymentFilters | null>(null)
   const [recordPaymentTarget, setRecordPaymentTarget] = useState<PaymentWithBookingAndService | null>(null)
@@ -54,6 +65,19 @@ export default function PaymentManager({ services }: { services: SerializedServi
     },
     { key: "service", label: "Service", render: (p: PaymentWithBookingAndService) => p.booking.services.map(s => s.service.name).join(", ") },
     { key: "amount", label: "Deposit paid", render: (p: PaymentWithBookingAndService) => <p className="text-lime-700">{`GHS ${p.amount}`}</p> },
+    {
+      key: "method",
+      label: "Method",
+      render: (p: PaymentWithBookingAndService) => {
+        const { mode, kind } = paymentMethod(p)
+        return (
+          <div>
+            <p className="font-medium text-gray-900">{mode}</p>
+            <p className="text-xs text-gray-500">{kind}</p>
+          </div>
+        )
+      }
+    },
     {
       key: "due",
       label: "Amount Due",
