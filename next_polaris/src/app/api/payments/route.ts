@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { paymentRepository } from "@/features/payment/server/payment.repository"
 import { PaymentProvider, PaymentStatus } from "@generated/prisma/client"
+import { requireRoleApi } from "@/app/_auth/require-role-api"
 
 export async function GET(req: NextRequest) {
+  const auth = await requireRoleApi(["ADMIN"], "payments.view")
+  if (!auth.ok) return auth.response
+
   const { searchParams } = req.nextUrl
 
   const search = searchParams.get("search")
@@ -66,6 +70,9 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await requireRoleApi(["ADMIN"], "payments.view")
+    if (!auth.ok) return auth.response
+
     const body = await req.json()
     const { bookingId, provider, providerRef, amount, currency, status, rawPayload } = body
 
