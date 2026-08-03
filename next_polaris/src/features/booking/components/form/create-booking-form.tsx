@@ -140,7 +140,13 @@ export default function CreateBookingForm({
 
   const handleApplyPromo = async () => {
     if (!promoInput.trim()) return
-    const baseTotal = selectedServices.reduce((sum, s) => sum + Number(s.price), 0)
+    // Discount base = full gross charge: qty × price across services and products.
+    const servicesTotal = selectedServices.reduce((sum, s) => {
+      const qty = serviceEntries.find((e: { id: string; quantity: number }) => e.id === s.id)?.quantity ?? 1
+      return sum + Number(s.price) * qty
+    }, 0)
+    const productsTotal = selectedProducts.reduce((sum, p) => sum + Number(p.price) * p.quantity, 0)
+    const baseTotal = servicesTotal + productsTotal
     setPromoLoading(true)
     setPromoError(null)
     try {

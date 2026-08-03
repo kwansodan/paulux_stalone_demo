@@ -283,8 +283,25 @@ export async function POST(request: NextRequest) {
         (promo.maxUses === null || promo.usedCount < promo.maxUses)
 
       if (isValid && promo) {
-        // Use client-supplied discountAmount but cap it at bookingTotal
-        const bookingTotal = existingServices.reduce((sum, s) => sum + Number(s.price), 0)
+        // Discount base = full gross charge: qty × price across all services AND
+        // products on the booking (not services-only). Products aren't fetched
+        // earlier, so resolve them here (only runs when a promo is applied).
+        const resolvedProductEntries: { id: string; quantity: number }[] = (validatedBody.productIds ?? []).map(
+          (p: string | { id: string; quantity?: number }) =>
+            typeof p === 'string' ? { id: p, quantity: 1 } : { id: p.id, quantity: p.quantity ?? 1 }
+        )
+        const existingProducts = resolvedProductEntries.length
+          ? await prisma.product.findMany({ where: { id: { in: resolvedProductEntries.map(e => e.id) } } })
+          : []
+        const servicesTotal = resolvedServiceEntries.reduce((sum, e) => {
+          const svc = existingServices.find(s => s.id === e.id)
+          return sum + (svc ? Number(svc.price) * (e.quantity ?? 1) : 0)
+        }, 0)
+        const productsTotal = resolvedProductEntries.reduce((sum, e) => {
+          const prod = existingProducts.find(p => p.id === e.id)
+          return sum + (prod ? Number(prod.price) * (e.quantity ?? 1) : 0)
+        }, 0)
+        const bookingTotal = servicesTotal + productsTotal
         const discountValue = Number(promo.discountValue)
         let computedDiscount =
           promo.discountType === "PERCENTAGE"
