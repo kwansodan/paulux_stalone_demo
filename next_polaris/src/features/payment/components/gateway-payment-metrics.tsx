@@ -61,7 +61,7 @@ export default function GatewayPaymentMetrics({
           iconClassName="bg-[#FFFBEB] text-[#973C00]"
         />
         <MetricCard
-          title={`${gatewayLabels.primary} percentage (target ≥60%)`}
+          title={`${gatewayLabels.primary} percentage (target ${Math.round(data.routingThreshold ?? 0)}%)`}
           value={`${(data.primaryPercentage ?? 0).toFixed(1)}%`}
           icon={<TrendingUp />}
           iconClassName="bg-[#F0F9FF] text-[#00598A]"
@@ -77,6 +77,7 @@ export default function GatewayPaymentMetrics({
       <GatewayDistribution
         primaryPercentage={data.primaryPercentage ?? 0}
         secondaryPercentage={data.secondaryPercentage ?? 0}
+        targetPercent={data.routingThreshold ?? 0}
         primaryLabel={gatewayLabels.primary}
         secondaryLabel={gatewayLabels.secondary}
       />

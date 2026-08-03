@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { gatewayMetricsService } from '@/features/payment/server/gateway-metrics.service';
+import { requireRoleApi } from '@/app/_auth/require-role-api';
 
 export async function GET() {
     try {
+        const auth = await requireRoleApi(["ADMIN"], "payments.view");
+        if (!auth.ok) return auth.response;
+
         const metrics = await gatewayMetricsService.getMetrics();
         return NextResponse.json({
             success: true,
@@ -20,6 +24,9 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
+        const auth = await requireRoleApi(["ADMIN"], "payments.view");
+        if (!auth.ok) return auth.response;
+
         const body = await req.json();
         const { paystackPercentage } = body;
 

@@ -5,8 +5,6 @@ import { SlidersHorizontal } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useUpdateGatewayThreshold } from "../client/use-payment"
 
-const DEFAULT_PRIMARY_TARGET = 60
-
 type GatewayAllocationPolicyProps = {
   routingThreshold: number
   isSaving?: boolean
@@ -29,10 +27,6 @@ export default function GatewayAllocationPolicy({
 
   const handleSave = () => {
     updateThreshold.mutate(primaryTarget)
-  }
-
-  const handleReset = () => {
-    setPrimaryTarget(DEFAULT_PRIMARY_TARGET)
   }
 
   return (
@@ -75,10 +69,7 @@ export default function GatewayAllocationPolicy({
         created.
       </p>
 
-      <div className="mt-4 flex gap-2">
-        <Button variant="outline" size="sm" onClick={handleReset}>
-          Reset to default (60/40)
-        </Button>
+      <div className="mt-4 flex justify-end">
         <Button
           size="sm"
           className="bg-fuchsia-600 hover:bg-fuchsia-700"

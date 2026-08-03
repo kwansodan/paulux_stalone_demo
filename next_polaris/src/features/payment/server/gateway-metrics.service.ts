@@ -18,15 +18,25 @@ export interface GatewayMetrics {
 
 export class GatewayMetricsService {
     private readonly ROUTING_KEY = "PRIMARY_PAYSTACK_ROUTING_THRESHOLD";
-    private readonly DEFAULT_THRESHOLD = 40; // 40%
+    // Pre-configuration seed ONLY — used to route the very first payment before an
+    // admin has ever set the split. The real proportion is admin-controlled from the
+    // Payments → Gateway routing slider; no other file should hardcode a proportion.
+    private readonly DEFAULT_THRESHOLD = 50;
 
     async getMetrics(): Promise<GatewayMetrics> {
-        // 1. Get total amounts from all PAID invoices
+        // Scope to the current calendar month so the admin view matches the window the
+        // router balances over (see PaymentAllocationService.calculateMonthlyAllocation).
+        const now = new Date();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+
+        // 1. Get total amounts from this month's PAID invoices
         const totals = await prisma.invoice.groupBy({
             by: ['gateway'],
             where: {
                 status: InvoiceStatus.PAID,
-                gateway: { in: [PaymentProvider.PRIMARY_PAYSTACK, PaymentProvider.SECONDARY_PAYSTACK] }
+                gateway: { in: [PaymentProvider.PRIMARY_PAYSTACK, PaymentProvider.SECONDARY_PAYSTACK] },
+                createdAt: { gte: startOfMonth, lte: endOfMonth }
             },
             _sum: {
                 amount: true

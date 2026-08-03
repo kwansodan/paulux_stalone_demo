@@ -5,7 +5,11 @@ import { ToggleSwitch } from "@/features/service/components/toggle-switch"
 import { useUpdateGatewayThreshold } from "../client/use-payment"
 import { cn } from "@/lib/utils"
 
-const DEFAULT_PRIMARY = 60
+// Neutral split used only when re-enabling a gateway that is currently fully
+// disabled (saved threshold is 0 or 100) — the admin then tunes the exact split
+// with the allocation slider. Not a routing "default": a live saved split is
+// always restored as-is.
+const EVEN_SPLIT = 50
 
 function formatLastWebhook(iso: string | null): string {
   if (!iso) return "—"
@@ -35,9 +39,13 @@ export default function GatewayControlCards({
   const primaryOn = routingThreshold > 0
   const secondaryOn = routingThreshold < 100
 
-  const turnPrimaryOn = () => updateThreshold.mutate(DEFAULT_PRIMARY)
+  // Restore the admin's saved split when re-enabling; only fall back to an even
+  // split if the saved value fully disables one side (0 or 100).
+  const reEnable = routingThreshold > 0 && routingThreshold < 100 ? routingThreshold : EVEN_SPLIT
+
+  const turnPrimaryOn = () => updateThreshold.mutate(reEnable)
   const turnPrimaryOff = () => updateThreshold.mutate(0)
-  const turnSecondaryOn = () => updateThreshold.mutate(DEFAULT_PRIMARY)
+  const turnSecondaryOn = () => updateThreshold.mutate(reEnable)
   const turnSecondaryOff = () => updateThreshold.mutate(100)
 
   return (

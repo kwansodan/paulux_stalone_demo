@@ -10,23 +10,23 @@ export interface AllocationMetrics {
 }
 
 export class PaymentAllocationService {
-    async calculateDailyAllocation(date: string): Promise<AllocationMetrics> {
-        // Standardize date search - assuming date is in "YYYY-MM-DD" format or similar
-        // We need to find all invoices issued/paid on this specific date.
-        // However, the task says "today's completed invoices".
-        // I'll query invoices where status is PAID and createdAt is within the day.
-
+    async calculateMonthlyAllocation(date: string): Promise<AllocationMetrics> {
+        // Routing is decided at initialization, so the allocation must count invoices
+        // we have already ROUTED (PENDING/ISSUED/PAID), not only settled ones — counting
+        // PAID-only lagged behind and let bursts of unpaid checkouts over-route one gateway.
+        // Window is the calendar month containing `date` (monthly reset).
         const targetDate = new Date(date)
-        const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0))
-        const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999))
+        const startOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth(), 1, 0, 0, 0, 0)
+        const endOfMonth = new Date(targetDate.getFullYear(), targetDate.getMonth() + 1, 0, 23, 59, 59, 999)
 
         const invoices = await prisma.invoice.findMany({
             where: {
-                status: InvoiceStatus.PAID,
+                status: { in: [InvoiceStatus.PENDING, InvoiceStatus.ISSUED, InvoiceStatus.PAID] },
                 transactionType: "initial",
+                gateway: { in: [PaymentProvider.PRIMARY_PAYSTACK, PaymentProvider.SECONDARY_PAYSTACK] },
                 createdAt: {
-                    gte: startOfDay,
-                    lte: endOfDay,
+                    gte: startOfMonth,
+                    lte: endOfMonth,
                 },
             },
         })

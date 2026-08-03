@@ -4,10 +4,10 @@ import { gatewayMetricsService } from "./gateway-metrics.service"
 
 export class GatewaySelectionService {
     async selectGateway(bookingAmount: number, bookingDate: string): Promise<{ gateway: PaymentProvider, metrics: unknown }> {
-        const metrics = await paymentAllocationService.calculateDailyAllocation(bookingDate)
+        const metrics = await paymentAllocationService.calculateMonthlyAllocation(bookingDate)
         const threshold = await gatewayMetricsService.getRoutingThreshold()
 
-        // Rule 3: Edge case: First booking of day → Use Secondary (previously Hubtel)
+        // Edge case: first routed transaction of the month → seed with Secondary
         if (metrics.totalAmount === 0) {
             return { gateway: PaymentProvider.SECONDARY_PAYSTACK, metrics }
         }
