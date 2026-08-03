@@ -15,6 +15,9 @@ import {
 import Modal from "@/components/modal"
 import { useGetGiftCards, useCancelGiftCard } from "../client/use-gift-cards"
 import { SerializedGiftCard } from "../types"
+import Pagination from "@/components/pagination"
+
+const PAGE_SIZE = 10
 
 interface GiftCardOrdersShellProps {
   initialGiftCards: SerializedGiftCard[]
@@ -67,6 +70,19 @@ export default function GiftCardOrdersShell({ initialGiftCards }: GiftCardOrders
   })
   const cancelMutation = useCancelGiftCard()
 
+  const [page, setPage] = useState(1)
+  // Reset to page 1 when the filters change (adjust-state-on-render pattern).
+  const filterKey = `${search.trim()}|${status}`
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey)
+  if (filterKey !== prevFilterKey) {
+    setPrevFilterKey(filterKey)
+    setPage(1)
+  }
+
+  const pageCount = Math.max(1, Math.ceil(giftCards.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedGiftCards = giftCards.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
+
   return (
     <div className="space-y-6">
       {/* Header / filters */}
@@ -111,7 +127,7 @@ export default function GiftCardOrdersShell({ initialGiftCards }: GiftCardOrders
       {/* Gift cards list */}
       {giftCards.length > 0 && (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-          {giftCards.map((gc) => {
+          {pagedGiftCards.map((gc) => {
             const canCancel = gc.status !== "REDEEMED" && gc.status !== "CANCELLED"
             const redemptions = gc.redemptions || []
 
@@ -209,6 +225,10 @@ export default function GiftCardOrdersShell({ initialGiftCards }: GiftCardOrders
             )
           })}
         </div>
+      )}
+
+      {giftCards.length > 0 && (
+        <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
       )}
 
       {/* Cancel confirm */}

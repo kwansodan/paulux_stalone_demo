@@ -8,6 +8,9 @@ import Modal from "@/components/modal"
 import { useGetPromoCodes, useDeletePromoCode } from "../client/use-promo-codes"
 import PromoCodeForm from "./form/promo-code-form"
 import { SerializedPromoCode } from "../types"
+import Pagination from "@/components/pagination"
+
+const PAGE_SIZE = 12
 
 interface PromoCodesShellProps {
   initialCodes: SerializedPromoCode[]
@@ -37,6 +40,11 @@ export default function PromoCodesShell({ initialCodes }: PromoCodesShellProps) 
   const [createOpen, setCreateOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<SerializedPromoCode | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<SerializedPromoCode | null>(null)
+  const [page, setPage] = useState(1)
+
+  const pageCount = Math.max(1, Math.ceil(codes.length / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedCodes = codes.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   return (
     <div className="space-y-6">
@@ -64,7 +72,7 @@ export default function PromoCodesShell({ initialCodes }: PromoCodesShellProps) 
       {/* Codes grid */}
       {codes.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          {codes.map((promo) => {
+          {pagedCodes.map((promo) => {
             const isExpired = promo.expiresAt ? new Date(promo.expiresAt) < new Date() : false
             const isMaxed = promo.maxUses !== null && promo.usedCount >= promo.maxUses
             const effectivelyActive = promo.isActive && !isExpired && !isMaxed
@@ -147,6 +155,10 @@ export default function PromoCodesShell({ initialCodes }: PromoCodesShellProps) 
             )
           })}
         </div>
+      )}
+
+      {codes.length > 0 && (
+        <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
       )}
 
       {/* Create modal */}

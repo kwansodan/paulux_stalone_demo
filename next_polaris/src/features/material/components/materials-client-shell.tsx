@@ -18,6 +18,7 @@ import { materialUsageReportPath } from "@/app/paths"
 import MaterialFormModal from "./material-form-modal"
 import MaterialMovementModal from "./material-movement-modal"
 import MaterialHistoryModal from "./material-history-modal"
+import Pagination from "@/components/pagination"
 import {
   Plus,
   ArrowUpCircle,
@@ -29,6 +30,8 @@ import {
   AlertTriangle,
   Search,
 } from "lucide-react"
+
+const PAGE_SIZE = 15
 
 export default function MaterialsClientShell() {
   const { data: materials, isLoading } = useGetMaterials()
@@ -48,10 +51,23 @@ export default function MaterialsClientShell() {
   const [editingSectionName, setEditingSectionName] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
 
+  const [page, setPage] = useState(1)
+
   const filteredMaterials = useMemo(() => {
     if (!materials) return materials
     return materials.filter((m) => m.name.toLowerCase().includes(searchQuery.toLowerCase()))
   }, [materials, searchQuery])
+
+  // Reset to page 1 when the search changes (adjust-state-on-render pattern).
+  const [prevSearch, setPrevSearch] = useState(searchQuery)
+  if (searchQuery !== prevSearch) {
+    setPrevSearch(searchQuery)
+    setPage(1)
+  }
+
+  const pageCount = Math.max(1, Math.ceil((filteredMaterials?.length ?? 0) / PAGE_SIZE))
+  const safePage = Math.min(page, pageCount)
+  const pagedMaterials = filteredMaterials?.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
 
   const startEditSection = (id: string, name: string) => { setEditingSectionId(id); setEditingSectionName(name) }
   const cancelEditSection = () => { setEditingSectionId(null); setEditingSectionName("") }
@@ -180,7 +196,7 @@ export default function MaterialsClientShell() {
           <p className="text-sm text-gray-400 text-center py-12">No materials match &quot;{searchQuery}&quot;.</p>
         ) : (
           <div className="divide-y divide-gray-100">
-            {filteredMaterials.map((m) => (
+            {(pagedMaterials ?? []).map((m) => (
               <div key={m.id} className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 ${!m.isActive ? "opacity-60" : ""}`}>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
@@ -227,6 +243,10 @@ export default function MaterialsClientShell() {
           </div>
         )}
       </div>
+
+      {!!filteredMaterials && filteredMaterials.length > 0 && (
+        <Pagination page={safePage} pageCount={pageCount} onPageChange={setPage} />
+      )}
 
       {/* Modals */}
       <MaterialFormModal open={formOpen} onClose={() => setFormOpen(false)} material={editing} />
