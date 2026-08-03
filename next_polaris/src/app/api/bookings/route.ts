@@ -1,7 +1,7 @@
 import { requireRoleApi } from "@/app/_auth/require-role-api";
 import { blockedDateRepository } from "@/features/blocked-date/server/blockedDate.repository";
 import { bookingRepository } from "@/features/booking/server/booking.repository";
-import { isPastSlot } from "@/features/booking/utils/helpers";
+import { isPastSlot, calculateBookingTotal } from "@/features/booking/utils/helpers";
 import { BookingSchema } from "@/features/booking/utils/validation";
 import { businessHourRepository } from "@/features/business-hour/server/businessHour.repository";
 import { serviceRepository } from "@/features/service/server/service.repository";
@@ -340,6 +340,21 @@ export async function POST(request: NextRequest) {
 
           return bookingRepository.upsertBooking(bookingPayload, tx)
         })
+
+    // A booking fully covered up-front — e.g. a 100% promo leaves nothing to pay —
+    // never receives a payment to auto-confirm it, so it would sit PENDING with no
+    // way for staff to progress or complete it. Confirm it here so it behaves like
+    // any other confirmed booking. (Walk-ins are already created CONFIRMED.)
+    if (!isWalkIn && (createdBooking as any).status === BookingStatus.PENDING) {
+      const total = calculateBookingTotal(createdBooking)
+      const paidSoFar = ((createdBooking as any).payments ?? [])
+        .filter((p: any) => p.status === PaymentStatus.PAID)
+        .reduce((s: number, p: any) => s + Number(p.amount), 0)
+      if (total - paidSoFar <= 0) {
+        await bookingRepository.updateStatus(createdBooking.id, BookingStatus.CONFIRMED)
+          .catch(err => console.error("Failed to auto-confirm zero-balance booking:", err))
+      }
+    }
 
     // Sync product stock after the booking is persisted (post-commit, idempotent).
     // No-op for pending bookings; deducts for walk-ins created CONFIRMED, and

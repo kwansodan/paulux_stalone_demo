@@ -3,6 +3,10 @@ import { PaymentStatus } from "../types";
 import { calculateBookingTotal } from "@/features/booking/utils/helpers";
 
 export function calculatePaymentStatus(booking: BookingWithServiceAndPayment): PaymentStatus {
+  // A booking with nothing left to pay (e.g. fully covered by a promo discount)
+  // is settled, even before any Payment row exists.
+  if (calculateBookingTotal(booking) <= 0) return PaymentStatus.PAID;
+
   if (!booking.payments?.length) {
     return PaymentStatus.PENDING;
   }
