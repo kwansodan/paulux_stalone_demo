@@ -5,6 +5,7 @@ import { paymentRepository } from "@/features/payment/server/payment.repository"
 import PaymentsPageContent from "@/features/payment/components/payments-page-content"
 import { serviceRepository } from "@/features/service/server/service.repository"
 import { gatewayMetricsService } from "@/features/payment/server/gateway-metrics.service"
+import { getGatewayLabels } from "@/features/payment/server/gateway-labels"
 import { UserRole } from "@generated/prisma/client"
 
 export default async function PaymentsPage() {
@@ -13,9 +14,11 @@ export default async function PaymentsPage() {
   const metrics = await paymentRepository.getMetrics()
   const services = await serviceRepository.getAllServices({})
   const gatewayMetrics = await gatewayMetricsService.getMetrics()
+  const gatewayLabels = await getGatewayLabels()
 
   return (
     <PaymentsPageContent
+      gatewayLabels={gatewayLabels}
       gatewayMetrics={{
         primaryNetTotal: gatewayMetrics.primary.totalAmount,
         secondaryNetTotal: gatewayMetrics.secondary.totalAmount,

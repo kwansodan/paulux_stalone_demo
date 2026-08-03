@@ -21,12 +21,14 @@ type GatewayControlCardsProps = {
   routingThreshold: number
   primaryLastWebhookAt: string | null
   secondaryLastWebhookAt: string | null
+  gatewayLabels: { primary: string; secondary: string }
 }
 
 export default function GatewayControlCards({
   routingThreshold,
   primaryLastWebhookAt,
   secondaryLastWebhookAt,
+  gatewayLabels,
 }: GatewayControlCardsProps) {
   const updateThreshold = useUpdateGatewayThreshold()
 
@@ -49,7 +51,7 @@ export default function GatewayControlCards({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <Monitor className="h-4 w-4 text-gray-600" />
-            <h3 className="text-base font-semibold text-gray-900">Primary Paystack</h3>
+            <h3 className="text-base font-semibold text-gray-900">{gatewayLabels.primary}</h3>
           </div>
           <ToggleSwitch
             checked={primaryOn}
@@ -71,7 +73,7 @@ export default function GatewayControlCards({
         <div className="flex items-start justify-between gap-4">
           <div className="flex items-center gap-2">
             <Smartphone className="h-4 w-4 text-gray-600" />
-            <h3 className="text-base font-semibold text-gray-900">Secondary Paystack</h3>
+            <h3 className="text-base font-semibold text-gray-900">{gatewayLabels.secondary}</h3>
           </div>
           <ToggleSwitch
             checked={secondaryOn}

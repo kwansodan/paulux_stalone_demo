@@ -11,8 +11,10 @@ import GatewayControlCards from "./gateway-control-cards"
 
 export default function GatewayPaymentMetrics({
   initialMetrics,
+  gatewayLabels,
 }: {
   initialMetrics: IGatewayPaymentMetrics
+  gatewayLabels: { primary: string; secondary: string }
 }) {
   const { data, refetch, isFetching } = useGatewayPaymentMetrics(initialMetrics)
 
@@ -33,7 +35,7 @@ export default function GatewayPaymentMetrics({
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
-          title="Primary Paystack Net Total"
+          title={`${gatewayLabels.primary} Net Total`}
           value={`GHS ${data.primaryNetTotal.toFixed(2)}`}
           icon={
             <svg
@@ -53,19 +55,19 @@ export default function GatewayPaymentMetrics({
           iconClassName="bg-gray-100"
         />
         <MetricCard
-          title="Secondary Paystack Net Total"
+          title={`${gatewayLabels.secondary} Net Total`}
           value={`GHS ${(data.secondaryNetTotal ?? 0).toFixed(2)}`}
           icon={<Wallet />}
           iconClassName="bg-[#FFFBEB] text-[#973C00]"
         />
         <MetricCard
-          title="Primary percentage (target ≥60%)"
+          title={`${gatewayLabels.primary} percentage (target ≥60%)`}
           value={`${(data.primaryPercentage ?? 0).toFixed(1)}%`}
           icon={<TrendingUp />}
           iconClassName="bg-[#F0F9FF] text-[#00598A]"
         />
         <MetricCard
-          title="Secondary percentage"
+          title={`${gatewayLabels.secondary} percentage`}
           value={`${(data.secondaryPercentage ?? 0).toFixed(1)}%`}
           icon={<Clock />}
           iconClassName="bg-fuchsia-50 text-fuchsia-800"
@@ -75,17 +77,21 @@ export default function GatewayPaymentMetrics({
       <GatewayDistribution
         primaryPercentage={data.primaryPercentage ?? 0}
         secondaryPercentage={data.secondaryPercentage ?? 0}
+        primaryLabel={gatewayLabels.primary}
+        secondaryLabel={gatewayLabels.secondary}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <GatewayAllocationPolicy
           routingThreshold={data.routingThreshold ?? 60}
           isSaving={false}
+          gatewayLabels={gatewayLabels}
         />
         <GatewayControlCards
           routingThreshold={data.routingThreshold ?? 60}
           primaryLastWebhookAt={data.primaryLastWebhookAt ?? null}
           secondaryLastWebhookAt={data.secondaryLastWebhookAt ?? null}
+          gatewayLabels={gatewayLabels}
         />
       </div>
 

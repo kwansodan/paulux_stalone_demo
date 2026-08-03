@@ -8,12 +8,6 @@ import { DataTable } from "@/components/data-table"
 import { usePayments } from "../client/use-payment"
 import { PaymentFilters, PaymentStatus, PaymentWithBookingAndService } from "../types"
 
-const gatewayLabel: Record<string, string> = {
-  PRIMARY_PAYSTACK: "Primary Paystack",
-  SECONDARY_PAYSTACK: "Secondary Paystack",
-  MANUAL: "Manual",
-}
-
 const statusLabel: Record<PaymentStatus, string> = {
   PENDING: "Pending",
   PAID: "Completed",
@@ -25,7 +19,17 @@ const statusLabel: Record<PaymentStatus, string> = {
 const ALL_GATEWAYS = "__all__"
 const ALL_STATUS = "__all__"
 
-export default function GatewayAllocationActivity() {
+export default function GatewayAllocationActivity({
+  gatewayLabels,
+}: {
+  gatewayLabels: { primary: string; secondary: string }
+}) {
+  const gatewayLabel: Record<string, string> = {
+    PRIMARY_PAYSTACK: gatewayLabels.primary,
+    SECONDARY_PAYSTACK: gatewayLabels.secondary,
+    MANUAL: "Manual",
+  }
+
   const [filters, setFilters] = useState<PaymentFilters | null>(null)
 
   const query: Record<string, string> = {}
@@ -156,8 +160,8 @@ export default function GatewayAllocationActivity() {
               </SelectTrigger>
               <SelectContent className="mt-12">
                 <SelectItem value={ALL_GATEWAYS}>All Gateways</SelectItem>
-                <SelectItem value="PRIMARY_PAYSTACK">Primary Paystack</SelectItem>
-                <SelectItem value="SECONDARY_PAYSTACK">Secondary Paystack</SelectItem>
+                <SelectItem value="PRIMARY_PAYSTACK">{gatewayLabels.primary}</SelectItem>
+                <SelectItem value="SECONDARY_PAYSTACK">{gatewayLabels.secondary}</SelectItem>
                 <SelectItem value="MANUAL">Manual</SelectItem>
               </SelectContent>
             </Select>

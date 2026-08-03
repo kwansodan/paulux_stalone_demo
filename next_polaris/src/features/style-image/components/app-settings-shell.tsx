@@ -210,6 +210,7 @@ function GeneralSection({
       <PaymentRecipientsCard initialPaymentEmails={initialPaymentEmails} />
       <GlobalDepositCard initialAmount={initialGlobalMinDeposit} />
       <ProcessingFeeCard />
+      <GatewayNamesCard />
       <ReviewLinkCard initialLink={initialGoogleReviewLink} />
     </div>
   )
@@ -453,6 +454,114 @@ function ProcessingFeeCard() {
           <Button
             className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
             disabled={saving || loading || !dirty || percentInput.trim() === ""}
+            onClick={handleSave}
+          >
+            {saving ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <><Save className="w-4 h-4 mr-1.5" />Save</>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// Admin-customisable display names for the two payment gateways. Display-only —
+// all routing/payment logic keys off the PaymentProvider enum, not these strings.
+// See /api/settings/gateway-labels.
+function GatewayNamesCard() {
+  const [saved, setSaved] = useState<{ primary: string; secondary: string } | null>(null)
+  const [primary, setPrimary] = useState("")
+  const [secondary, setSecondary] = useState("")
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    let active = true
+    api
+      .get("/settings/gateway-labels")
+      .then((res) => {
+        if (!active) return
+        const { primary, secondary } = res.data.data
+        setSaved({ primary, secondary })
+        setPrimary(primary)
+        setSecondary(secondary)
+      })
+      .catch(() => {})
+      .finally(() => active && setLoading(false))
+    return () => { active = false }
+  }, [])
+
+  const dirty =
+    !!saved && (primary.trim() !== saved.primary || secondary.trim() !== saved.secondary)
+
+  async function handleSave() {
+    if (!primary.trim() || !secondary.trim()) {
+      toast.error("Both gateway names are required")
+      return
+    }
+    setSaving(true)
+    try {
+      const res = await api.patch("/settings/gateway-labels", {
+        primary: primary.trim(),
+        secondary: secondary.trim(),
+      })
+      setSaved(res.data.data)
+      setPrimary(res.data.data.primary)
+      setSecondary(res.data.data.secondary)
+      toast.success(res.data.message || "Gateway names updated")
+    } catch (e: any) {
+      toast.error(e?.response?.data?.message || "Failed to update gateway names")
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 mt-4">
+      <div className="flex flex-col gap-4 px-6 py-5">
+        <div className="space-y-0.5">
+          <div className="flex items-center gap-2">
+            <CreditCard className="w-4 h-4 text-gray-400 flex-shrink-0" />
+            <p className="text-sm font-medium text-gray-900">Payment gateway names</p>
+          </div>
+          <p className="text-xs text-gray-500 pl-6">
+            Display names for the two payment gateways, shown in the Payments &rarr; Gateway
+            routing view. Labels only — this doesn&apos;t change how payments are routed or processed.
+          </p>
+        </div>
+
+        <div className="flex flex-col sm:flex-row gap-4 pl-6">
+          <div className="flex-1 space-y-1">
+            <Label className="text-xs font-normal text-gray-500">Primary gateway</Label>
+            <Input
+              disabled={loading}
+              maxLength={40}
+              className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none"
+              value={primary}
+              onChange={(e) => setPrimary(e.target.value)}
+              placeholder="Primary Paystack"
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <Label className="text-xs font-normal text-gray-500">Secondary gateway</Label>
+            <Input
+              disabled={loading}
+              maxLength={40}
+              className="h-10 bg-white border-[#E2E8F0] rounded-lg shadow-none"
+              value={secondary}
+              onChange={(e) => setSecondary(e.target.value)}
+              placeholder="Secondary Paystack"
+            />
+          </div>
+        </div>
+
+        <div className="flex justify-end">
+          <Button
+            className="h-10 bg-fuchsia-600 hover:bg-fuchsia-700 px-4"
+            disabled={saving || loading || !dirty || !primary.trim() || !secondary.trim()}
             onClick={handleSave}
           >
             {saving ? (

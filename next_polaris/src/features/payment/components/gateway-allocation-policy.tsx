@@ -10,11 +10,13 @@ const DEFAULT_PRIMARY_TARGET = 60
 type GatewayAllocationPolicyProps = {
   routingThreshold: number
   isSaving?: boolean
+  gatewayLabels: { primary: string; secondary: string }
 }
 
 export default function GatewayAllocationPolicy({
   routingThreshold,
   isSaving = false,
+  gatewayLabels,
 }: GatewayAllocationPolicyProps) {
   const [primaryTarget, setPrimaryTarget] = useState(routingThreshold)
   const updateThreshold = useUpdateGatewayThreshold()
@@ -45,11 +47,11 @@ export default function GatewayAllocationPolicy({
 
       <div className="mt-4 grid grid-cols-2 gap-4">
         <div className="bg-gray-50 gap-2.5 flex flex-col justify-center items-center p-2 rounded-lg">
-          <p className="text-xs font-medium text-gray-500">Primary Paystack target (%)</p>
+          <p className="text-xs font-medium text-gray-500">{gatewayLabels.primary} target (%)</p>
           <p className="mt-0.5 text-2xl font-semibold text-gray-900  rounded-lg border border-gray-200 py-2.5 px-4">{primaryTarget}%</p>
         </div>
         <div className="bg-gray-50 gap-2.5 flex flex-col justify-center items-center p-2 rounded-lg">
-          <p className="text-xs font-medium text-gray-500">Secondary Paystack target (%)</p>
+          <p className="text-xs font-medium text-gray-500">{gatewayLabels.secondary} target (%)</p>
           <p className="mt-0.5 text-2xl font-semibold text-gray-900 rounded-lg border border-gray-200 py-2.5 px-4">{secondaryTarget}%</p>
         </div>
       </div>

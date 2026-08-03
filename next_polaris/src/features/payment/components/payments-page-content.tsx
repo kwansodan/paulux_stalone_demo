@@ -18,12 +18,14 @@ type PaymentsPageContentProps = {
   initialMetrics: IPaymentMetrics
   gatewayMetrics: IGatewayPaymentMetrics
   services: SerializedService[]
+  gatewayLabels: { primary: string; secondary: string }
 }
 
 export default function PaymentsPageContent({
   initialMetrics,
   gatewayMetrics,
   services,
+  gatewayLabels,
 }: PaymentsPageContentProps) {
   const [view, setView] = useState<PaymentsView>("collections")
 
@@ -66,8 +68,8 @@ export default function PaymentsPageContent({
 
       {view === "gateway-routing" && (
         <div className="space-y-6">
-          <GatewayPaymentMetrics initialMetrics={gatewayMetrics} />
-          <GatewayAllocationActivity />
+          <GatewayPaymentMetrics initialMetrics={gatewayMetrics} gatewayLabels={gatewayLabels} />
+          <GatewayAllocationActivity gatewayLabels={gatewayLabels} />
         </div>
       )}
     </div>
