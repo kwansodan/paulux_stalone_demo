@@ -1102,7 +1102,9 @@ Deployments are managed via **Komodo**:
 3. Pushes the built image to the Portainer host
 4. Portainer redeploys the stack
 
-Build args (`NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY`, `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MINIO_ENDPOINT`, `NEXT_PUBLIC_MINIO_PORT`) are baked into the client bundle at compile time. All other secrets are injected at runtime via Portainer environment variables.
+Build args (`NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_MINIO_ENDPOINT`, `NEXT_PUBLIC_MINIO_PORT`) are baked into the client bundle at compile time. All other secrets are injected at runtime via environment variables.
+
+`NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY` is **not** a build arg. Checkout uses Paystack's server-side redirect flow (`/api/paystack/initialize` returns an `authorization_url` the browser navigates to), so the public key is never read in the browser and can be changed at runtime without a rebuild. If an inline Paystack widget is ever added client-side, it would have to move back to a build arg.
 
 ---
 

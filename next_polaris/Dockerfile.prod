@@ -20,12 +20,14 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 # Build-time public env vars (baked into the client bundle at compile time).
-ARG NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
+# NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is deliberately NOT here: checkout is a
+# server-side redirect flow (api/paystack/initialize -> authorization_url), so
+# the public key is never read in the browser. Keeping it a runtime-only var
+# means it can be changed in the deployment environment without a rebuild.
 ARG NEXT_PUBLIC_APP_URL
 ARG NEXT_PUBLIC_MINIO_ENDPOINT
 ARG NEXT_PUBLIC_MINIO_PORT
 
-ENV NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=$NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY
 ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
 ENV NEXT_PUBLIC_MINIO_ENDPOINT=$NEXT_PUBLIC_MINIO_ENDPOINT
 ENV NEXT_PUBLIC_MINIO_PORT=$NEXT_PUBLIC_MINIO_PORT

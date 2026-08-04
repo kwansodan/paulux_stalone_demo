@@ -11,7 +11,8 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
     ports:
-      - "5432:5432"
+      # Demo runs alongside production on the same host - do not reuse 5432.
+      - "${DB_HOST_PORT:-5433}:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 10s
@@ -29,7 +30,8 @@ services:
       dockerfile: Dockerfile.prod
       network: host
       args:
-        - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
+        # NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is a runtime var only - see the note
+        # in next_polaris/Dockerfile.prod. Set it under `environment:` below.
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
         - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
         - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
@@ -44,6 +46,7 @@ services:
       - PAYSTACK_SECRET_KEY=${PAYSTACK_SECRET_KEY}
       - NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY=${NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY}
       - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
+      - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
       - NODE_ENV=${NODE_ENV}
       - RESEND_API_KEY=${RESEND_API_KEY}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT}
@@ -66,9 +69,15 @@ services:
       - ARKESAL_BASE_URL=${ARKESAL_BASE_URL}
       - PRIMARY_PAYSTACK_SECRET_KEY=${PRIMARY_PAYSTACK_SECRET_KEY}
       - SECONDARY_PAYSTACK_SECRET_KEY=${SECONDARY_PAYSTACK_SECRET_KEY}
-      - SECURE_COOKIES=${SECURE_COOKIES:-true}
-    expose:
-      - "3000"
+      # Demo is served over plain HTTP on a host port, so session cookies must
+      # NOT be marked Secure - the browser would drop them and login would
+      # silently bounce back to the login page. Set to "true" if this ever
+      # gets put behind TLS.
+      - SECURE_COOKIES=${SECURE_COOKIES:-false}
+    ports:
+      # Published so the host's existing reverse proxy can route the demo
+      # subdomain here (prod app = 3000, dev = 3001).
+      - "${APP_HOST_PORT:-3002}:3000"
     depends_on:
       db:
         condition: service_healthy
@@ -84,11 +93,13 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9001}
+      MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9003}
     command: server /data --console-address ":9001"
     ports:
-      - "9005:9000"
-      - "9001:9001"
+      # API     (prod uses 9005, dev uses 9006)
+      - "${MINIO_HOST_PORT:-9007}:9000"
+      # Console (prod uses 9001, dev uses 9002)
+      - "${MINIO_CONSOLE_HOST_PORT:-9003}:9001"
     volumes:
       - minio_data:/data
     healthcheck:
@@ -100,12 +111,20 @@ services:
       - polaris_network
 
 
+  # Edge proxy + TLS. Disabled by default: on a host that already runs the
+  # production stack, that nginx owns 80/443 and holds the Let's Encrypt certs,
+  # and this service would have neither. Route the demo subdomain to
+  # ${APP_HOST_PORT} on the existing proxy instead.
+  # To run a self-contained demo on its own host:
+  #   docker compose --profile edge up -d
+  # (first point nginx.conf at a hostname you control and re-issue certs).
   nginx:
     image: nginx:alpine
+    profiles: [ "edge" ]
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
+      - "${HTTP_HOST_PORT:-80}:80"
+      - "${HTTPS_HOST_PORT:-443}:443"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
@@ -119,6 +138,7 @@ services:
 
   certbot:
     image: certbot/certbot
+    profiles: [ "edge" ]
     restart: unless-stopped
     volumes:
       - certbot_webroot:/var/www/certbot
