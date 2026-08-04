@@ -1,5 +1,6 @@
 import EmailBookingCancelled from "@/emails/booking/booking-cancelled-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendBookingCancelEmail = async (
   email: string,
@@ -11,7 +12,7 @@ export const sendBookingCancelEmail = async (
   bookingSummaryLink: string,
 ) => {
   return await resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to: email,
     subject: `Your Booking Has Been Cancelled – ${bookingReference}`,
     react: (

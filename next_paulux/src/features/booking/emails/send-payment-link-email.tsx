@@ -1,5 +1,6 @@
 import PaymentLinkEmail from "@/emails/booking/payment-link-email";
 import { resend } from "@/lib/resend";
+import { EMAIL_FROM } from "@/lib/email-from";
 
 export const sendPaymentLinkEmail = async (
     email: string,
@@ -11,7 +12,7 @@ export const sendPaymentLinkEmail = async (
     bookingTime: string
 ) => {
     return await resend.emails.send({
-        from: "no-reply@pauluxbooking.com",
+        from: EMAIL_FROM,
         to: email,
         subject: `Payment Link for your ${serviceName} Booking`,
         react: <PaymentLinkEmail

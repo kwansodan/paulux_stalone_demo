@@ -1,5 +1,6 @@
 import LowStockAlertEmail from "@/emails/product/low-stock-alert-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendLowStockAlertEmail = async (
   adminEmail: string,
@@ -13,7 +14,7 @@ export const sendLowStockAlertEmail = async (
     : `⚠️ Low Stock Alert: ${productName}`
 
   return resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to: adminEmail,
     subject,
     react: (

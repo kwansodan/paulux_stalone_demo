@@ -1,5 +1,6 @@
 import WalkinWelcomeEmail from "@/emails/booking/walkin-welcome-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendWalkinWelcomeEmail = async (
   email: string,
@@ -10,7 +11,7 @@ export const sendWalkinWelcomeEmail = async (
   productNames?: string[],
 ) => {
   return await resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to: email,
     subject: `Welcome to Paulux! 🌟 – ${bookingReference}`,
     react: (

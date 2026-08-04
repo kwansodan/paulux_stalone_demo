@@ -1,5 +1,6 @@
 import GiftCardRecipientEmail from "@/emails/gift-card/gift-card-recipient-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendGiftCardRecipientEmail = async ({
   to,
@@ -21,7 +22,7 @@ export const sendGiftCardRecipientEmail = async ({
   redeemUrl: string
 }) => {
   return await resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to,
     subject: `${senderName} sent you a gift from Paulux Booking!`,
     react: (

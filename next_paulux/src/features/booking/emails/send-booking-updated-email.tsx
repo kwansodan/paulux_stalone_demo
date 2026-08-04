@@ -1,5 +1,6 @@
 import BookingUpdatedEmail from "@/emails/booking/booking-updated-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendBookingUpdatedEmail = async (
   email: string,
@@ -11,7 +12,7 @@ export const sendBookingUpdatedEmail = async (
   bookingSummaryUrl: string,
 ) => {
   return await resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to: email,
     subject: `Booking Updated – ${bookingReference}`,
     react: (

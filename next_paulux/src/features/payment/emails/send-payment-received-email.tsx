@@ -1,5 +1,6 @@
 import PaymentReceivedEmail from "@/emails/booking/payment-received-email";
 import { resend } from "@/lib/resend";
+import { EMAIL_FROM } from "@/lib/email-from";
 
 export const sendPaymentReceivedEmail = async (
     adminEmail: string,
@@ -14,7 +15,7 @@ export const sendPaymentReceivedEmail = async (
     bookingId: string,
 ) => {
     return await resend.emails.send({
-        from: "no-reply@pauluxbooking.com",
+        from: EMAIL_FROM,
         to: adminEmail,
         subject: `Payment Received – ${clientName} (${bookingReference})`,
         react: (

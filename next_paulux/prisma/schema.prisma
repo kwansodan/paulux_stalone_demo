@@ -710,3 +710,28 @@ model MaterialMovement {
   @@index([createdAt])
   @@map("material_movements")
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Demo lead capture — prospects who request access to the demo environment.
+// Not part of the salon domain; this exists only so the demo deployment can
+// record who asked to look at it.
+// ─────────────────────────────────────────────────────────────────────────────
+model DemoLead {
+  id       String  @id @default(uuid()) @db.Uuid
+  name     String
+  email    String
+  business String?
+  phone    String?
+  message  String?
+
+  // Captured for abuse triage only, never displayed back to anyone.
+  userAgent String?
+
+  // Deliberately NOT unique on email: a prospect returning to the demo is a
+  // signal worth keeping, so every request is recorded.
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([createdAt])
+  @@map("demo_leads")
+}

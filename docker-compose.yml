@@ -57,6 +57,11 @@ services:
       - NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL}
       - NODE_ENV=${NODE_ENV}
       - RESEND_API_KEY=${RESEND_API_KEY}
+      - RESEND_FROM=${RESEND_FROM}
+      # Shared demo account handed to prospects by the lead-capture form.
+      # Server-side only - never NEXT_PUBLIC_, or it lands in the client bundle.
+      - DEMO_LOGIN_EMAIL=${DEMO_LOGIN_EMAIL}
+      - DEMO_LOGIN_PASSWORD=${DEMO_LOGIN_PASSWORD}
       - MINIO_ENDPOINT=${MINIO_ENDPOINT}
       - MINIO_PORT=${MINIO_PORT}
       - MINIO_USE_SSL=${MINIO_USE_SSL}

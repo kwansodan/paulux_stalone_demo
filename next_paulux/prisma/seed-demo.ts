@@ -167,7 +167,11 @@ async function alreadySeeded(): Promise<boolean> {
 }
 
 /** Wipes demo content. `users` is deliberately absent — CASCADE only follows
- *  FKs pointing *at* these tables, and nothing here is referenced by users. */
+ *  FKs pointing *at* these tables, and nothing here is referenced by users.
+ *
+ *  `demo_leads` is deliberately absent too: leads are real sales data that
+ *  happen to live in the demo database. Resetting the sample salon must never
+ *  destroy the record of who asked to see it. */
 async function wipe(): Promise<void> {
   await client.query(`
     TRUNCATE TABLE

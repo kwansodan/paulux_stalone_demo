@@ -1,5 +1,6 @@
 import BookingConfirmedEmail from "@/emails/booking/booking-confirmed-email"
 import { resend } from "@/lib/resend"
+import { EMAIL_FROM } from "@/lib/email-from"
 
 export const sendBookingConfirmedEmail = async (
   email: string,
@@ -12,7 +13,7 @@ export const sendBookingConfirmedEmail = async (
   productNames?: string,
 ) => {
   return await resend.emails.send({
-    from: "no-reply@pauluxbooking.com",
+    from: EMAIL_FROM,
     to: email,
     subject: `Booking Request Received – ${bookingReference}`,
     react: (
