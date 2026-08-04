@@ -65,8 +65,10 @@ export const SOCIAL_ICONS = {
 export default function LandingFooter() {
   return (
     <footer className="bg-black space-y-12 text-white px-6 py-12">
+      {/* Light variant: this footer is bg-black, where the standard
+          dark-brown mark is close to invisible. */}
       <Image
-        src="/images/pauluxicon.png"
+        src="/images/pauluxicon-light.png"
         alt="Company Logo"
         width={100}
         height={50}
