@@ -1,4 +1,4 @@
-# Polaris Beauty Lounge — Architecture & Onboarding Guide
+# Paulux Booking — Architecture & Onboarding Guide
 
 > **Audience:** New developer taking over this project.
 > **Rule:** Never edit production files without a reviewed plan and explicit approval.
@@ -7,7 +7,7 @@
 
 ## 1. What Is This Project?
 
-**Polaris** is a full-stack booking and payment management system for **Polaris Beauty Lounge** (`polarisbeautylounge.com`). It lets:
+**Paulux** is a full-stack booking and payment management system for **Paulux Booking** (`pauluxbooking.com`). It lets:
 
 - **Customers** browse services, book appointments, pay online (or via link), reschedule, and cancel.
 - **Admins/Staff** manage bookings, services, payments, availability, and view reports — all from a dashboard.
@@ -41,8 +41,8 @@
 ## 3. Repository Structure
 
 ```
-polaris/                          ← repo root
-├── next_polaris/                 ← the entire Next.js application
+paulux/                          ← repo root
+├── next_paulux/                 ← the entire Next.js application
 │   ├── prisma/
 │   │   └── schema.prisma         ← database schema (source of truth)
 │   ├── src/
@@ -224,13 +224,13 @@ This app uses **custom session-based auth** (not NextAuth/Auth.js, despite the e
 
 All auth helpers use React's `cache()` to deduplicate calls per request.
 
-**Permissions layer:** `ADMIN`/`SUPER_ADMIN` bypass all checks. `STAFF` accounts are gated by an optional `permission` argument (a `PermissionKey` from `src/lib/permissions.ts`) — they pass only if their assigned custom `Role.permissions` array includes it. This lets individual pages/routes be locked down per-permission (`"bookings.view"`, `"materials.manage"`, `"roles.manage"`, etc.) without changing the guard functions themselves. Roles are managed at `/app-settings` → Roles tab. See `next_polaris/ARCHITECTURE.md` §4 for the full resolution order.
+**Permissions layer:** `ADMIN`/`SUPER_ADMIN` bypass all checks. `STAFF` accounts are gated by an optional `permission` argument (a `PermissionKey` from `src/lib/permissions.ts`) — they pass only if their assigned custom `Role.permissions` array includes it. This lets individual pages/routes be locked down per-permission (`"bookings.view"`, `"materials.manage"`, `"roles.manage"`, etc.) without changing the guard functions themselves. Roles are managed at `/app-settings` → Roles tab. See `next_paulux/ARCHITECTURE.md` §4 for the full resolution order.
 
 ---
 
 ## 7. Payment System (Dual-Gateway)
 
-This is the most complex part of the codebase. Polaris runs **two Paystack accounts** (Primary and Secondary) for transaction volume distribution.
+This is the most complex part of the codebase. Paulux runs **two Paystack accounts** (Primary and Secondary) for transaction volume distribution.
 
 ### Gateway Selection Logic (`gateway-selection.service.ts`)
 
@@ -316,11 +316,11 @@ All services run in Docker on an **OVH VPS** via Docker Compose:
 ```
 Internet
   └── Caddy (ports 80/443, auto TLS)
-        ├── → polaris_app (Next.js, port 3000)
-        └── /files/* → polaris_minio (port 9000)
+        ├── → paulux_app (Next.js, port 3000)
+        └── /files/* → paulux_minio (port 9000)
 
-polaris_app → polaris_db (PostgreSQL, port 5432)
-polaris_app → polaris_minio (internal)
+paulux_app → paulux_db (PostgreSQL, port 5432)
+paulux_app → paulux_minio (internal)
 
 Portainer (port 9443) — Docker management UI
 ```
@@ -331,7 +331,7 @@ Triggered on every push to `main`:
 1. `rsync` project files to OVH VPS (excluding `.git`, `node_modules`, `.env`).
 2. SSH in and run `docker compose up -d --build`.
 3. Prune unused images.
-4. Health check: `curl https://polarisbeautylounge.com`.
+4. Health check: `curl https://pauluxbooking.com`.
 
 **Required GitHub Secrets:** `OVH_SSH_KEY`, `OVH_HOST`
 
@@ -356,7 +356,7 @@ Copy `example.env` to `.env` and fill in all values. Key groups:
 
 ```bash
 # 1. Clone and install
-cd next_polaris
+cd next_paulux
 npm install          # also runs "prisma generate" via postinstall
 
 # 2. Set up env
@@ -405,5 +405,5 @@ When a booking is created, the service's price and duration are copied into the 
    - Customer: `(customer)/customer/booking/page.tsx` → `customer-booking-form.tsx` → `POST /api/bookings`
    - Admin: `(admin)/bookings/page.tsx` → booking table/filters → edit/cancel forms
 5. **Understand payments:** Read `payment-processing.service.ts` and the two webhook routes.
-6. **Understand the newer subsystems:** roles/permissions (`src/lib/permissions.ts`, `features/roles/`), gift cards (`features/gift-card/`), and inventory (`features/product/` vs `features/material/` — read §11 of `next_polaris/ARCHITECTURE.md` for why they're separate).
-7. **Check the docs** in the repo root: `DEPLOYMENT.md`, `MIGRATION_GUIDE.md`, `DOCKER_MIGRATIONS.md`, `MINIO_GUIDE.md`, `GATEWAY_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DESIGN.md` (in `next_polaris/`).
+6. **Understand the newer subsystems:** roles/permissions (`src/lib/permissions.ts`, `features/roles/`), gift cards (`features/gift-card/`), and inventory (`features/product/` vs `features/material/` — read §11 of `next_paulux/ARCHITECTURE.md` for why they're separate).
+7. **Check the docs** in the repo root: `DEPLOYMENT.md`, `MIGRATION_GUIDE.md`, `DOCKER_MIGRATIONS.md`, `MINIO_GUIDE.md`, `GATEWAY_DOCUMENTATION.md`, `ARCHITECTURE.md`, `DESIGN.md` (in `next_paulux/`).

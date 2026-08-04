@@ -1,4 +1,4 @@
-# Polaris Beauty Lounge — Off-Site SEO & GEO Playbook (Phase 3)
+# Paulux Booking — Off-Site SEO & GEO Playbook (Phase 3)
 
 This is the non-code half of the SEO/GEO plan. For a local salon, this is where
 most ranking is actually won: Google Business Profile, reviews, and consistent
@@ -19,17 +19,17 @@ every profile and directory. They must match the website's structured data.
 
 | Field | Canonical value |
 |---|---|
-| Name | **Polaris Beauty Lounge** (never "Polaris", "PolarisBooking", or variants) |
+| Name | **Paulux Booking** (never "Paulux", "PauluxBooking", or variants) |
 | Address | **12 Brenya Ave, Accra, Ghana** |
 | Phone (primary) | **+233 24 070 2107** |
 | Phone (secondary) | **+233 50 485 1482** |
 | WhatsApp | **+233 50 485 1482** |
-| Email | **polarisbeautylounge@gmail.com** |
-| Website | **https://polarisbeautylounge.com** |
+| Email | **hello@pauluxbooking.com** |
+| Website | **https://pauluxbooking.com** |
 | Category | Beauty salon / Health & beauty |
 | Hours | ⚠️ CONFIRM — site currently uses placeholder hours. Lock real hours first. |
 
-> Action: agree the final hours, then update `next_polaris/src/lib/site-config.ts`
+> Action: agree the final hours, then update `next_paulux/src/lib/site-config.ts`
 > so the website schema and every off-site listing tell the same story.
 
 ---
@@ -40,7 +40,7 @@ For "beauty salon near me", "nail salon Accra", and Google Maps, GBP outranks th
 website itself. AI engines also lean on GBP data heavily.
 
 ### Claim & verify
-- Go to https://business.google.com and claim **Polaris Beauty Lounge**. If a
+- Go to https://business.google.com and claim **Paulux Booking**. If a
   listing already exists (the footer links to a Maps place), claim that one —
   do not create a duplicate.
 - Complete video/postcard verification. Nothing ranks until verified.
@@ -58,7 +58,7 @@ website itself. AI engines also lean on GBP data heavily.
   interior, team, and before/after work. Add new photos weekly; GBPs with fresh
   photos get more views. Geotag where possible.
 - **Booking link:** set the GBP "Book" action to
-  `https://polarisbeautylounge.com/customer/booking`.
+  `https://pauluxbooking.com/customer/booking`.
 - **Business description:** 750 chars, naturally include "beauty and wellness
   salon in Accra", key services, and what makes you distinct.
 - **Opening hours + special hours** for holidays.
@@ -151,12 +151,12 @@ Accra":
 
 ## 5. Measurement (Phase 4 preview)
 - **Google Search Console** — verify the domain, submit
-  `https://polarisbeautylounge.com/sitemap.xml`, watch impressions/queries.
+  `https://pauluxbooking.com/sitemap.xml`, watch impressions/queries.
 - **Bing Webmaster Tools** — same, feeds Copilot.
 - **GBP Insights** — calls, direction requests, booking clicks, search terms.
 - Periodically ask ChatGPT/Perplexity/Gemini/AI Overviews a few target queries
   ("best beauty salon in Accra", "where to get lash extensions in Accra") and
-  note whether/how Polaris is mentioned. Track changes over time.
+  note whether/how Paulux is mentioned. Track changes over time.
 
 ---
 

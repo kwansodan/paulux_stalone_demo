@@ -4,11 +4,11 @@ set -e
 echo "Starting database seeding process..."
 
 # Ensure we are in the correct directory (optional check)
-# cd /home/ubuntu/polaris
+# cd /home/ubuntu/paulux
 
 # Check if the app container is running
-if [ "$(docker ps -q -f name=polaris_app)" ]; then
-    echo "Container 'polaris_app' is running."
+if [ "$(docker ps -q -f name=paulux_app)" ]; then
+    echo "Container 'paulux_app' is running."
     
     # Exec into the container and run the seed command
     # Using -T to avoid TTY issues in non-interactive shells, but script is interactive usually.
@@ -18,7 +18,7 @@ if [ "$(docker ps -q -f name=polaris_app)" ]; then
     
     echo "Seeding completed successfully."
 else
-    echo "Error: Container 'polaris_app' is not running."
+    echo "Error: Container 'paulux_app' is not running."
     echo "Please start the containers with 'docker compose up -d' first."
     exit 1
 fi

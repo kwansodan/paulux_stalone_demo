@@ -1,6 +1,6 @@
 # Deployment Guide
 
-This guide covers deploying the Polaris application to a Linux server using Docker Compose and GitHub Actions.
+This guide covers deploying the Paulux application to a Linux server using Docker Compose and GitHub Actions.
 
 ## Prerequisites
 
@@ -44,7 +44,7 @@ Set up the following **Repository Secrets** (Settings → Secrets and variables 
 | `SERVER_HOST` | Your server IP or domain | `123.45.67.89` or `server.example.com` |
 | `SERVER_USERNAME` | SSH username | `ubuntu` or `root` |
 | `SSH_PRIVATE_KEY` | Your SSH private key | Contents of `~/.ssh/id_rsa` |
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@db:5432/polaris` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://postgres:password@db:5432/paulux` |
 | `DATABASE_PASSWORD` | Database password | `your_secure_password` |
 | `DB_USER` | Database username | `postgres` |
 | `PAYSTACK_SECRET_KEY` | Paystack secret key | `sk_live_...` |
@@ -58,14 +58,14 @@ Set up the following **Repository Secrets** (Settings → Secrets and variables 
 | `MINIO_ENDPOINT` | MinIO endpoint | `minio` |
 | `MINIO_PORT` | MinIO port | `9000` |
 | `MINIO_USE_SSL` | Use SSL for MinIO | `false` |
-| `MINIO_BUCKET_NAME` | MinIO bucket name | `polaris-uploads` |
+| `MINIO_BUCKET_NAME` | MinIO bucket name | `paulux-uploads` |
 
 #### Optional Secrets
 
 | Secret Name | Description | Default |
 |-------------|-------------|---------|
 | `SERVER_PORT` | SSH port | `22` |
-| `DEPLOY_PATH` | Deployment directory on server | `~/polaris` |
+| `DEPLOY_PATH` | Deployment directory on server | `~/paulux` |
 | `DOCKERHUB_USERNAME` | Docker Hub username (if using) | - |
 | `DOCKERHUB_TOKEN` | Docker Hub token (if using) | - |
 
@@ -74,7 +74,7 @@ Set up the following **Repository Secrets** (Settings → Secrets and variables 
 1. **Clone the repository**
    ```bash
    git clone <your-repo-url>
-   cd polaris
+   cd paulux
    ```
 
 2. **Set up environment variables**
@@ -114,7 +114,7 @@ Set up the following **Repository Secrets** (Settings → Secrets and variables 
    ssh user@your-server
    
    # Create deployment directory
-   mkdir -p ~/polaris
+   mkdir -p ~/paulux
    ```
 
 2. **Generate SSH key for GitHub Actions** (if you don't have one)
@@ -179,10 +179,10 @@ docker compose ps
 ### Database Backup
 ```bash
 # Create backup
-docker compose exec db pg_dump -U postgres polaris > backup_$(date +%Y%m%d).sql
+docker compose exec db pg_dump -U postgres paulux > backup_$(date +%Y%m%d).sql
 
 # Restore backup
-docker compose exec -T db psql -U postgres polaris < backup_20260122.sql
+docker compose exec -T db psql -U postgres paulux < backup_20260122.sql
 ```
 
 ### Update Application
@@ -226,7 +226,7 @@ docker compose restart
 docker compose exec db pg_isready -U postgres
 
 # Access database
-docker compose exec db psql -U postgres polaris
+docker compose exec db psql -U postgres paulux
 ```
 
 ### Port already in use

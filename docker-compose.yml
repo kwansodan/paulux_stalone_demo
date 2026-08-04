@@ -6,12 +6,12 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: polaris
+      POSTGRES_DB: paulux
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
     ports:
-      # Demo runs alongside production on the same host - do not reuse 5432.
+      # 5432 is often already taken on a shared host, hence 5433.
       # Bound to loopback on purpose: Docker's published ports bypass ufw, so
       # "0.0.0.0:5433" would put this database on the open internet regardless
       # of firewall rules. Reach it over an SSH tunnel instead (DATABASE_ACCESS.md):
@@ -24,24 +24,22 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - polaris_network
+      - paulux_network
 
   # Next.js Application
   app:
-    # Deliberately NOT pinned to a shared image tag. This compose was copied
-    # from the production stack, which builds `polaris-main:latest-polaris-main`
-    # on this same host - building the demo under that tag would overwrite the
-    # image production runs from. Without `image:`, Compose names the image
-    # after this project, so the two stacks can never collide.
-    # (`pull_policy: never` went with the pinned tag: it stopped Docker trying
-    # to pull a tag that only ever existed locally. Unnecessary now.)
+    # Deliberately NOT pinned to a fixed image tag. A hardcoded tag is shared
+    # by every stack that declares it, so on a host running more than one, a
+    # build here silently replaces the image another stack starts from. Without
+    # `image:`, Compose derives the tag from the project name and collisions
+    # become impossible.
     build:
-      context: ./next_polaris
+      context: ./next_paulux
       dockerfile: Dockerfile.prod
       network: host
       args:
         # NEXT_PUBLIC_PAYSTACK_PUBLIC_KEY is a runtime var only - see the note
-        # in next_polaris/Dockerfile.prod. Set it under `environment:` below.
+        # in next_paulux/Dockerfile.prod. Set it under `environment:` below.
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
         - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
         - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
@@ -85,14 +83,15 @@ services:
       # gets put behind TLS.
       - SECURE_COOKIES=${SECURE_COOKIES:-false}
     ports:
-      # Published so the host's existing reverse proxy can route the demo
-      # subdomain here (prod app = 3000, dev = 3001).
+      # Published directly: this stack has no edge proxy of its own (see the
+      # `edge` profile below). Reach the app on this port, or point an existing
+      # proxy at it.
       - "${APP_HOST_PORT:-3002}:3000"
     depends_on:
       db:
         condition: service_healthy
     networks:
-      - polaris_network
+      - paulux_network
     volumes:
       - app_cache:/app/.next/cache
 
@@ -106,9 +105,9 @@ services:
       MINIO_BROWSER_REDIRECT_URL: ${MINIO_BROWSER_REDIRECT_URL:-http://localhost:9003}
     command: server /data --console-address ":9001"
     ports:
-      # API     (prod uses 9005, dev uses 9006)
+      # API - must be reachable by browsers, uploaded images are served from it
       - "${MINIO_HOST_PORT:-9007}:9000"
-      # Console (prod uses 9001, dev uses 9002)
+      # Console (admin UI)
       - "${MINIO_CONSOLE_HOST_PORT:-9003}:9001"
     volumes:
       - minio_data:/data
@@ -118,16 +117,16 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - polaris_network
+      - paulux_network
 
 
-  # Edge proxy + TLS. Disabled by default: on a host that already runs the
-  # production stack, that nginx owns 80/443 and holds the Let's Encrypt certs,
-  # and this service would have neither. Route the demo subdomain to
-  # ${APP_HOST_PORT} on the existing proxy instead.
-  # To run a self-contained demo on its own host:
+  # Edge proxy + TLS. Disabled by default, because on a shared host something
+  # else usually already owns 80/443 and holds the certificates - in which case
+  # point that proxy at ${APP_HOST_PORT} rather than running this.
+  # On a dedicated host, enable it with:
   #   docker compose --profile edge up -d
-  # (first point nginx.conf at a hostname you control and re-issue certs).
+  # after pointing nginx/nginx.conf at a hostname you control and issuing certs
+  # for it. The bundled config will not start without matching certificates.
   nginx:
     image: nginx:alpine
     profiles: [ "edge" ]
@@ -144,7 +143,7 @@ services:
     depends_on:
       - app
     networks:
-      - polaris_network
+      - paulux_network
 
   certbot:
     image: certbot/certbot
@@ -163,5 +162,5 @@ volumes:
   certbot_certs:
 
 networks:
-  polaris_network:
+  paulux_network:
     driver: bridge

@@ -1,4 +1,4 @@
-polarisbeautylounge.com {
+pauluxbooking.com {
     header {
         X-Content-Type-Options nosniff
         X-Frame-Options SAMEORIGIN
@@ -6,14 +6,14 @@ polarisbeautylounge.com {
         Strict-Transport-Security "max-age=63072000; includeSubDomains"
     }
 
-    reverse_proxy polaris_app:3000
+    reverse_proxy paulux_app:3000
 
     # Proxy MinIO for public access (GET, PUT, OPTIONS)
     handle_path /files/* {
-        reverse_proxy polaris_minio:9000 {
+        reverse_proxy paulux_minio:9000 {
             header_up Host minio:9000
         }
     }
 
-    tls polarisbeautylounge@gmail.com
+    tls hello@pauluxbooking.com
 }

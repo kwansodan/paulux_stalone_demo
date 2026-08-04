@@ -40,13 +40,13 @@ jobs:
             --exclude='.github' \
             --exclude='node_modules' \
             --exclude='.env' \
-            ./ ubuntu@${{ secrets.OVH_HOST }}:~/polaris
+            ./ ubuntu@${{ secrets.OVH_HOST }}:~/paulux
 
       - name: Deploy with Docker Compose
         run: |
           ssh -T ubuntu@${{ secrets.OVH_HOST }} << 'ENDSSH'
           set -e
-          cd ~/polaris
+          cd ~/paulux
           docker compose up -d --build
           docker image prune -f
           docker compose ps
@@ -57,5 +57,5 @@ jobs:
           ssh -T ubuntu@${{ secrets.OVH_HOST }} << 'ENDSSH'
           set -e
           sleep 15
-          curl -fsSL https://polarisbeautylounge.com > /dev/null
+          curl -fsSL https://pauluxbooking.com > /dev/null
           ENDSSH

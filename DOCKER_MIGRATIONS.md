@@ -27,7 +27,7 @@ docker-compose up -d
 
 ```bash
 # If container is running
-docker exec -it polaris_app npx prisma migrate deploy
+docker exec -it paulux_app npx prisma migrate deploy
 
 # Or run as a one-off command
 docker-compose run --rm app npx prisma migrate deploy
@@ -40,7 +40,7 @@ docker-compose run --rm app npx prisma migrate deploy
 docker-compose run --rm app npx prisma migrate dev --name your_migration_name
 
 # Or exec into running container
-docker exec -it polaris_app npx prisma migrate dev --name your_migration_name
+docker exec -it paulux_app npx prisma migrate dev --name your_migration_name
 ```
 
 ### Option 3: Reset Database (Development Only)
@@ -52,7 +52,7 @@ docker-compose run --rm app npx prisma migrate reset
 ### Option 4: Check Migration Status
 
 ```bash
-docker exec -it polaris_app npx prisma migrate status
+docker exec -it paulux_app npx prisma migrate status
 ```
 
 ---
@@ -77,7 +77,7 @@ You should see output like:
 ```
 Running database migrations...
 Prisma schema loaded from prisma/schema.prisma
-Datasource "db": PostgreSQL database "polaris"
+Datasource "db": PostgreSQL database "paulux"
 
 1 migration found in prisma/migrations
 
@@ -101,7 +101,7 @@ Starting Next.js application...
 
 Check the database connection:
 ```bash
-docker exec -it polaris_db psql -U postgres -d polaris -c "SELECT version();"
+docker exec -it paulux_db psql -U postgres -d paulux -c "SELECT version();"
 ```
 
 ### View Migration Logs
@@ -120,18 +120,18 @@ docker-compose up -d
 ### Manual Database Access
 
 ```bash
-docker exec -it polaris_db psql -U postgres -d polaris
+docker exec -it paulux_db psql -U postgres -d paulux
 ```
 
 ---
 
 ## Environment Variables
 
-Make sure these are set in `next_polaris/.env`:
+Make sure these are set in `next_paulux/.env`:
 
 ```bash
-DATABASE_URL="postgresql://postgres:pol56!Ris@db:5432/polaris"
-DIRECT_URL="postgresql://postgres:pol56!Ris@db:5432/polaris"
+DATABASE_URL="postgresql://postgres:pol56!Ris@db:5432/paulux"
+DIRECT_URL="postgresql://postgres:pol56!Ris@db:5432/paulux"
 ```
 
 ---

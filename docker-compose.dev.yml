@@ -2,7 +2,7 @@ services:
   # PostgreSQL Database
   db:
     image: postgres:15-alpine
-    container_name: polaris_dev_db
+    container_name: paulux_dev_db
     restart: unless-stopped
     deploy:
       resources:
@@ -12,7 +12,7 @@ services:
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
-      POSTGRES_DB: polaris
+      POSTGRES_DB: paulux
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db:/docker-entrypoint-initdb.d
@@ -22,12 +22,12 @@ services:
       timeout: 5s
       retries: 5
     networks:
-      - polaris_network
+      - paulux_network
 
   # Next.js Application
   app:
     build:
-      context: ./next_polaris
+      context: ./next_paulux
       dockerfile: Dockerfile.prod
       network: host
       args:
@@ -35,7 +35,7 @@ services:
         - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL}
         - NEXT_PUBLIC_MINIO_ENDPOINT=${NEXT_PUBLIC_MINIO_ENDPOINT}
         - NEXT_PUBLIC_MINIO_PORT=${NEXT_PUBLIC_MINIO_PORT}
-    container_name: polaris_dev_app
+    container_name: paulux_dev_app
     restart: unless-stopped
     deploy:
       resources:
@@ -83,15 +83,15 @@ services:
       minio:
         condition: service_healthy
     networks:
-      - polaris_network
+      - paulux_network
     volumes:
-      - ./next_polaris/public:/app/public
+      - ./next_paulux/public:/app/public
       - app_cache:/app/.next/cache
 
   # MinIO Object Storage (S3-compatible)
   minio:
     image: minio/minio:latest
-    container_name: polaris_dev_minio
+    container_name: paulux_dev_minio
     restart: unless-stopped
     deploy:
       resources:
@@ -114,7 +114,7 @@ services:
       timeout: 20s
       retries: 3
     networks:
-      - polaris_network
+      - paulux_network
 
 volumes:
   postgres_data:
@@ -125,5 +125,5 @@ volumes:
     driver: local
 
 networks:
-  polaris_network:
+  paulux_network:
     driver: bridge

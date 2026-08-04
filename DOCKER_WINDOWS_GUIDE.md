@@ -1,6 +1,6 @@
-# Docker Guide for Windows Users (Next Polaris)
+# Docker Guide for Windows Users (Next Paulux)
 
-This guide helps Windows users set up and manage the Polaris development and production environments using Docker.
+This guide helps Windows users set up and manage the Paulux development and production environments using Docker.
 
 ## 1. Prerequisites
 
@@ -27,7 +27,7 @@ This guide helps Windows users set up and manage the Polaris development and pro
 ## 3. Running the Environments
 
 ### 💻 Development Mode (Hot-reloading)
-Use this while coding. Changes you save in `next_polaris/src` will update the app instantly.
+Use this while coding. Changes you save in `next_paulux/src` will update the app instantly.
 ```powershell
 docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build
 ```

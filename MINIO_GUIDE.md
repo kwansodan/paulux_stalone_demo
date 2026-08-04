@@ -25,7 +25,7 @@ Once your Docker containers are running:
 - **Persistent Storage** - Data stored in Docker volume `minio_data`
 
 ### Code Utilities
-- **[next_polaris/src/lib/minio.ts](file:///home/joojo/Desktop/polaris/next_polaris/src/lib/minio.ts)** - Ready-to-use MinIO client with helper functions
+- **[next_paulux/src/lib/minio.ts](file:///home/joojo/Desktop/paulux/next_paulux/src/lib/minio.ts)** - Ready-to-use MinIO client with helper functions
 
 ## 🔧 Configuration
 
@@ -42,7 +42,7 @@ MINIO_PORT=9000
 MINIO_USE_SSL=false               # Set to 'true' in production with SSL
 
 # Bucket Configuration
-MINIO_BUCKET_NAME=polaris-uploads
+MINIO_BUCKET_NAME=paulux-uploads
 ```
 
 ### Production Settings
@@ -158,7 +158,7 @@ console.log(avatars); // ['avatars/user1.jpg', 'avatars/user2.png', ...]
 Organize your files with a clear folder structure:
 
 ```
-polaris-uploads/
+paulux-uploads/
 ├── avatars/          # User profile images
 ├── posts/            # Post images/videos
 ├── services/         # Service-related images
@@ -204,10 +204,10 @@ Use the MinIO Console or CLI to set appropriate bucket policies:
 
 ```bash
 # Make bucket private (default)
-mc anonymous set none myminio/polaris-uploads
+mc anonymous set none myminio/paulux-uploads
 
 # Make specific folder public
-mc anonymous set download myminio/polaris-uploads/public
+mc anonymous set download myminio/paulux-uploads/public
 ```
 
 ## 🌐 Production Deployment
@@ -260,7 +260,7 @@ curl http://localhost:9000/minio/health/live
 ```bash
 # Backup MinIO data volume
 docker run --rm \
-  -v polaris_minio_data:/data \
+  -v paulux_minio_data:/data \
   -v $(pwd)/backups:/backup \
   alpine tar czf /backup/minio-backup-$(date +%Y%m%d).tar.gz /data
 ```
@@ -270,7 +270,7 @@ docker run --rm \
 ```bash
 # Restore from backup
 docker run --rm \
-  -v polaris_minio_data:/data \
+  -v paulux_minio_data:/data \
   -v $(pwd)/backups:/backup \
   alpine tar xzf /backup/minio-backup-20260122.tar.gz -C /
 ```
@@ -291,7 +291,7 @@ docker system df -v | grep minio_data
 
 # Check bucket size via MinIO Console
 # Or use MinIO client:
-mc du myminio/polaris-uploads
+mc du myminio/paulux-uploads
 ```
 
 ## 🛠️ Troubleshooting
@@ -314,7 +314,7 @@ docker compose restart minio
 ```bash
 # Create bucket manually
 docker compose exec minio \
-  mc mb /data/polaris-uploads
+  mc mb /data/paulux-uploads
 ```
 
 ### Permission Denied

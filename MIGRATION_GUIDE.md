@@ -13,7 +13,7 @@ git pull origin main
 
 ### 2. **Start the Database Container**
 ```bash
-cd /home/joojo/Desktop/polaris
+cd /home/joojo/Desktop/paulux
 docker-compose up db -d
 ```
 
@@ -25,13 +25,13 @@ docker-compose ps db
 
 ### 4. **Initialize Prisma Migrations**
 ```bash
-cd next_polaris
+cd next_paulux
 npx prisma migrate dev --name init
 ```
 
 ### 5. **Verify Tables Were Created**
 ```bash
-docker exec -it polaris_db psql -U postgres -d polaris -c "\dt"
+docker exec -it paulux_db psql -U postgres -d paulux -c "\dt"
 ```
 
 ### 6. **Seed Database (Optional)**
@@ -53,13 +53,13 @@ docker-compose logs -f app
 
 ## Files Updated ✅
 
-1. ✅ `next_polaris/.env` - Updated DATABASE_URL and DIRECT_URL
-2. ✅ `next_polaris/prisma/schema.prisma` - Removed url/directUrl (Prisma 7 requirement)
-3. ✅ `next_polaris/prisma.config.ts` - Uses DATABASE_URL for runtime connections
+1. ✅ `next_paulux/.env` - Updated DATABASE_URL and DIRECT_URL
+2. ✅ `next_paulux/prisma/schema.prisma` - Removed url/directUrl (Prisma 7 requirement)
+3. ✅ `next_paulux/prisma.config.ts` - Uses DATABASE_URL for runtime connections
 
 ## Quick Production Deploy
 
 ```bash
-cd next_polaris
+cd next_paulux
 npx prisma migrate deploy
 ```
