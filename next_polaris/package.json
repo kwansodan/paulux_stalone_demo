@@ -10,6 +10,7 @@
     "type": "tsc --noEmit",
     "postinstall": "prisma generate",
     "prisma-seed": "tsx prisma/seed.ts",
+    "seed-demo": "tsx prisma/seed-demo.ts",
     "lint": "eslint"
   },
   "dependencies": {
