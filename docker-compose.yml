@@ -12,7 +12,12 @@ services:
       - ./init-db:/docker-entrypoint-initdb.d
     ports:
       # Demo runs alongside production on the same host - do not reuse 5432.
-      - "${DB_HOST_PORT:-5433}:5432"
+      # Bound to loopback on purpose: Docker's published ports bypass ufw, so
+      # "0.0.0.0:5433" would put this database on the open internet regardless
+      # of firewall rules. Reach it over an SSH tunnel instead (DATABASE_ACCESS.md):
+      #   ssh -L 5433:127.0.0.1:5433 ubuntu@<host>
+      # Set DB_BIND_HOST=0.0.0.0 to override, but understand what that exposes.
+      - "${DB_BIND_HOST:-127.0.0.1}:${DB_HOST_PORT:-5433}:5432"
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${DB_USER}" ]
       interval: 10s
