@@ -1,25 +1,25 @@
 import { prisma } from "@/lib/prisma"
 import { checkRateLimit } from "@/lib/rate-limit"
 import { DemoAccessSchema } from "@/features/demo-lead/utils/validation"
-import { getDemoLeadRecipients } from "@/features/demo-lead/server/demo-lead-recipients"
-import { sendDemoLeadEmail } from "@/features/demo-lead/emails/send-demo-lead-email"
+import { issueOtp } from "@/features/demo-lead/server/demo-otp"
+import { normalizePhone } from "@/lib/phone"
 import { type NextRequest, NextResponse } from "next/server"
 
 /**
- * Public endpoint — deliberately unauthenticated, unlike every other route
- * under /api. It is the front door of the demo: a prospect leaves their
- * details and gets the shared demo credentials back.
+ * Step 1 of the demo gate — deliberately unauthenticated, unlike every other
+ * route under /api. Records the lead as unverified and texts them a code.
+ * No credentials are handed out here; that happens in ./verify once the
+ * number has been proven.
  */
 export async function POST(request: NextRequest) {
   try {
     // NOTE: getClientIp falls back to the literal "unknown" when there is no
     // x-forwarded-for/x-real-ip header. This demo is published straight on a
-    // host port with no reverse proxy in front, so every visitor currently
-    // lands in the SAME bucket. The limit is therefore deliberately loose —
-    // it exists to stop a script hammering the endpoint, not to police
-    // individuals, and a tight number here would lock out real prospects.
-    // Put a proxy in front that sets X-Forwarded-For and this becomes per-IP.
-    const rateLimited = checkRateLimit(request, "demo-access", 20, 15 * 60 * 1000)
+    // host port with no reverse proxy, so every visitor currently shares ONE
+    // bucket. This limit is therefore only a blunt stop on a script hammering
+    // the endpoint; the meaningful per-number throttle (and the one that
+    // controls SMS spend) lives in issueOtp.
+    const rateLimited = checkRateLimit(request, "demo-access", 30, 15 * 60 * 1000)
     if (rateLimited) return rateLimited
 
     const body = await request.json()
@@ -32,58 +32,53 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, email, business, phone, message, website } = parsed.data
+    const { name, phone, email, business, message, website } = parsed.data
 
     // Honeypot: the field is hidden from real users, so a value means a bot.
     if (website) {
       return NextResponse.json({ success: false, message: "Invalid submission" }, { status: 400 })
     }
 
+    const normalizedPhone = normalizePhone(phone)
+
     const lead = await prisma.demoLead.create({
       data: {
         name: name.trim(),
-        email: email.toLowerCase().trim(),
+        phone: normalizedPhone,
+        email: email?.trim() ? email.toLowerCase().trim() : null,
         business: business?.trim() || null,
-        phone: phone?.trim() || null,
         message: message?.trim() || null,
         userAgent: request.headers.get("user-agent")?.slice(0, 500) ?? null,
       },
     })
 
-    // Notification is best-effort. The lead is already persisted, and a Resend
-    // outage must not stop the prospect getting into the demo — that would turn
-    // an email problem into a lost prospect.
-    try {
-      const recipients = await getDemoLeadRecipients()
-      if (recipients.length > 0) {
-        await sendDemoLeadEmail({
-          to: recipients.map((r) => r.email),
-          name: lead.name,
-          email: lead.email,
-          business: lead.business,
-          phone: lead.phone,
-          message: lead.message,
-          requestedAt: lead.createdAt,
-        })
+    const issued = await issueOtp(lead.id, normalizedPhone, lead.name)
+
+    if (!issued.ok) {
+      if (issued.reason === "throttled") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Too many codes requested for this number. Please try again shortly.",
+          },
+          {
+            status: 429,
+            headers: issued.retryAfterSeconds
+              ? { "Retry-After": String(issued.retryAfterSeconds) }
+              : undefined,
+          }
+        )
       }
-    } catch (error) {
-      console.error("Demo lead notification failed (lead was still saved):", error)
+
+      return NextResponse.json(
+        { success: false, message: "We couldn't send the code. Please check the number and try again." },
+        { status: 502 }
+      )
     }
 
-    // Server-side only: these are never NEXT_PUBLIC_, so they exist in the
-    // client bundle nowhere — they reach the browser only in this response.
-    const demoEmail = process.env.DEMO_LOGIN_EMAIL
-    const demoPassword = process.env.DEMO_LOGIN_PASSWORD
-
-    return NextResponse.json({
-      success: true,
-      data: {
-        credentials:
-          demoEmail && demoPassword
-            ? { email: demoEmail, password: demoPassword }
-            : null,
-      },
-    })
+    // Only the lead id goes back — it is a random uuid and useless without the
+    // code that was sent to the handset.
+    return NextResponse.json({ success: true, data: { leadId: lead.id } })
   } catch (error: any) {
     console.error("Demo access request failed:", error)
     return NextResponse.json(

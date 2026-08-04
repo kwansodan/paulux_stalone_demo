@@ -717,21 +717,60 @@ model MaterialMovement {
 // record who asked to look at it.
 // ─────────────────────────────────────────────────────────────────────────────
 model DemoLead {
-  id       String  @id @default(uuid()) @db.Uuid
-  name     String
-  email    String
+  id   String @id @default(uuid()) @db.Uuid
+  name String
+
+  // The mobile number is the lead. Stored normalised (233XXXXXXXXX) so the
+  // same person entering 024... or +233... is recognised as one number.
+  phone String
+
+  // Optional: a verified mobile is what qualifies a lead here, so nobody is
+  // forced to hand over an email to see the demo.
+  email    String?
   business String?
-  phone    String?
   message  String?
+
+  // Access is only granted once the number has been proven via OTP.
+  phoneVerified Boolean   @default(false)
+  verifiedAt    DateTime?
 
   // Captured for abuse triage only, never displayed back to anyone.
   userAgent String?
 
-  // Deliberately NOT unique on email: a prospect returning to the demo is a
-  // signal worth keeping, so every request is recorded.
+  // Deliberately NOT unique on phone: a prospect coming back is a signal
+  // worth keeping, so every request is recorded.
   createdAt DateTime @default(now())
 
-  @@index([email])
+  otps DemoOtp[]
+
+  @@index([phone])
   @@index([createdAt])
+  @@index([phoneVerified])
   @@map("demo_leads")
+}
+
+/// One-time codes for demo phone verification. Separate from DemoLead so a
+/// live secret never sits on the lead record, and so resends leave a trail.
+model DemoOtp {
+  id     String   @id @default(uuid()) @db.Uuid
+  leadId String   @db.Uuid
+  lead   DemoLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  // Normalised, duplicated from the lead so per-number throttling can be
+  // answered without a join.
+  phone String
+
+  // bcrypt, never the code itself — the same treatment user passwords get.
+  codeHash  String
+  expiresAt DateTime
+
+  // Guessing budget. Exhausting it burns the code rather than the number.
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  @@index([leadId])
+  @@index([phone, createdAt])
+  @@map("demo_otps")
 }

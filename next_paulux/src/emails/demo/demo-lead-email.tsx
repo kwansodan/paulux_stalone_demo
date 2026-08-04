@@ -3,18 +3,18 @@ import { Html, Head, Body, Tailwind, Container, Section, Text, Heading, Hr } fro
 
 interface DemoLeadEmailProps {
   name: string
-  email: string
+  phone: string
+  email?: string | null
   business?: string | null
-  phone?: string | null
   message?: string | null
   requestedAt: string
 }
 
 export default function DemoLeadEmail({
   name,
+  phone,
   email,
   business,
-  phone,
   message,
   requestedAt,
 }: DemoLeadEmailProps) {
@@ -36,12 +36,14 @@ export default function DemoLeadEmail({
 
               <Section className="rounded-xl bg-gray-50 p-4 mb-6">
                 <Text className="text-base font-semibold text-gray-900 mb-1">{name}</Text>
-                <Text className="text-sm text-gray-600 m-0">{email}</Text>
+                {/* The verified number is the lead — lead with it. */}
+                <Text className="text-base font-semibold text-gray-900 m-0">{phone}</Text>
+                <Text className="text-xs text-green-700 m-0">✓ Mobile verified</Text>
                 {business ? (
                   <Text className="text-sm text-gray-600 m-0">{business}</Text>
                 ) : null}
-                {phone ? (
-                  <Text className="text-sm text-gray-600 m-0">{phone}</Text>
+                {email ? (
+                  <Text className="text-sm text-gray-600 m-0">{email}</Text>
                 ) : null}
               </Section>
 

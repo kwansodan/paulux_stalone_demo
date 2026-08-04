@@ -1,8 +1,12 @@
 import { z } from "zod";
+import { isValidPhone } from "@/lib/phone";
 
 /**
- * Shared by the request form and the API route, so the browser and the server
- * agree on what a valid lead looks like.
+ * Step 1 — request a code. Shared by the form and the API route so the browser
+ * and the server agree on what a valid request looks like.
+ *
+ * Phone is required and email is not: a verified mobile number is what
+ * qualifies a lead here.
  */
 export const DemoAccessSchema = z.object({
   name: z
@@ -10,15 +14,16 @@ export const DemoAccessSchema = z.object({
     .min(1, "Name is required")
     .max(120, "Name is too long"),
 
-  email: z
+  phone: z
     .string()
-    .min(1, "Email is required")
-    .email("Invalid email address")
-    .max(191),
+    .min(1, "Mobile number is required")
+    .refine(isValidPhone, "Enter a valid Ghanaian mobile number"),
+
+  email: z
+    .union([z.string().email("Invalid email address").max(191), z.literal("")])
+    .optional(),
 
   business: z.string().max(160, "Business name is too long").optional(),
-
-  phone: z.string().max(40, "Phone number is too long").optional(),
 
   message: z.string().max(1000, "Message is too long").optional(),
 
@@ -29,4 +34,14 @@ export const DemoAccessSchema = z.object({
   website: z.string().max(200).optional(),
 });
 
+/** Step 2 — prove the number. */
+export const DemoVerifySchema = z.object({
+  leadId: z.string().min(1),
+  code: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+
 export type DemoAccessInput = z.infer<typeof DemoAccessSchema>;
+export type DemoVerifyInput = z.infer<typeof DemoVerifySchema>;
