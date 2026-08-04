@@ -4,6 +4,7 @@ import { DemoVerifySchema } from "@/features/demo-lead/utils/validation"
 import { verifyOtp } from "@/features/demo-lead/server/demo-otp"
 import { getDemoLeadRecipients } from "@/features/demo-lead/server/demo-lead-recipients"
 import { sendDemoLeadEmail } from "@/features/demo-lead/emails/send-demo-lead-email"
+import { setDemoLeadCookie } from "@/lib/demo-session"
 import { type NextRequest, NextResponse } from "next/server"
 
 const FAILURE_MESSAGES: Record<string, string> = {
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     const demoEmail = process.env.DEMO_LOGIN_EMAIL
     const demoPassword = process.env.DEMO_LOGIN_PASSWORD
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         credentials:
@@ -82,6 +83,13 @@ export async function POST(request: NextRequest) {
             : null,
       },
     })
+
+    // This is the one moment we know who is holding the browser, so it is the
+    // only place attribution can be established. Everything this browser does
+    // in the demo from here on is recorded against this lead.
+    setDemoLeadCookie(response, leadId)
+
+    return response
   } catch (error: any) {
     console.error("Demo verification failed:", error)
     return NextResponse.json(

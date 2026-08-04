@@ -313,7 +313,8 @@ export function DemoAccessForm() {
         </Button>
 
         <p className="text-xs text-gray-500 text-center">
-          We&apos;ll use these details to follow up about the product. Nothing else.
+          We&apos;ll use these details to follow up about the product, and we
+          record which parts of the demo you visit so we know what to show you.
         </p>
 
         {requestAccess.isError && (

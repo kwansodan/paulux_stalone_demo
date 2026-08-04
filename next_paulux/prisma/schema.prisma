@@ -741,12 +741,28 @@ model DemoLead {
   // worth keeping, so every request is recorded.
   createdAt DateTime @default(now())
 
-  otps DemoOtp[]
+  otps       DemoOtp[]
+  activities DemoActivity[]
 
   @@index([phone])
   @@index([createdAt])
   @@index([phoneVerified])
   @@map("demo_leads")
+}
+
+/// Pages a verified prospect looked at inside the demo. Everyone shares one
+/// demo login, so sessions cannot tell prospects apart — attribution comes
+/// from a signed cookie set at OTP verification, when we know who is present.
+model DemoActivity {
+  id     String   @id @default(uuid()) @db.Uuid
+  leadId String   @db.Uuid
+  lead   DemoLead @relation(fields: [leadId], references: [id], onDelete: Cascade)
+
+  path      String
+  createdAt DateTime @default(now())
+
+  @@index([leadId, createdAt])
+  @@map("demo_activity")
 }
 
 /// One-time codes for demo phone verification. Separate from DemoLead so a

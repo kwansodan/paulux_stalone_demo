@@ -10,6 +10,7 @@ export const PERMISSIONS = {
   PROMO_CODES_VIEW: { key: "promo_codes.view",  label: "Promo Codes",          area: "Marketing" },
   GIFT_CARDS_VIEW:   { key: "gift_cards.view",   label: "Gift Cards",          area: "Marketing" },
   GIFT_CARDS_MANAGE: { key: "gift_cards.manage", label: "Manage Gift Cards",   area: "Marketing" },
+  DEMO_LEADS_VIEW:   { key: "demo_leads.view",   label: "Demo Leads",          area: "Marketing" },
   SETTINGS_VIEW:    { key: "settings.view",     label: "App Settings",         area: "Administration" },
   ROLES_MANAGE:     { key: "roles.manage",      label: "Roles & Permissions",  area: "Administration" },
 } as const
