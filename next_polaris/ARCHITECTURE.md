@@ -1086,7 +1086,7 @@ All three are run from `/app` inside the production runner container (matching w
 
 | Service | Image | Role |
 |---|---|---|
-| `app` | `polaris-main:latest-polaris-main` | Next.js application |
+| `app` | built from `Dockerfile.prod`, tagged per Compose project | Next.js application |
 | `db` | `postgres:15-alpine` | Primary database |
 | `minio` | `minio/minio:latest` | File storage |
 | `nginx` | `nginx:alpine` | TLS termination, reverse proxy |

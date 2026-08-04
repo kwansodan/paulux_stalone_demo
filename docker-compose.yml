@@ -23,8 +23,13 @@ services:
 
   # Next.js Application
   app:
-    image: polaris-main:latest-polaris-main
-    pull_policy: never
+    # Deliberately NOT pinned to a shared image tag. This compose was copied
+    # from the production stack, which builds `polaris-main:latest-polaris-main`
+    # on this same host - building the demo under that tag would overwrite the
+    # image production runs from. Without `image:`, Compose names the image
+    # after this project, so the two stacks can never collide.
+    # (`pull_policy: never` went with the pinned tag: it stopped Docker trying
+    # to pull a tag that only ever existed locally. Unnecessary now.)
     build:
       context: ./next_polaris
       dockerfile: Dockerfile.prod
