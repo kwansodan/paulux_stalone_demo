@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { installOverlay, say, beat, clearCaption } from "../helpers/overlay"
-import { click, scroll } from "../helpers/ui"
+import { click, navigate, scroll } from "../helpers/ui"
 import { signIn } from "../helpers/auth"
 
 /**
@@ -20,7 +20,7 @@ test("money and reporting", async ({ page }) => {
   await installOverlay(page)
   await signIn(page)
 
-  await click(page, page.getByRole("link", { name: "Reports" }))
+  await navigate(page, "Reports")
   await page.waitForURL(/\/reports/)
   await beat(page, 1400)
 

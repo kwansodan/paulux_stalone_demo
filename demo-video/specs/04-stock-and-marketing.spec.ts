@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { installOverlay, say, beat, clearCaption } from "../helpers/overlay"
-import { click, scroll } from "../helpers/ui"
+import { click, navigate, scroll } from "../helpers/ui"
 import { signIn } from "../helpers/auth"
 
 /**
@@ -16,7 +16,7 @@ test("stock and marketing", async ({ page }) => {
   await signIn(page)
 
   // ── Retail stock ─────────────────────────────────────────────────────────
-  await click(page, page.getByRole("link", { name: "Products" }))
+  await navigate(page, "Products")
   await page.waitForURL(/\/products/)
   await beat(page, 1400)
 
@@ -27,7 +27,7 @@ test("stock and marketing", async ({ page }) => {
   await clearCaption(page)
 
   // ── Consumables ──────────────────────────────────────────────────────────
-  await click(page, page.getByRole("link", { name: "Materials" }))
+  await navigate(page, "Materials")
   await page.waitForURL(/\/materials/)
   await beat(page, 1400)
 
@@ -38,7 +38,7 @@ test("stock and marketing", async ({ page }) => {
   await clearCaption(page)
 
   // ── Marketing ────────────────────────────────────────────────────────────
-  await click(page, page.getByRole("link", { name: "Promo Codes" }))
+  await navigate(page, "Promo Codes")
   await page.waitForURL(/\/promo-codes/)
   await beat(page, 1400)
 
@@ -46,7 +46,7 @@ test("stock and marketing", async ({ page }) => {
   await scroll(page, 350)
   await clearCaption(page)
 
-  await click(page, page.getByRole("link", { name: "Gift Cards" }))
+  await navigate(page, "Gift Cards")
   await page.waitForURL(/\/gift-card/)
   await beat(page, 1400)
 

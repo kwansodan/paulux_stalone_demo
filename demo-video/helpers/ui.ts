@@ -52,6 +52,20 @@ export async function type(
 }
 
 /**
+ * Click a sidebar entry by name.
+ *
+ * Scoped to the <nav> and matched exactly, because page content collides with
+ * nav labels: the dashboard's low-stock banner contains a "View Products" link,
+ * so a bare getByRole('link', { name: 'Products' }) matches two elements and
+ * Playwright refuses in strict mode. Anything that navigates by menu should go
+ * through here rather than reaching for the link directly.
+ */
+export async function navigate(page: Page, name: string): Promise<void> {
+  const sidebar = page.getByRole("navigation").first()
+  await click(page, sidebar.getByRole("link", { name, exact: true }))
+}
+
+/**
  * Scroll down in a way that reads as scrolling rather than jumping, so long
  * pages (reports, dashboards) can be shown in one shot.
  */

@@ -1,6 +1,6 @@
 import { test } from "@playwright/test"
 import { installOverlay, say, beat, clearCaption } from "../helpers/overlay"
-import { click, scroll } from "../helpers/ui"
+import { click, navigate, scroll } from "../helpers/ui"
 import { signIn } from "../helpers/auth"
 
 /**
@@ -28,7 +28,7 @@ test("running the day", async ({ page }) => {
   await clearCaption(page)
 
   // ── Bookings ─────────────────────────────────────────────────────────────
-  await click(page, page.getByRole("link", { name: "Bookings" }))
+  await navigate(page, "Bookings")
   await page.waitForURL(/\/bookings/)
   await beat(page, 1400)
 
@@ -61,7 +61,7 @@ test("running the day", async ({ page }) => {
   }
 
   // ── Payments ─────────────────────────────────────────────────────────────
-  await click(page, page.getByRole("link", { name: "Payments" }))
+  await navigate(page, "Payments")
   await page.waitForURL(/\/payments/)
   await beat(page, 1400)
 

@@ -72,13 +72,21 @@ output nearly useless as a sales asset. Two helpers fix that:
 Pacing is deliberate — `slowMo` in the config plus explicit `beat()` calls. If a
 clip feels rushed, raise the beats before touching anything else.
 
-## Expect to adjust selectors
+## Navigating by menu
 
-Clip 01's selectors were taken from the running demo and are solid. Clips 02–04
-were derived from source and are written defensively — they skip a step rather
-than fail the run if an element isn't where expected. **Watch the first
-recording** and tighten anything that got skipped; that's normal for the first
-pass, not a sign something is broken.
+Use `navigate(page, "Products")` from `helpers/ui.ts` for anything that moves
+between admin sections. It scopes to the sidebar `<nav>` and matches the label
+exactly.
+
+Reaching for `page.getByRole("link", { name: "Products" })` directly looks
+equivalent and isn't: the dashboard's low-stock banner contains a "View
+Products" link, so the bare version matches two elements and Playwright fails
+the run in strict mode. Page content collides with nav labels more often than
+you'd expect.
+
+Clips 02–04 were derived from source rather than from the running app, so if a
+step gets skipped, **watch the recording** and tighten that selector — expected
+on a first pass, not a sign anything is broken.
 
 ## Notes
 
