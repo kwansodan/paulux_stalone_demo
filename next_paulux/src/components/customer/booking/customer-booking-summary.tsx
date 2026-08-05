@@ -442,7 +442,7 @@ export default function BookingSummary({ booking }: Props) {
                   <p className="text-sm">
                     If you have any privacy-related concerns, please contact us at:<br />
                     <strong>hello@pauluxbooking.com</strong><br />
-                    <strong>+233 24 070 2107 | +233 50 485 1482</strong>
+                    <strong>+233 00 000 0000</strong>
                   </p>
                 </div>
               </div>

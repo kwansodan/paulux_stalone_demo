@@ -64,3 +64,9 @@ id_ed25519*
 
 # Machine-specific Claude Code config
 .claude/settings.local.json
+
+# Demo video recorder (separate project, outside the Docker build context)
+demo-video/node_modules
+demo-video/output
+demo-video/test-results
+demo-video/playwright-report

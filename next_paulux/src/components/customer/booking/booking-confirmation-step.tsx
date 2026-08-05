@@ -647,7 +647,7 @@ export default function BookingConfirmationStep({ formData, onBack, globalMinDep
               </div>
               <div>
                 <h3 className="font-semibold mb-2">7. Contact Us</h3>
-                <p className="text-sm">hello@pauluxbooking.com<br /><strong>+233 24 070 2107 | +233 50 485 1482</strong></p>
+                <p className="text-sm">hello@pauluxbooking.com<br /><strong>+233 00 000 0000</strong></p>
               </div>
             </div>
           </PolicyBottomSheet>

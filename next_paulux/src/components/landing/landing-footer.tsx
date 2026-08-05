@@ -96,7 +96,7 @@ export default function LandingFooter() {
           <div className="space-y-2 text-white/70">
             <p className="text-white/70 flex gap-2 items-center">
               <Phone size={16} className="text-white" />
-              <span>+233 50 485 1482</span>
+              <span>+233 00 000 0000</span>
             </p>
             <p className="text-white/70 flex gap-2 items-center">
               <Mail size={16} className="text-white" />
@@ -104,7 +104,9 @@ export default function LandingFooter() {
             </p>
             <p className="text-white/70 flex gap-2 items-center">
               <MapPin size={16} className="text-white" />
-              <Link href="https://www.google.com/maps/dir//Paulux+Beauty+Lounge,+12+Brenya+Ave,+Accra/@5.5803904,-0.147456,12z/data=!4m8!4m7!1m0!1m5!1m1!1s0xfdf99004f607ca1:0xc7be968beb8f55be!2m2!1d-0.2312859!2d5.610236?entry=ttu&g_ep=EgoyMDI2MDIxNi4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer">
+              {/* Generic city link. The original deep link pointed at a real
+                  business's premises and map pin, which has no place on a demo. */}
+              <Link href="https://www.google.com/maps/search/?api=1&query=Accra%2C+Ghana" target="_blank" rel="noopener noreferrer">
                 Location
               </Link>
             </p>
@@ -224,8 +226,8 @@ export default function LandingFooter() {
               <h3 className="font-semibold mb-2">8. Contact Us</h3>
               <p className="text-sm">
                 If you have any privacy-related concerns, please contact us at:<br />
-                <strong>support@service4gh.com</strong><br />
-                <strong>+233 249733286</strong>
+                <strong>hello@pauluxbooking.com</strong><br />
+                <strong>+233 00 000 0000</strong>
               </p>
             </div>
 

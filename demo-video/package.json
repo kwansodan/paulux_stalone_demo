@@ -1,0 +1,17 @@
+{
+  "name": "paulux-demo-video",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Scripted Playwright walkthroughs of the Paulux demo, recorded to video for sending to prospects.",
+  "scripts": {
+    "record": "playwright test",
+    "record:customer": "playwright test specs/01-customer-books.spec.ts",
+    "record:day": "playwright test specs/02-running-the-day.spec.ts",
+    "record:money": "playwright test specs/03-money-and-reporting.spec.ts",
+    "record:stock": "playwright test specs/04-stock-and-marketing.spec.ts",
+    "mp4": "bash scripts/to-mp4.sh"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}
