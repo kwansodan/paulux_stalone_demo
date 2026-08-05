@@ -60,9 +60,107 @@ function CopyRow({ label, value }: { label: string; value: string }) {
   )
 }
 
+/**
+ * Step 2, as its own component.
+ *
+ * It owns its form so the form is created at mount, alongside the field it
+ * controls. The previous shape kept this form in the parent and called
+ * reset() on it from step 1's submit handler — i.e. before the field had ever
+ * mounted — which left react-hook-form unable to register subsequent updates:
+ * the input focused and fired change events, but state never moved and the
+ * value snapped back to empty on every keystroke.
+ *
+ * The parent keys this on leadId, so asking for a new code gives a new form
+ * rather than resetting a stale one.
+ */
+function CodeStep({
+  leadId,
+  phone,
+  onVerified,
+  onBack,
+}: {
+  leadId: string
+  phone: string
+  onVerified: (credentials: DemoCredentials | null) => void
+  onBack: () => void
+}) {
+  const verifyAccess = useVerifyDemoAccess()
+
+  const form = useForm<DemoCodeInput>({
+    resolver: zodResolver(DemoCodeSchema),
+    defaultValues: { code: '' },
+  })
+
+  const onSubmit = async (data: DemoCodeInput) => {
+    try {
+      const result = await verifyAccess.mutateAsync({ leadId, code: data.code })
+      onVerified(result.data?.credentials ?? null)
+    } catch {
+      // Rendered from verifyAccess.isError below.
+    }
+  }
+
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+        <p className="text-sm text-gray-700">
+          We sent a 6-digit code to <span className="font-medium">{phone}</span>.
+        </p>
+
+        <FormField
+          control={form.control}
+          name="code"
+          render={({ field }) => (
+            <div className="space-y-2">
+              <FormLabel className="text-sm font-normal text-foreground">
+                Verification code
+              </FormLabel>
+              <Input
+                {...field}
+                onChange={(e) => field.onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                placeholder="000000"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                className={`${inputClass} tracking-[0.4em] text-center text-lg text-gray-900`}
+              />
+              {form.formState.errors.code && (
+                <p className="text-red-500 text-sm mt-1">
+                  {form.formState.errors.code.message}
+                </p>
+              )}
+            </div>
+          )}
+        />
+
+        <Button
+          type="submit"
+          disabled={verifyAccess.isPending}
+          className="w-full h-12 bg-[#A800B7] hover:bg-[#A800B7]/90 text-white rounded-lg font-normal text-base"
+        >
+          {verifyAccess.isPending ? 'Verifying...' : 'Verify number'}
+        </Button>
+
+        <button
+          type="button"
+          onClick={onBack}
+          className="w-full text-sm text-gray-500 hover:text-gray-700"
+        >
+          Didn&apos;t get it? Go back and try again
+        </button>
+
+        {verifyAccess.isError && (
+          <p className="text-red-500 text-sm text-center">
+            {errorMessage(verifyAccess.error, 'Could not verify the code. Please try again.')}
+          </p>
+        )}
+      </form>
+    </Form>
+  )
+}
+
 export function DemoAccessForm() {
   const requestAccess = useRequestDemoAccess()
-  const verifyAccess = useVerifyDemoAccess()
 
   const [leadId, setLeadId] = useState<string | null>(null)
   const [sentTo, setSentTo] = useState('')
@@ -81,11 +179,6 @@ export function DemoAccessForm() {
     },
   })
 
-  const codeForm = useForm<DemoCodeInput>({
-    resolver: zodResolver(DemoCodeSchema),
-    defaultValues: { code: '' },
-  })
-
   const onRequest = async (data: DemoAccessInput) => {
     try {
       const result = await requestAccess.mutateAsync(data)
@@ -93,29 +186,10 @@ export function DemoAccessForm() {
       if (!id) return
       setLeadId(id)
       setSentTo(data.phone)
-      codeForm.reset({ code: '' })
     } catch {
       // Rendered from requestAccess.isError below; rethrowing here would only
       // produce an unhandled rejection.
     }
-  }
-
-  const onVerify = async (data: DemoCodeInput) => {
-    if (!leadId) return
-    try {
-      const result = await verifyAccess.mutateAsync({ leadId, code: data.code })
-      setCredentials(result.data?.credentials ?? null)
-      setDone(true)
-    } catch {
-      // Rendered from verifyAccess.isError below.
-    }
-  }
-
-  const backToDetails = () => {
-    // Re-submitting the details issues a fresh code and retires the old one,
-    // so there is no separate resend endpoint to keep in sync.
-    codeForm.reset({ code: '' })
-    setLeadId(null)
   }
 
   // ── Step 3: verified ──────────────────────────────────────────────────────
@@ -145,69 +219,19 @@ export function DemoAccessForm() {
   }
 
   // ── Step 2: enter the code ────────────────────────────────────────────────
+  // Keyed on leadId so requesting a new code mounts a brand-new form.
   if (leadId) {
     return (
-      <Form {...codeForm}>
-        <form onSubmit={codeForm.handleSubmit(onVerify)} className="space-y-5">
-          <p className="text-sm text-gray-700">
-            We sent a 6-digit code to <span className="font-medium">{sentTo}</span>.
-          </p>
-
-          <FormField
-            control={codeForm.control}
-            name="code"
-            render={({ field }) => (
-              <div className="space-y-2">
-                <FormLabel className="text-sm font-normal text-foreground">
-                  Verification code
-                </FormLabel>
-                {/* value/onChange come AFTER the spread on purpose: they must
-                    win, so the field can never end up controlled with a value
-                    that nothing updates — which shows as typing doing nothing. */}
-                <Input
-                  {...field}
-                  value={field.value ?? ''}
-                  onChange={(e) =>
-                    field.onChange(e.target.value.replace(/\D/g, '').slice(0, 6))
-                  }
-                  placeholder="000000"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  className={`${inputClass} tracking-[0.4em] text-center text-lg text-gray-900`}
-                />
-                {codeForm.formState.errors.code && (
-                  <p className="text-red-500 text-sm mt-1">
-                    {codeForm.formState.errors.code.message}
-                  </p>
-                )}
-              </div>
-            )}
-          />
-
-          <Button
-            type="submit"
-            disabled={verifyAccess.isPending}
-            className="w-full h-12 bg-[#A800B7] hover:bg-[#A800B7]/90 text-white rounded-lg font-normal text-base"
-          >
-            {verifyAccess.isPending ? 'Verifying...' : 'Verify number'}
-          </Button>
-
-          <button
-            type="button"
-            onClick={backToDetails}
-            className="w-full text-sm text-gray-500 hover:text-gray-700"
-          >
-            Didn&apos;t get it? Go back and try again
-          </button>
-
-          {verifyAccess.isError && (
-            <p className="text-red-500 text-sm text-center">
-              {errorMessage(verifyAccess.error, 'Could not verify the code. Please try again.')}
-            </p>
-          )}
-        </form>
-      </Form>
+      <CodeStep
+        key={leadId}
+        leadId={leadId}
+        phone={sentTo}
+        onVerified={(creds) => {
+          setCredentials(creds)
+          setDone(true)
+        }}
+        onBack={() => setLeadId(null)}
+      />
     )
   }
 
