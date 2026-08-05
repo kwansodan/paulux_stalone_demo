@@ -1,4 +1,5 @@
 export const signInPath = () => "/login"
+export const tryDemoPath = () => "/try"
 export const signUpPath = () => "/sign-up"
 export const homePath = () => "/"
 export const customerServicesPath = () => "/customer/services"

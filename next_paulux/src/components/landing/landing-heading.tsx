@@ -10,8 +10,10 @@ import Image  from "next/image"
 
 export default function LandingHeader() {
   const [open, setOpen] = useState(false)
+  // top-10 not top-0: DemoBanner is h-10 and sticks above this header. If that
+  // banner's height changes, this offset has to change with it.
   return (
-    <header className="sticky top-0 z-10 bg-white flex items-center justify-between px-4 py-4">
+    <header className="sticky top-10 z-10 bg-white flex items-center justify-between px-4 py-4">
       <Link href={homePath()} className="flex items-center gap-2">
         <Image
           src="/images/pauluxicon.png"
