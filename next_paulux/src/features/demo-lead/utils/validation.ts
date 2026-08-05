@@ -34,7 +34,18 @@ export const DemoAccessSchema = z.object({
   website: z.string().max(200).optional(),
 });
 
-/** Step 2 — prove the number. */
+/**
+ * Step 2, as the form sees it — just the code.
+ *
+ * The lead id deliberately isn't part of the form: it comes back from step 1
+ * and lives in component state. Keeping it out means the form cannot fail
+ * validation on a field the user can't see or fix.
+ */
+export const DemoCodeSchema = z.object({
+  code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+});
+
+/** Step 2, as the API sees it. */
 export const DemoVerifySchema = z.object({
   leadId: z.string().min(1),
   code: z
@@ -44,4 +55,5 @@ export const DemoVerifySchema = z.object({
 });
 
 export type DemoAccessInput = z.infer<typeof DemoAccessSchema>;
+export type DemoCodeInput = z.infer<typeof DemoCodeSchema>;
 export type DemoVerifyInput = z.infer<typeof DemoVerifySchema>;

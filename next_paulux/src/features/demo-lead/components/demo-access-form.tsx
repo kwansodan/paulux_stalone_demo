@@ -11,8 +11,8 @@ import { Form, FormField, FormLabel } from '@/components/ui/form'
 import {
   DemoAccessInput,
   DemoAccessSchema,
-  DemoVerifyInput,
-  DemoVerifySchema,
+  DemoCodeInput,
+  DemoCodeSchema,
 } from '../utils/validation'
 import {
   useRequestDemoAccess,
@@ -81,9 +81,9 @@ export function DemoAccessForm() {
     },
   })
 
-  const codeForm = useForm<DemoVerifyInput>({
-    resolver: zodResolver(DemoVerifySchema),
-    defaultValues: { leadId: '', code: '' },
+  const codeForm = useForm<DemoCodeInput>({
+    resolver: zodResolver(DemoCodeSchema),
+    defaultValues: { code: '' },
   })
 
   const onRequest = async (data: DemoAccessInput) => {
@@ -93,16 +93,17 @@ export function DemoAccessForm() {
       if (!id) return
       setLeadId(id)
       setSentTo(data.phone)
-      codeForm.reset({ leadId: id, code: '' })
+      codeForm.reset({ code: '' })
     } catch {
       // Rendered from requestAccess.isError below; rethrowing here would only
       // produce an unhandled rejection.
     }
   }
 
-  const onVerify = async (data: DemoVerifyInput) => {
+  const onVerify = async (data: DemoCodeInput) => {
+    if (!leadId) return
     try {
-      const result = await verifyAccess.mutateAsync(data)
+      const result = await verifyAccess.mutateAsync({ leadId, code: data.code })
       setCredentials(result.data?.credentials ?? null)
       setDone(true)
     } catch {
@@ -113,7 +114,7 @@ export function DemoAccessForm() {
   const backToDetails = () => {
     // Re-submitting the details issues a fresh code and retires the old one,
     // so there is no separate resend endpoint to keep in sync.
-    codeForm.reset({ leadId: '', code: '' })
+    codeForm.reset({ code: '' })
     setLeadId(null)
   }
 
@@ -160,13 +161,20 @@ export function DemoAccessForm() {
                 <FormLabel className="text-sm font-normal text-foreground">
                   Verification code
                 </FormLabel>
+                {/* value/onChange come AFTER the spread on purpose: they must
+                    win, so the field can never end up controlled with a value
+                    that nothing updates — which shows as typing doing nothing. */}
                 <Input
+                  {...field}
+                  value={field.value ?? ''}
+                  onChange={(e) =>
+                    field.onChange(e.target.value.replace(/\D/g, '').slice(0, 6))
+                  }
                   placeholder="000000"
                   inputMode="numeric"
                   autoComplete="one-time-code"
                   maxLength={6}
-                  className={`${inputClass} tracking-[0.5em] text-center text-lg`}
-                  {...field}
+                  className={`${inputClass} tracking-[0.4em] text-center text-lg text-gray-900`}
                 />
                 {codeForm.formState.errors.code && (
                   <p className="text-red-500 text-sm mt-1">
