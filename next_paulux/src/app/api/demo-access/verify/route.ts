@@ -74,6 +74,17 @@ export async function POST(request: NextRequest) {
     const demoEmail = process.env.DEMO_LOGIN_EMAIL
     const demoPassword = process.env.DEMO_LOGIN_PASSWORD
 
+    if (!demoEmail || !demoPassword) {
+      // Loud on purpose. Without these the prospect verifies their number and
+      // is then told access is coming "shortly", which is indistinguishable
+      // from working — so a missing variable is otherwise invisible.
+      console.warn(
+        "[demo-access] Verified a lead but DEMO_LOGIN_EMAIL/DEMO_LOGIN_PASSWORD " +
+          "are not set, so no credentials were shown. Set both in the deployment " +
+          "environment; they are read at request time and need only a restart."
+      )
+    }
+
     const response = NextResponse.json({
       success: true,
       data: {
